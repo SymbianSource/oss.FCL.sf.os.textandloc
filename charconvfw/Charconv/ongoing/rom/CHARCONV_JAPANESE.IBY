@@ -1,0 +1,56 @@
+/*
+* Copyright (c) 2000-2005 Nokia Corporation and/or its subsidiary(-ies). 
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:      
+*
+*/
+
+
+
+
+
+
+
+
+#ifndef __CHARCONV_JAPANESE_IBY__
+#define __CHARCONV_JAPANESE_IBY__
+
+#ifdef __JAPANESE
+file=ABI_DIR\BUILD_DIR\JISBASE_SHARED.DLL              Sys\Bin\JISBASE_SHARED.DLL
+file=ABI_DIR\BUILD_DIR\JISX0201.DLL                    Sys\Bin\JISX0201.DLL
+file=ABI_DIR\BUILD_DIR\JISX0208.DLL                    Sys\Bin\JISX0208.DLL
+file=ABI_DIR\BUILD_DIR\JISX0212.DLL                    Sys\Bin\JISX0212.DLL
+file=ABI_DIR\BUILD_DIR\SHIFTJIS_SHARED.DLL             Sys\Bin\SHIFTJIS_SHARED.DLL
+file=ABI_DIR\BUILD_DIR\CnvShiftJisDirectmap.dll        Sys\Bin\CnvShiftJisDirectmap.dll
+
+
+ECOM_PLUGIN(SHIFTJIS.DLL, 102044E8.rsc)
+ECOM_PLUGIN(ISO2022JP.DLL, 102044F5.rsc)
+ECOM_PLUGIN(ISO2022JP1.DLL, 102044F6.rsc)
+ECOM_PLUGIN(JIS.DLL, 102044F3.rsc)
+ECOM_PLUGIN(EUCJP_PACKED.DLL, 102044F4.rsc)
+ECOM_PLUGIN(EucJpDirectmap.dll, 10207353.rsc)
+ECOM_PLUGIN(ShiftJisDirectmap.dll, 10207354.rsc)
+
+data=MULTI_LINGUIFY(RSC ZRESOURCE\Charconv\SHIFTJIS      Resource\Charconv\SHIFTJIS)
+data=MULTI_LINGUIFY(RSC ZRESOURCE\Charconv\ISO2022JP     Resource\Charconv\ISO2022JP)
+data=MULTI_LINGUIFY(RSC ZRESOURCE\Charconv\ISO2022JP1    Resource\Charconv\ISO2022JP1)
+data=MULTI_LINGUIFY(RSC ZRESOURCE\Charconv\JIS           Resource\Charconv\JIS)
+data=MULTI_LINGUIFY(RSC ZRESOURCE\Charconv\EUCJP_PACKED  Resource\Charconv\EUCJP_PACKED)
+
+data=MULTI_LINGUIFY(RSC ZRESOURCE\Charconv\ShiftJisDirectmap Resource\Charconv\ShiftJisDirectmap)
+data=MULTI_LINGUIFY(RSC ZRESOURCE\Charconv\EucJpDirectmap    Resource\Charconv\EucJpDirectmap)
+#endif
+
+#endif
+

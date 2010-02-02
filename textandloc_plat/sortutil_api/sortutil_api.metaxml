@@ -1,0 +1,18 @@
+<?xml version="1.0" ?>
+<api id="fa105804036174a824559c14c1545d62" dataversion="1.0">
+  <name>SortUtil API</name>
+  <description>A utility for sorting functionality in lists. Used e.g. in phonebook.</description>
+  <type>c++</type>
+  <subsystem>uiutils</subsystem>
+  <libs>
+    <lib name="sortutil.lib" />
+  </libs>
+  <release category="domain"/>
+  <attributes>
+     <!-- This indicates wether the api provedes separate html documentation -->
+     <!-- or is the additional documentation generated from headers. -->
+     <!-- If you are unsuere then the value is "no" -->
+     <htmldocprovided>yes</htmldocprovided>
+     <adaptation>no</adaptation>
+  </attributes>
+</api>

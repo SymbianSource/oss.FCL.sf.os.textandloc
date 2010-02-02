@@ -1,0 +1,56 @@
+/*
+* Copyright (c) 2000 Nokia Corporation and/or its subsidiary(-ies). 
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:    
+*       MakMake Project file.  
+*
+*/
+
+
+
+
+
+
+
+
+/**
+@file
+
+@SYMPurpose shiftjis_docomo_shared.dll ShiftJIS common implementation for NTT DoCoMo
+*/
+
+#include <platform_paths.hrh>
+
+target          SHIFTJIS_DOCOMO_SHARED.DLL
+CAPABILITY All -Tcb
+targettype      dll
+uid         0x1000008d 0x102044E8
+VENDORID 0x70000001
+sourcepath      ../Source/foreign/shared
+source          SHIFTJIS_SHARED2.CPP shiftJisDoCoMo.cpp
+
+// This is a SYSTEMINCLUDE macro containing the middleware
+// layer specific include directories
+MW_LAYER_SYSTEMINCLUDE
+OS_LAYER_SYSTEMINCLUDE
+
+systeminclude   ../Include
+SYSTEMINCLUDE   ../../../../inc
+SYSTEMINCLUDE   ../../../inc
+
+library         EUSER.LIB charconv.lib 
+deffile         SHIFTJIS_SHARED.DEF
+start WINS
+            baseaddress 0x744f0000
+end
+

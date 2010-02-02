@@ -1,0 +1,13 @@
+EXPORTS
+	?ConvertFromUnicode@@YAHW4TEndianness@CCnvCharacterSetConverter@@ABVTDesC8@@AAVTDes8@@ABVTDesC16@@AAVTArrayOfAscendingIndices@2@@Z @ 1 NONAME ; int __cdecl ConvertFromUnicode(enum CCnvCharacterSetConverter::TEndianness,class TDesC8 const &,class TDes8 &,class TDesC16 const &,class CCnvCharacterSetConverter::TArrayOfAscendingIndices &)
+	?ConvertToUnicode@@YAHW4TEndianness@CCnvCharacterSetConverter@@AAVTDes16@@ABVTDesC8@@AAH33@Z @ 2 NONAME ; int __cdecl ConvertToUnicode(enum CCnvCharacterSetConverter::TEndianness,class TDes16 &,class TDesC8 const &,int &,int &,int &)
+	?IsInThisCharacterSetL@@YAHAAH0ABVTDesC8@@@Z @ 3 NONAME ; int __cdecl IsInThisCharacterSetL(int &,int &,class TDesC8 const &)
+	?ReplacementForUnconvertibleUnicodeCharacters@@YAABVTDesC8@@XZ @ 4 NONAME ; class TDesC8 const & __cdecl ReplacementForUnconvertibleUnicodeCharacters(void)
+	?Reserved_2@@YAXXZ @ 5 NONAME ; void __cdecl Reserved_2(void)
+	?Reserved_3@@YAXXZ @ 6 NONAME ; void __cdecl Reserved_3(void)
+	?Reserved_4@@YAXXZ @ 7 NONAME ; void __cdecl Reserved_4(void)
+	?Reserved_5@@YAXXZ @ 8 NONAME ; void __cdecl Reserved_5(void)
+	?Reserved_6@@YAXXZ @ 9 NONAME ; void __cdecl Reserved_6(void)
+	?Reserved_7@@YAXXZ @ 10 NONAME ; void __cdecl Reserved_7(void)
+	?Reserved_8@@YAXXZ @ 11 NONAME ; void __cdecl Reserved_8(void)
+

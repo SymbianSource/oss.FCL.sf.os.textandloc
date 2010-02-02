@@ -1,0 +1,39 @@
+EXPORTS
+	"_._25CCnvCharacterSetConverter" @ 1 NONAME R3UNUSED ; CCnvCharacterSetConverter::~CCnvCharacterSetConverter(void)
+	ConvertCharacterSetIdentifierToStandardNameL__25CCnvCharacterSetConverterUiR3RFs @ 2 NONAME R3UNUSED ; CCnvCharacterSetConverter::ConvertCharacterSetIdentifierToStandardNameL(unsigned int, RFs &)
+	ConvertFromUnicodeToUtf7__15CnvUtfConverterR5TDes8RC7TDesC16i @ 3 NONAME R3UNUSED ; CnvUtfConverter::ConvertFromUnicodeToUtf7(TDes8 &, TDesC16 const &, int)
+	ConvertFromUnicodeToUtf8__15CnvUtfConverterR5TDes8RC7TDesC16 @ 4 NONAME R3UNUSED ; CnvUtfConverter::ConvertFromUnicodeToUtf8(TDes8 &, TDesC16 const &)
+	ConvertFromUnicode__C25CCnvCharacterSetConverterR5TDes8RC7TDesC16 @ 5 NONAME R3UNUSED ; CCnvCharacterSetConverter::ConvertFromUnicode(TDes8 &, TDesC16 const &) const
+	ConvertFromUnicode__C25CCnvCharacterSetConverterR5TDes8RC7TDesC16Ri @ 6 NONAME ; CCnvCharacterSetConverter::ConvertFromUnicode(TDes8 &, TDesC16 const &, int &) const
+	ConvertFromUnicode__C25CCnvCharacterSetConverterR5TDes8RC7TDesC16RiT3 @ 7 NONAME ; CCnvCharacterSetConverter::ConvertFromUnicode(TDes8 &, TDesC16 const &, int &, int &) const
+	ConvertMibEnumOfCharacterSetToIdentifierL__25CCnvCharacterSetConverteriR3RFs @ 8 NONAME R3UNUSED ; CCnvCharacterSetConverter::ConvertMibEnumOfCharacterSetToIdentifierL(int, RFs &)
+	ConvertStandardNameOfCharacterSetToIdentifierL__25CCnvCharacterSetConverterRC6TDesC8R3RFs @ 9 NONAME R3UNUSED ; CCnvCharacterSetConverter::ConvertStandardNameOfCharacterSetToIdentifierL(TDesC8 const &, RFs &)
+	ConvertToUnicodeFromUtf7__15CnvUtfConverterR6TDes16RC6TDesC8Ri @ 10 NONAME R3UNUSED ; CnvUtfConverter::ConvertToUnicodeFromUtf7(TDes16 &, TDesC8 const &, int &)
+	ConvertToUnicodeFromUtf8__15CnvUtfConverterR6TDes16RC6TDesC8 @ 11 NONAME R3UNUSED ; CnvUtfConverter::ConvertToUnicodeFromUtf8(TDes16 &, TDesC8 const &)
+	ConvertToUnicode__C25CCnvCharacterSetConverterR6TDes16RC6TDesC8Ri @ 12 NONAME ; CCnvCharacterSetConverter::ConvertToUnicode(TDes16 &, TDesC8 const &, int &) const
+	ConvertToUnicode__C25CCnvCharacterSetConverterR6TDes16RC6TDesC8RiN23 @ 13 NONAME ; CCnvCharacterSetConverter::ConvertToUnicode(TDes16 &, TDesC8 const &, int &, int &, int &) const
+	ConvertToUnicode__C25CCnvCharacterSetConverterR6TDes16RC6TDesC8RiT3 @ 14 NONAME ; CCnvCharacterSetConverter::ConvertToUnicode(TDes16 &, TDesC8 const &, int &, int &) const
+	CreateArrayOfCharacterSetsAvailableLC__25CCnvCharacterSetConverterR3RFs @ 15 NONAME R3UNUSED ; CCnvCharacterSetConverter::CreateArrayOfCharacterSetsAvailableLC(RFs &)
+	CreateArrayOfCharacterSetsAvailableL__25CCnvCharacterSetConverterR3RFs @ 16 NONAME R3UNUSED ; CCnvCharacterSetConverter::CreateArrayOfCharacterSetsAvailableL(RFs &)
+	NewLC__25CCnvCharacterSetConverter @ 17 NONAME R3UNUSED ; CCnvCharacterSetConverter::NewLC(void)
+	NewL__25CCnvCharacterSetConverter @ 18 NONAME R3UNUSED ; CCnvCharacterSetConverter::NewL(void)
+	PrepareToConvertToOrFromL__25CCnvCharacterSetConverterUiR3RFs @ 19 NONAME R3UNUSED ; CCnvCharacterSetConverter::PrepareToConvertToOrFromL(unsigned int, RFs &)
+	PrepareToConvertToOrFromL__25CCnvCharacterSetConverterUiRCt9CArrayFix1ZQ225CCnvCharacterSetConverter13SCharacterSetR3RFs @ 20 NONAME ; CCnvCharacterSetConverter::PrepareToConvertToOrFromL(unsigned int, CArrayFix<CCnvCharacterSetConverter::SCharacterSet> const &, RFs &)
+	SetDefaultEndiannessOfForeignCharacters__25CCnvCharacterSetConverterQ225CCnvCharacterSetConverter11TEndianness @ 21 NONAME R3UNUSED ; CCnvCharacterSetConverter::SetDefaultEndiannessOfForeignCharacters(CCnvCharacterSetConverter::TEndianness)
+	SetReplacementForUnconvertibleUnicodeCharactersL__25CCnvCharacterSetConverterRC6TDesC8 @ 22 NONAME R3UNUSED ; CCnvCharacterSetConverter::SetReplacementForUnconvertibleUnicodeCharactersL(TDesC8 const &)
+	ConvertCharacterSetIdentifierToMibEnumL__25CCnvCharacterSetConverterUiR3RFs @ 23 NONAME R3UNUSED ; CCnvCharacterSetConverter::ConvertCharacterSetIdentifierToMibEnumL(unsigned int, RFs &)
+	ConvertFromUnicode__C25CCnvCharacterSetConverterR5TDes8RC7TDesC16RQ225CCnvCharacterSetConverter24TArrayOfAscendingIndices @ 24 NONAME ; CCnvCharacterSetConverter::ConvertFromUnicode(TDes8 &, TDesC16 const &, CCnvCharacterSetConverter::TArrayOfAscendingIndices &) const
+	DoConvertFromUnicode__25CCnvCharacterSetConverterRC18SCnvConversionDataQ225CCnvCharacterSetConverter11TEndiannessRC6TDesC8R5TDes8RC7TDesC16RQ225CCnvCharacterSetConverter24TArrayOfAscendingIndices @ 25 NONAME ; CCnvCharacterSetConverter::DoConvertFromUnicode(SCnvConversionData const &, CCnvCharacterSetConverter::TEndianness, TDesC8 const &, TDes8 &, TDesC16 const &, CCnvCharacterSetConverter::TArrayOfAscendingIndices &)
+	DoConvertFromUnicode__25CCnvCharacterSetConverterRC18SCnvConversionDataQ225CCnvCharacterSetConverter11TEndiannessRC6TDesC8R5TDes8RC7TDesC16RQ225CCnvCharacterSetConverter24TArrayOfAscendingIndicesRUiUi @ 26 NONAME ; CCnvCharacterSetConverter::DoConvertFromUnicode(SCnvConversionData const &, CCnvCharacterSetConverter::TEndianness, TDesC8 const &, TDes8 &, TDesC16 const &, CCnvCharacterSetConverter::TArrayOfAscendingIndices &, unsigned int &, unsigned int)
+	DoConvertToUnicode__25CCnvCharacterSetConverterRC18SCnvConversionDataQ225CCnvCharacterSetConverter11TEndiannessR6TDes16RC6TDesC8RiT5 @ 27 NONAME ; CCnvCharacterSetConverter::DoConvertToUnicode(SCnvConversionData const &, CCnvCharacterSetConverter::TEndianness, TDes16 &, TDesC8 const &, int &, int &)
+	DoConvertToUnicode__25CCnvCharacterSetConverterRC18SCnvConversionDataQ225CCnvCharacterSetConverter11TEndiannessR6TDes16RC6TDesC8RiT5RUiUi @ 28 NONAME ; CCnvCharacterSetConverter::DoConvertToUnicode(SCnvConversionData const &, CCnvCharacterSetConverter::TEndianness, TDes16 &, TDesC8 const &, int &, int &, unsigned int &, unsigned int)
+	AsciiConversionData__25CCnvCharacterSetConverter @ 29 NONAME R3UNUSED ; CCnvCharacterSetConverter::AsciiConversionData(void)
+	AppendIndex__Q225CCnvCharacterSetConverter24TArrayOfAscendingIndicesi @ 30 NONAME R3UNUSED ; CCnvCharacterSetConverter::TArrayOfAscendingIndices::AppendIndex(int)
+	SetDowngradeForExoticLineTerminatingCharacters__25CCnvCharacterSetConverterQ225CCnvCharacterSetConverter44TDowngradeForExoticLineTerminatingCharacters @ 31 NONAME R3UNUSED ; CCnvCharacterSetConverter::SetDowngradeForExoticLineTerminatingCharacters(CCnvCharacterSetConverter::TDowngradeForExoticLineTerminatingCharacters)
+	AutoDetectCharacterSetL__25CCnvCharacterSetConverterRiRUiRCt9CArrayFix1ZQ225CCnvCharacterSetConverter13SCharacterSetRC6TDesC8 @ 32 NONAME ; CCnvCharacterSetConverter::AutoDetectCharacterSetL(int &, unsigned int &, CArrayFix<CCnvCharacterSetConverter::SCharacterSet> const &, TDesC8 const &)
+	ConvertibleToCharacterSetL__25CCnvCharacterSetConverterRiUiRCt9CArrayFix1ZQ225CCnvCharacterSetConverter13SCharacterSetRC6TDesC8 @ 33 NONAME ; CCnvCharacterSetConverter::ConvertibleToCharacterSetL(int &, unsigned int, CArrayFix<CCnvCharacterSetConverter::SCharacterSet> const &, TDesC8 const &)
+	ConvertFromUnicodeToUtf8L__15CnvUtfConverterRC7TDesC16 @ 34 NONAME ; CnvUtfConverter::ConvertFromUnicodeToUtf8L(TDesC16 const &)
+	ConvertToUnicodeFromUtf8L__15CnvUtfConverterRC6TDesC8 @ 35 NONAME ; CnvUtfConverter::ConvertToUnicodeFromUtf8L(TDesC8 const &)
+	ConvertFromUnicodeToUtf7L__15CnvUtfConverterRC7TDesC16i @ 36 NONAME ; CnvUtfConverter::ConvertFromUnicodeToUtf7L(TDesC16 const &, int)
+	ConvertToUnicodeFromUtf7L__15CnvUtfConverterRC6TDesC8 @ 37 NONAME ; CnvUtfConverter::ConvertToUnicodeFromUtf7L(TDesC8 const &)
+

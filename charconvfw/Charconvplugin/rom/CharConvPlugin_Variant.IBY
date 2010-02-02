@@ -1,0 +1,45 @@
+/*
+* Copyright (c) 2002-2004 Nokia Corporation and/or its subsidiary(-ies). 
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:    
+*
+*/
+
+
+
+
+#ifndef __CHARCONVPLUGIN_VARIANT_IBY__
+#define __CHARCONVPLUGIN_VARIANT_IBY__
+
+#ifdef __HINDI_ROM_CONTENT
+// Plugins
+ECOM_PLUGIN(iscii.dll, 1027508D.rsc)
+data=MULTI_LINGUIFY(RSC ZRESOURCE\Charconv\iscii  Resource\Charconv\iscii)
+data=ZRESOURCE\Charconv\iscii.snm       CHARCONV_PLUGIN_DIR\iscii.snm
+#endif //__HINDI_ROM_CONTENT
+
+#ifdef __LOCALES_65_IBY__
+// Plugins
+ECOM_PLUGIN(EUCKR.dll, 2000E527.rsc)
+ECOM_PLUGIN(iso2022kr.dll, 20010102.rsc)
+ECOM_PLUGIN(cp949.dll, 20010100.rsc)
+file=ABI_DIR\BUILD_DIR\CP949table.dll   System\Libs\CP949table.dll
+ECOM_PLUGIN(ksc5601.dll, 200113CE.rsc)
+
+data=ZRESOURCE\Charconv\EUCKR.snm         CHARCONV_PLUGIN_DIR\EUCKR.snm
+data=ZRESOURCE\Charconv\iso2022kr.snm     CHARCONV_PLUGIN_DIR\iso2022kr.snm
+data=ZRESOURCE\Charconv\ksc5601.snm       CHARCONV_PLUGIN_DIR\ksc5601.snm
+
+#endif // __LOCALES_65_IBY__
+
+#endif  // __CHARCONVPLUGIN_VARIANT_IBY__

@@ -1,0 +1,497 @@
+{\rtf1\ansi \deff4\deflang1033{\fonttbl{\f1\froman\fcharset2\fprq2 Symbol;}{\f4\froman\fcharset0\fprq2 Times New Roman;}{\f5\fswiss\fcharset0\fprq2 Arial;}{\f11\fmodern\fcharset0\fprq1 Courier New;}
+{\f56\fswiss\fcharset0\fprq2 Verdana;}}{\colortbl;\red0\green0\blue0;\red0\green0\blue255;\red0\green255\blue255;\red0\green255\blue0;\red255\green0\blue255;\red255\green0\blue0;\red255\green255\blue0;\red255\green255\blue255;\red0\green0\blue128;
+\red0\green128\blue128;\red0\green128\blue0;\red128\green0\blue128;\red128\green0\blue0;\red128\green128\blue0;\red128\green128\blue128;\red192\green192\blue192;}{\stylesheet{\widctlpar \f4\fs20 \snext0 Normal;}{\s1\sb240\sa60\keepn\widctlpar 
+\b\f5\fs28\kerning28 \sbasedon0\snext0 heading 1;}{\s2\sb240\sa60\keepn\widctlpar \b\i\f5 \sbasedon0\snext0 heading 2;}{\s3\sb240\sa60\keepn\widctlpar \f5 \sbasedon0\snext0 heading 3;}{\s4\sb240\sa60\keepn\widctlpar \b\f5 \sbasedon0\snext0 heading 4;}{
+\s5\sb240\sa60\widctlpar \f5\fs22 \sbasedon0\snext0 heading 5;}{\*\cs10 \additive Default Paragraph Font;}{\s15\widctlpar \f4\fs20 \sbasedon0\snext15 footnote text;}{\*\cs16 \additive\super \sbasedon10 footnote reference;}}{\info
+{\author Preferred Customer}{\operator Preferred Customer}{\creatim\yr1999\mo3\dy16\hr14\min36}{\revtim\yr1999\mo11\dy26\hr14\min22}{\printim\yr1999\mo3\dy17\hr16\min34}{\version8}{\edmins11}{\nofpages9}{\nofwords5010}{\nofchars28557}
+{\*\company Dell Computer Corporation}{\vern57443}}\paperw11906\paperh16838 \deftab340\widowctrl\ftnbj\aenddoc\hyphcaps0\formshade \fet0\sectd \linex0\headery709\footery709\colsx709\endnhere {\*\pnseclvl1\pnlcrm\pnstart1\pnindent283\pnhang}{\*\pnseclvl2
+\pnf1\pnstart1\pnindent283 {\pntxtb \'b7}}{\*\pnseclvl3\pnf1\pnstart1\pnindent283 {\pntxtb \'b7}}{\*\pnseclvl4\pnf1\pnstart1\pnindent283 {\pntxtb \'b7}}{\*\pnseclvl5\pnf1\pnstart1\pnindent283 {\pntxtb \'b7}}{\*\pnseclvl6\pnf1\pnstart1\pnindent283 
+{\pntxtb \'b7}}{\*\pnseclvl7\pnf1\pnstart1\pnindent283 {\pntxtb \'b7}}{\*\pnseclvl8\pnf1\pnstart1\pnindent283 {\pntxtb \'b7}}{\*\pnseclvl9\pnf1\pnstart1\pnindent283 {\pntxtb \'b7}}\pard\plain \s1\sb240\sa60\keepn\widctlpar \b\f5\fs28\kerning28 
+Converting text between different character-encoding systems
+\par \pard\plain \qj\fi720\widctlpar \f4\fs20 EPOC machines internally store text encoded in Unicode - the character set{\cs16\super \chftn {\footnote \pard\plain \s15\qj\widctlpar \f4\fs20 {\cs16\super \chftn } The term \ldblquote character set\rdblquote 
+ is used throughout this document to refer to {\i a set of characters and their encodings} as defined by a particular body (e.g. a government organization, a consortium, etc).}}
+ defined by The Unicode Consortium. However, much of the text sent between the EPOC machine and the outside world (e.g. in emails) will be encoded in character sets other than Unicode. The CHARCONV component provides a DLL for converting text (both ways) 
+between Unicode and other standard characters sets. It also supports converting (both ways) between 2-byte Unicode (also known as UC
+S-2) and its two transformation formats UTF-7 and UTF-8. There is no direct way to convert between UTF-7 and UTF-8 though - in fact CHARCONV as a whole does not provide any direct conversion facilities other than to or from Unicode (UCS-2).
+\par \pard\plain \s2\sb240\sa60\keepn\widctlpar \b\i\f5 Converting text between Unicode and other standard character sets
+\par \pard\plain \qj\fi720\widctlpar \f4\fs20 The class {\f11 CCnvCharacterSetConverter} is provided for converting text between Unicode and other standard character sets. The public parts of the class are shown below:
+\par \pard \qj\widctlpar 
+\par \pard \widctlpar {\f11\fs14 class CCnvCharacterSetConverter : public CBase
+\par \tab \{
+\par public:
+\par \tab enum TAvailability
+\par \tab \tab \{
+\par \tab \tab EAvailable,
+\par \tab \tab ENotAvailable
+\par \tab \tab \};
+\par \tab enum TError
+\par \tab \tab \{
+\par \tab \tab EErrorIllFormedInput=-1
+\par \tab \tab \};
+\par \tab enum TEndianness
+\par \tab \tab \{
+\par \tab \tab ELittleEndian,
+\par \tab \tab EBigEndian
+\par \tab \tab \};
+\par \tab enum \{KStateDefault=0\};
+\par \tab struct SCharacterSet
+\par \tab \tab \{
+\par \tab \tab inline TUint Identifier() const;
+\par \tab \tab inline TBool NameIsFileName() const;
+\par \tab \tab inline TPtrC Name() const;
+\par \tab private:
+\par \tab \tab // ...
+\par \tab \tab \};
+\par public:
+\par \tab IMPORT_C static CCnvCharacterSetConverter* NewL();
+\par \tab IMPORT_C static CCnvCharacterSetConverter* NewLC();
+\par \tab IMPORT_C virtual ~CCnvCharacterSetConverter();
+\par \tab IMPORT_C static CArrayFix<SCharacterSet>* CreateArrayOfCharacterSetsAvailableL(RFs&);
+\par \tab IMPORT_C static CArrayFix<SCharacterSet>* CreateArrayOfCharacterSetsAvailableLC(RFs&);
+\par \tab IMPORT_C TUint ConvertStandardNameOfCharacterSetToIdentifierL(const TDesC8&, RFs&);
+\par \tab IMPORT_C HBufC8* ConvertCharacterSetIdentifierToStandardNameL(TUint, RFs&);
+\par \tab IMPORT_C TUint ConvertMibEnumOfCharacterSetToIdentifierL(TInt, RFs&);
+\par \tab IMPORT_C TInt ConvertCharacterSetIdentifierToMibEnumL(TUint, RFs&);
+\par \tab IMPORT_C void PrepareToConvertToOrFromL(TUint, const CArrayFix<SCharacterSet>&, RFs&);
+\par \tab IMPORT_C TAvailability PrepareToConvertToOrFromL(TUint, RFs&);
+\par \tab IMPORT_C void SetDefaultEndiannessOfForeignCharacters(TEndianness);
+\par \tab IMPORT_C void SetReplacementForUnconvertibleUnicodeCharactersL(const TDesC8&);
+\par \tab IMPORT_C TInt ConvertFromUnicode(TDes8&, const TDesC16&) const;
+\par \tab IMPORT_C TInt ConvertFromUnicode(TDes8&, const TDesC16&, TInt&) const;
+\par \tab IMPORT_C TInt ConvertFromUnicode(TDes8&, const TDesC16&, TInt&, TInt&) const;
+\par \tab IMPORT_C TInt ConvertToUnicode(TDes16&, const TDesC8&, TInt&) const;
+\par \tab IMPORT_C TInt ConvertToUnicode(TDes16&, const TDesC8&, TInt&, TInt&) const;
+\par \tab IMPORT_C TInt ConvertToUnicode(TDes16&, const TDesC8&, TInt&, TInt&, TInt&) const;
+\par private:
+\par \tab // ...
+\par \tab \};
+\par }\pard\plain \s3\sb240\sa60\keepn\widctlpar \f5 Overview
+\par \pard\plain \qj\fi720\widctlpar \f4\fs20 There are two basic stages involved in using a {\f11 CCnvCharacterSetConverter}
+ object to change the encoding of a piece of text from one character set to another. It is first necessary to select the foreign character set of interest. Then having done th
+at, the actual conversion of text to or from that character set can be performed. Selecting the foreign character set is done by calling one of the overloads of {\f11 PrepareToConvertToOrFromL}
+. Text conversion itself is done by calling one of the overloads of {\f11 ConvertFromUnicode} or {\f11 ConvertToUnicode}.
+\par \pard\plain \s3\sb240\sa60\keepn\widctlpar \f5 Creating and destroying {\f11 CCnvCharacterSetConverter} objects
+\par \pard\plain \qj\fi720\widctlpar \f4\fs20 Objects of the {\f11 CCnvCharacterSetConverter} class are created by calling either of the static member functions {\f11 NewL} or {\f11 NewLC}
+, the latter leaving the object on the cleanup stack. These objects are created on the heap and are thus destroyed using the {\f11 delete}
+ operator as normal. Creating one of these objects only involves some allocation on the heap and initialization of member data - it does not involve anything as onerous as scanning for files, or loading data from a file. Such \ldblquote heavyweight
+\rdblquote  activities are done at a later stage (see \ldblquote Selecting the foreign character set to convert to/from\rdblquote  below).
+\par \pard\plain \s3\sb240\sa60\keepn\widctlpar \f5 The member functions for doing the conversion
+\par \pard\plain \qj\fi720\widctlpar \f4\fs20 The most important member functions of the class are {\f11 ConvertFromUnicode} and {\f11 ConvertToUnicode}
+. These all convert the text passed in the second parameter and output the resulting text in the first parameter. Sixteen-bit descriptors are used to hold any text encoded in Unicode (UCS-2), and eight-bit descriptors are used to hold any text encoded in 
+any other character set. Foreign character sets (i.e. character sets other than Unicode) may use a single byte per character (e.g. Code Page 1252) or more than one byte per character (e.g. China\rquote 
+s GB 2312-80) or even a variable number of bytes per character (e.g. Japan\rquote s Shift-JIS) - hence the need to use eight-bit descriptors.
+\par The third parameter to the second two overloads of {\f11 ConvertFromUnicode}
+ (which is purely an output parameter) tells the caller the number of characters in the input Unicode descriptor that could not be converted into the target character set because the target character set has no equivalents of those Unicode characters. Sim
+ilarly, the fourth parameters to the second two overloads of {\f11 ConvertToUnicode}
+ (which are also purely output parameters) tell the caller the number of characters in the input descriptor that could not be converted into Unicode (for the analogous reason). In neither {\f11 ConvertFromUnicode} or {\f11 ConvertToUnicode}
+ is conversion aborted because of unconvertible characters. (What is written to the output descriptor for such unconvertible characters is discussed in a separate paragraph below.) The purpose of these parameters in the case of both {\f11 
+ConvertFromUnicode} and {\f11 ConvertToUnicode} is to allow the caller to gauge a rough idea of the proportion of characters that are failing to be converted. (Recall that a character in the input descriptor to {\f11 ConvertToUnicode}
+ does not necessarily occupy only a single byte of that descriptor. However, since Unicode is intended to cover all possible characters and thus be the superset of all character sets, this will rarely, if ever, report anything other than zero characters, 
+although it will report the existence of unconvertible characters if the input descriptor contains illegal \ldblquote characters\rdblquote , i.e. values not actually in the foreign character set.)
+\par The last parameter to the last overloads of both {\f11 ConvertFromUnicode} and {\f11 ConvertToUnicode} (these are again purely output parameters) indicates the index of the first character (or in the case of {\f11 ConvertToUnicode}
+, the index of the first {\i byte} of the first character) in the input descriptor that could not be converted. If all the characters in the input descriptor could be converted, this parameter is set to a negative value.
+\par The {\f11 TInt} value returned by {\f11 ConvertFromUnicode} and {\f11 ConvertToUnicode} is either one of the negative error values defined in {\f11 CCnvCharacterSetConverter}\rquote s {\f11 enum TError}{\cs16\super \chftn {\footnote \pard\plain 
+\s15\qj\widctlpar \f4\fs20 {\cs16\super \chftn } Although there is currently only one error code in {\f11 CCnvCharacterSetConverter::TError}, this may be extended in the future, so CHARCONV clients should program defensively to allow for this.}}
+ or the number of elements left at the end of the input descriptor which were not converted, ei
+ther (i) because there was no room left in the output descriptor, or (ii) because the input descriptor ended with an incomplete sequence (e.g. half-way through a multi-byte character).
+\par {\pntext\pard\plain\f1\fs20 \'b7\tab}\pard \qj\fi-283\li283\widctlpar{\*\pn \pnlvlblt\pnf1\pnstart1\pnindent283\pnhang{\pntxtb \'b7}}
+The ability to do partial conversions means that the CHARCONV client does not have to try to guess how big to make the output descriptor for a given input descriptor, they can simply do the conversion in a loop using a smallish output descriptor (an outpu
+t descriptor whose {\f11 MaxLength()} is less than about 20 elements would not be recommended) - the code in the \ldblquote Sample code\rdblquote 
+ section below gives a demonstration of how to do this. It is worth noting that even if the output descriptor was not big enough to hold the entire converted input text, it will not necessarily be full in the sense of have its {\f11 Length()} equal its {
+\f11 MaxLength()}. The only sure way to find out whether the whole input descriptor has been converted is to test whether the return value (if not negative) is zero or not.
+\par {\pntext\pard\plain\f1\fs20 \'b7\tab}The ability to cope with an input descriptor be
+ing truncated is useful if the client cannot guarantee whether the input descriptor will be complete, e.g. if they themselves are receiving it in chunks from an external source. All that the client needs to do to handle this situation is to add the specif
+ied number of descriptor elements to the start of the input descriptor passed to the next call. However, there is a binary compatibility issue here. For those clients whose input descriptor is known to be complete, if they perform the sort of loop found i
+n the first two examples in the \ldblquote Sample code\rdblquote 
+ section, they would get into an infinite loop if the input descriptor was corrupt such that it ended with an incomplete sequence, as the conversion function would always return a value greater than zero. To avoi
+d this problem arising, the behavior of the conversion functions is actually such that if none of the input descriptor can be consumed because it consists {\i exclusively} of an incomplete sequence, the error {\f11 EErrorIllFormedInput} (defined in {\f11 
+CCnvCharacterSetConverter}\rquote s {\f11 enum TError}) will be returned. In order for this error not to be returned when the presence of an incomplete sequence at the end of the input descriptor does {\i not}
+ mean it is corrupt, the input descriptor must be long enough such that it cannot consist exclusively of an incomplete sequence - an input descriptor of at least 20 elements should be plenty long enough. (The third example in the \ldblquote Sample code
+\rdblquote  section below gives an illustration of how to use CHARCONV to convert fragmented input.)
+\par \pard \qj\fi720\widctlpar The third parameter to {\f11 ConvertToUnicode} is used to save state information across multiple calls to {\f11 ConvertToUnicode}
+ where each call starts off where the previous call reached in the input descriptor. At the start of each such series of calls to {\f11 ConvertToUnicode} this parameter must be set to {\f11 CCnvCharacterSetConverter::KStateDefault}
+ and thereafter not tampered with, but simply passed in to each {\f11 ConvertToUnicode} call.
+\par \pard\plain \s3\sb240\sa60\keepn\widctlpar \f5 Selecting the foreign character set to convert to/from
+\par \pard\plain \qj\fi720\widctlpar \f4\fs20 When the {\f11 CCnvCharacterSetConverter} object has been created, before either {\f11 ConvertFromUnicode} or {\f11 ConvertToUnicode}
+ can be called, it is necessary to state which foreign character set is to be converted to/from. This is done by calling either of the two overloads of {\f11 PrepareToConvertToOrFromL}
+. Each takes the identifier (a Symbian-defined UID) of the required character set as it\rquote s first parameter, and a file-server session object as it\rquote s last parameter. The first overload requires the array returned by either of {\f11 
+CCnvCharacterSetConverter}\rquote s static member functions {\f11 CreateArrayOfCharacterSetsAvailableL} or {\f11 CreateArrayOfCharacterSetsAvailableLC} to be passed in as its second parameter. This array contains one {\f11 
+CCnvCharacterSetConverter::SCharacterSet} item for each foreign character set that is available (at run-time) for text conversion. The {\f11 Identifier} member function of {\f11 SCharacterSet}
+ returns the Symbian-UID identifier of the character set represented by that object. (See below for a discussion of {\f11 SCharacterSet}\rquote s other member functions.) Creating this array is not required for calling the second overload.
+\par If the first overload of {\f11 PrepareToConvertToOrFromL} is used, the character-set identifier passed into the first parameter must correspond to an item in the array passed to the second parameter (i.e. that item\rquote s {\f11 Identifier}
+ member function returns the same number), or a panic will occur. The second overload, however, is less demanding - the character set identified in the first parameter does not have to be availabl
+e at run-time. Depending on whether the character set is available or not, it returns {\f11 EAvailable} or {\f11 ENotAvailable} (from {\f11 CCnvCharacterSetConverter}\rquote s {\f11 enum TAvailability}). Calls to {\f11 ConvertFromUnicode} or {\f11 
+ConvertToUnicode} convert to or from the character set whose identifier was passed into the last {\f11 PrepareToConvertToOrFromL} call which did not return {\f11 ENotAvailable}. If all calls previously returned {\f11 ENotAvailable}, a panic will occur.
+
+\par The two overloads of {\f11 PrepareToConvertToOrFromL} are designed for different usage. 
+In a situation where it may be necessary to present the user with a list of all the possible character sets for them to choose which to convert to/from, then the first overload would need to be used. However, if the CHARCONV client wishes to convert the c
+ontent of, say, an email message, or an HTML document, i.e. something that describes within itself what character set its content is in, then the second overload would be more appropriate.
+\par \pard\plain \s3\sb240\sa60\keepn\widctlpar \f5 Efficiency considerations
+\par \pard\plain \qj\fi720\widctlpar \f4\fs20 The first overload of {\f11 PrepareToConvertToOrFromL}
+ should be used in preference to the second overload if a number of different character sets are to be converted to/from in a short space of time. The reason for this is that the second overload, unlike the first, internally has to do a file scan{
+\cs16\super \chftn {\footnote \pard\plain \s15\qj\widctlpar \f4\fs20 {\cs16\super \chftn } The second overload of {\f11 PrepareToConvertToOrFromL} is fast to call for if the required conversion data/code is hard-coded within CHARCONV (
+this currently applies to Code Page 1252, ISO 8859-1, ASCII and SMS 7-bit, and also the Unicode transformation formats UTF-7 and UTF-8). For other character sets, file scanning is necessary.}} which is similar to the one performed by {\f11 
+CreateArrayOfCharacterSetsAvailableL} and {\f11 CreateArrayOfCharacterSetsAvailableLC}
+. Thus it is more efficient to do the file-scanning once to start with by calling one of these array-creating functions, and then pass that array in to the first overload of {\f11 PrepareToConvertToOrFromL}
+ each time the target/source character set is to be changed (first checking to see if each required character set is in the array, to avoid the panic that occurs if it is not). However, if the different calls to {\f11 PrepareToConvertToOrFromL}
+ are spread out over a {\i considerable} time, it may be best to use the second overload for this as it will perform the necessary re-scanning of files each time and thus pick up any new files that have been installed in the mean time.
+\par \pard\plain \s3\sb240\sa60\keepn\widctlpar \f5 {\f11 SCharacterSet} and the names of foreign character sets
+\par \pard\plain \qj\fi720\widctlpar \f4\fs20 {\f11 SCharacterSet}\rquote s member function {\f11 Name}
+ returns the full path and file name of the conversion-data file for that character set, although for those character sets for which CHARCONV hard codes conversion data (rather than getting it from a file) {\f11 Name}
+ returns an arbitrary name for that character set. {\i Note that the name returned cannot be treated as an Internet-standard name. Converting between the Internet-standard names of character sets and the Symbian-UID identifiers that }{\i\f11 
+PrepareToConvertToOrFromL}{\i  expects is provided by the member functions }{\i\f11 ConvertStandardNameOfCharacterSetToIdentifierL}{\i  and }{\i\f11 ConvertCharacterSetIdentifierToStandardNameL}{\i  (see \ldblquote Other member functions\rdblquote 
+ below).} Also, the name returned is locale-independent and therefore should be hidden from the user{\cs16\super \chftn {\footnote \pard\plain \s15\qj\widctlpar \f4\fs20 {\cs16\super \chftn }
+ If a character-set name needs to be shown to the user (and therefore is locale-dependent), that name should to be mapped to the locale-independent name returned by {\f11 Name} by some software at a higher level than CHARCONV.}}. {\f11 NameIsFileName}
+ returns whether {\f11 Name} returns a file name or just an arbitrary name. (This may prove useful, for example, to find out whether F32\rquote s file-name parsing class {\f11 TParse} can be used on the return value of {\f11 Name}.)
+\par \pard\plain \s3\sb240\sa60\keepn\widctlpar \f5 Other member functions
+\par \pard\plain \qj\fi720\widctlpar \f4\fs20 For character sets using more than one byte per character, the \ldblquote endian\rdblquote -ness of those characters may be defined or left open{\cs16\super \chftn {\footnote \pard\plain \s15\qj\widctlpar \f4\fs20 
+{\cs16\super \chftn } As an example of each, China\rquote s GB2312-80 defines the byte order of its two-byte characters, whereas Unicode leaves the byte order of its two-byte characters undefined.}}. Although none of the foreign character s
+ets currently supported by CHARCONV are of undefined endianness, the member function {\f11 SetDefaultEndiannessOfForeignCharacters} which takes either {\f11 ELittleEndian} or {\f11 EBigEndian} (from {\f11 CCnvCharacterSetConverter}\rquote s {\f11 
+enum TEndianness}) allows the CHARCONV client to set the endianness that {\f11 ConvertFromUnicode} and {\f11 ConvertToUnicode} use when converting to or from foreign character sets of undefined endianness.
+\par When converting to Unicode, each character in the input descriptor for which there is no equivalent in Unicode is c
+onverted to the Unicode character specifically designated for that purpose - 0xFFFD. (As already noted, this should rarely, if ever, be the case, unless the input is corrupt.) When converting the other way, each foreign character set provides a default ch
+aracter to be used for each Unicode character lacking an equivalent in that character set. This default may be overridden by calling the member function {\f11 SetReplacementForUnconvertibleUnicodeCharactersL}. It should be noted that {\f11 
+PrepareToConvertToOrFromL} undoes the effect of any previous {\f11 SetReplacementForUnconvertibleUnicodeCharactersL} call, and thus for the latter to have any effect, it should be called between the {\f11 PrepareToConvertToOrFromL}
+ call and the subsequent {\f11 ConvertFromUnicode} call(s). The parameter to {\f11 SetReplacementForUnconvertibleUnicodeCharactersL}
+ should be passed a single, possibly multi-byte, character, whose byte order (if multi-byte) should be little-endian if the endianness of the character set is undefined, otherwise the same endianness as is defined by the character set.
+\par {\f11 ConvertStandardNameOfCharacterSetToIdentifierL}
+ is provided for the CHARCONV client to be able to find out the Symbian UID of a character set for a given Internet-standard name of that character set. It returns zero if the name of the character set was not known. This function
+ can be called at any time in the {\f11 CCnvCharacterSetConverter} object\rquote s lifetime.
+\par {\f11 ConvertCharacterSetIdentifierToStandardNameL} is provided for the CHARCONV client to be able to find out an Internet-standard name of a character set (which is a \ldblquote preferred MIME name\rdblquote 
+ where possible) for the Symbian UID of that character set. It returns {\f11 NULL} if the UID of the character set was not known. This function can be called at any time in the {\f11 CCnvCharacterSetConverter} object\rquote s lifetime.
+\par {\f11 ConvertMibEnumOfCharacterSetToIdentifierL} is provided for the CHARCONV client to be able to find out the Symbian UID of a character set for a given MIB-enum{\cs16\super \chftn {\footnote \pard\plain \s15\qj\widctlpar \f4\fs20 {\cs16\super \chftn }
+ MIB enum values are defined in {\i ftp.isi.edu/in-notes/iana/assignments/character-sets}.}} of that character set. It returns zero if the name of the character set was not known. This function can be called at any time in the {\f11 
+CCnvCharacterSetConverter} object\rquote s lifetime.
+\par {\f11 ConvertCharacterSetIdentifierToMibEnumL} is provided for the CHARCONV client to be able to find out a MIB-enum of a character
+ set for the Symbian UID of that character set. It returns zero if the UID of the character set was not known. This function can be called at any time in the {\f11 CCnvCharacterSetConverter} object\rquote s lifetime.
+\par The four functions described above all behave as follows. The first time any if them is called with a first parameter that is not in {\f11 CCnvCharacterSetConverter}\rquote 
+s internal hard-coded list, a file scan is done to try to find out the required information from a file. The results of this are stored in the {\f11 CCnvCharacterSetConverter} object, so that no subsequent call to {\i any}
+ of these four functions will repeat the file scanning.
+\par \pard\plain \s3\sb240\sa60\keepn\widctlpar \f5 Sample code
+\par \pard\plain \qj\fi720\widctlpar \f4\fs20 The sample code below illustrates typical usage of {\f11 CCnvCharacterSetConverter}.
+\par \pard \qj\widctlpar 
+\par An example of how to convert, in small chunks, Unicode text to another character set:
+\par 
+\par \pard \widctlpar {\f11\fs14 LOCAL_C void ConvertUnicodeTextL(CCnvCharacterSetConverter& aCharacterSetConverter,
+\par \tab \tab \tab \tab \tab \tab \tab \tab RFs& aFileServerSession,
+\par \tab \tab \tab \tab \tab \tab \tab \tab TUint aForeignCharacterSet,
+\par \tab \tab \tab \tab \tab \tab \tab \tab const TDesC16& aUnicodeText)
+\par \tab \{
+\par \tab if (aCharacterSetConverter.PrepareToConvertToOrFromL(aForeignCharacterSet, aFileServerSession)
+\par \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab !=CCnvCharacterSetConverter::EAvailable)
+\par \tab \tab User::Leave(KErrNotSupported);
+\par 
+\par \tab TBuf8<20> outputBuffer;
+\par \tab TPtrC16 remainderOfUnicodeText(aUnicodeText);
+\par \tab FOREVER
+\par \tab \tab \{
+\par \tab \tab const TInt returnValue=aCharacterSetConverter.ConvertFromUnicode(outputBuffer,
+\par \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab remainderOfUnicodeText);
+\par \tab \tab if (returnValue==CCnvCharacterSetConverter::EErrorIllFormedInput)
+\par \tab \tab \tab User::Leave(KErrCorrupt);
+\par \tab \tab else if (returnValue<0) // future-proof against "TError" expanding
+\par \tab \tab \tab User::Leave(KErrGeneral);
+\par 
+\par \tab \tab // ? - do something here with outputBuffer
+\par 
+\par \tab \tab if (returnValue==0)
+\par \tab \tab \tab break; // all of aUnicodeText has been converted and handled
+\par \tab \tab remainderOfUnicodeText.Set(remainderOfUnicodeText.Right(returnValue));
+\par \tab \tab \}
+\par \tab \}
+\par }\pard \qj\widctlpar 
+\par An example of how to convert, in small chunks, text in another character set to Unicode:
+\par 
+\par \pard \widctlpar {\f11\fs14 LOCAL_C void ConvertForeignTextL(CCnvCharacterSetConverter& aCharacterSetConverter,
+\par \tab \tab \tab \tab \tab \tab \tab \tab RFs& aFileServerSession,
+\par \tab \tab \tab \tab \tab \tab \tab \tab TUint aForeignCharacterSet,
+\par \tab \tab \tab \tab \tab \tab \tab \tab const TDesC8& aForeignText)
+\par \tab \{
+\par \tab if (aCharacterSetConverter.PrepareToConvertToOrFromL(aForeignCharacterSet, aFileServerSession)
+\par \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab !=CCnvCharacterSetConverter::EAvailable)
+\par \tab \tab User::Leave(KErrNotSupported);
+\par 
+\par \tab TBuf16<20> outputBuffer;
+\par \tab TPtrC8 remainderOfForeignText(aForeignText);
+\par \tab // "state" must be initialized to CCnvCharacterSetConverter::KStateDefault - it must not be
+\par \tab // tampered with thereafter but simply passed into each call of "ConvertToUnicode"
+\par \tab TInt state=CCnvCharacterSetConverter::KStateDefault;
+\par \tab FOREVER
+\par \tab \tab \{
+\par \tab \tab const TInt returnValue=aCharacterSetConverter.ConvertToUnicode(outputBuffer,
+\par \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab remainderOfForeignText,
+\par \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab state);
+\par \tab \tab if (returnValue==CCnvCharacterSetConverter::EErrorIllFormedInput)
+\par \tab \tab \tab User::Leave(KErrCorrupt);
+\par \tab \tab else if (returnValue<0) // future-proof against "TError" expanding
+\par \tab \tab \tab User::Leave(KErrGeneral);
+\par 
+\par \tab \tab // ? - do something here with outputBuffer
+\par 
+\par \tab \tab if (returnValue==0)
+\par \tab \tab \tab break; // all of aForeignText has been converted and handled
+\par \tab \tab remainderOfForeignText.Set(remainderOfForeignText.Right(returnValue));
+\par \tab \tab \}
+\par \tab \}
+\par }\pard \qj\widctlpar 
+\par An example of how to convert, in small chunks, {\i fragmented} text in another character set to Unicode:
+\par 
+\par \pard \widctlpar {\f11\fs14 LOCAL_C void ConvertForeignTextL(CCnvCharacterSetConverter& aCharacterSetConverter,
+\par \tab \tab \tab \tab \tab \tab \tab \tab RFs& aFileServerSession,
+\par \tab \tab \tab \tab \tab \tab \tab \tab TUint aForeignCharacterSet)
+\par \tab \{
+\par \tab if (aCharacterSetConverter.PrepareToConvertToOrFromL(aForeignCharacterSet, aFileServerSession)
+\par \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab !=CCnvCharacterSetConverter::EAvailable)
+\par \tab \tab User::Leave(KErrNotSupported);
+\par 
+\par \tab const TInt KMaximumLengthOfBufferForForeignText=200;
+\par \tab TUint8 bufferForForeignText[KMaximumLengthOfBufferForForeignText];
+\par \tab TInt lengthOfBufferForForeignText=0;
+\par 
+\par \tab FOREVER
+\par \tab \tab \{
+\par \tab \tab TPtr8 nextChunkOfForeignText(bufferForForeignText+lengthOfBufferForForeignText,
+\par \tab \tab \tab \tab \tab \tab \tab KMaximumLengthOfBufferForForeignText-lengthOfBufferForForeignText);
+\par 
+\par \tab \tab // ? load nextChunkOfForeignText here
+\par 
+\par \tab \tab const TInt lengthOfNextChunkOfForeignText=nextChunkOfForeignText.Length();
+\par \tab \tab lengthOfBufferForForeignText+=lengthOfNextChunkOfForeignText;
+\par 
+\par \tab \tab const TBool isLastChunkOfForeignText= // ? find out from the source of the foreign text
+\par \tab \tab // whether this is the last chunk and set this variable accordingly, e.g. the source may
+\par \tab \tab // define that the last chunk is of length zero, in which case the expression
+\par \tab \tab // "(lengthOfNextChunkOfForeignText==0)" would be assigned to this variable; note that
+\par \tab \tab // even if the length of this chunk is zero, we can't just exit this function here as
+\par \tab \tab // bufferForForeignText may not be empty (i.e. lengthOfBufferForForeignText>0)
+\par 
+\par \tab \tab TBuf16<20> outputBuffer;
+\par \tab \tab TPtrC8 remainderOfForeignText(bufferForForeignText, lengthOfBufferForForeignText);
+\par \tab \tab // "state" must be initialized to CCnvCharacterSetConverter::KStateDefault - it must not
+\par \tab \tab // be tampered with thereafter but simply passed into each call of "ConvertToUnicode"
+\par \tab \tab TInt state=CCnvCharacterSetConverter::KStateDefault;
+\par \tab \tab FOREVER
+\par \tab \tab \tab \{
+\par \tab \tab \tab const TInt lengthOfRemainderOfForeignText=remainderOfForeignText.Length();
+\par \tab \tab \tab if (isLastChunkOfForeignText)
+\par \tab \tab \tab \tab \{
+\par \tab \tab \tab \tab if (lengthOfRemainderOfForeignText==0)
+\par \tab \tab \tab \tab \tab return; // the single point of exit of this function
+\par \tab \tab \tab \tab \}
+\par \tab \tab \tab else
+\par \tab \tab \tab \tab \{
+\par \tab \tab \tab \tab // As this isn't the last chunk, we don't want ConvertToUnicode to return
+\par \tab \tab \tab \tab // CCnvCharacterSetConverter::EErrorIllFormedInput if the input descriptor ends
+\par \tab \tab \tab \tab // with an incomplete sequence - but it will only do this if *none* of the input
+\par \tab \tab \tab \tab // descriptor can be consumed. Therefore if the input descriptor is long enough
+\par \tab \tab \tab \tab // (20 elements or longer is plenty adequate) there is no danger of this error
+\par \tab \tab \tab \tab // being returned for this reason. If it's shorter than that, we'll simply put it
+\par \tab \tab \tab \tab // at the start of the buffer so that it gets converted with the next chunk.
+\par \tab \tab \tab \tab if (lengthOfRemainderOfForeignText<20)
+\par \tab \tab \tab \tab \tab \{
+\par \tab \tab \tab \tab \tab // put any remaining foreign text at the start of bufferForForeignText
+\par \tab \tab \tab \tab \tab lengthOfBufferForForeignText=lengthOfRemainderOfForeignText;
+\par \tab \tab \tab \tab \tab Mem::Copy(bufferForForeignText, remainderOfForeignText.Ptr(),
+\par \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab lengthOfBufferForForeignText);
+\par \tab \tab \tab \tab \tab break;
+\par \tab \tab \tab \tab \tab \}
+\par \tab \tab \tab \tab \}
+\par 
+\par \tab \tab \tab const TInt returnValue=aCharacterSetConverter.ConvertToUnicode(outputBuffer,
+\par \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab remainderOfForeignText,
+\par \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab state);
+\par \tab \tab \tab if (returnValue==CCnvCharacterSetConverter::EErrorIllFormedInput)
+\par \tab \tab \tab \tab User::Leave(KErrCorrupt);
+\par \tab \tab \tab else if (returnValue<0) // future-proof against "TError" expanding
+\par \tab \tab \tab \tab User::Leave(KErrGeneral);
+\par 
+\par \tab \tab \tab // ? - do something here with outputBuffer
+\par 
+\par \tab \tab \tab remainderOfForeignText.Set(remainderOfForeignText.Right(returnValue));
+\par \tab \tab \tab \}
+\par \tab \tab \}
+\par \tab \}
+\par }\pard\plain \s2\sb240\sa60\keepn\widctlpar \b\i\f5 Converting text between UCS-2 and Unicode\rquote s transformation formats
+\par \pard\plain \qj\fi720\widctlpar \f4\fs20 The class {\f11 CnvUtfConverter} is provided for converting text between UCS-2 and the two Unicode transformation formats UTF-7 and UTF-8. (For the definition of these formats, see {\i The Unicode Standard}
+ published by The Unicode Consortium.) The public parts of the class are shown below:
+\par \pard \qj\widctlpar 
+\par \pard \widctlpar {\f11\fs14 class CnvUtfConverter
+\par \tab \{
+\par public:
+\par \tab enum TError
+\par \tab \tab \{
+\par \tab \tab EErrorIllFormedInput=-1
+\par \tab \tab \};
+\par \tab enum \{KStateDefault=0\};
+\par public:
+\par \tab IMPORT_C static TInt ConvertFromUnicodeToUtf7(TDes8&, const TDesC16&, TBool);
+\par \tab IMPORT_C static TInt ConvertFromUnicodeToUtf8(TDes8&, const TDesC16&);
+\par \tab IMPORT_C static TInt ConvertToUnicodeFromUtf7(TDes16&, const TDesC8&, TInt&);
+\par \tab IMPORT_C static TInt ConvertToUnicodeFromUtf8(TDes16&, const TDesC8&);
+\par private:
+\par \tab // ...
+\par \tab \};
+\par }\pard \qj\widctlpar 
+\par \pard \qj\fi720\widctlpar In fact the functionality of this class is also available via the {\f11 CCnvCharacterSetConverter} class by passing it the UID for UTF-7 or UTF-8. However, {\f11 CnvUtfConverter} is provided for ease of use as it 
+requires no instantiation (all the member functions are static)
+. The four functions all convert the text passed in the second parameter and output the resulting text in the first parameter. Sixteen-bit descriptors are used to hold text encoded in UCS-2 (i.e. n
+ormal 2-byte Unicode), and eight-bit descriptors are used to hold text encoded either of the transformation formats.
+\par UTF-7 divides the Unicode character set into 3 subsets: set D which is the set of characters that are encoded directly (i.e. unaltered), set B which is the set of characters that are encoded in modified \ldblquote base 64\rdblquote 
+, and set O which is the set of characters that can either be encoded directly, or in modified \ldblquote base 64\rdblquote . The {\f11 TBool} parameter to {\f11 ConvertFromUnicodeToUtf7}
+ controls the way that the characters in set O are encoded: passing in {\f11 ETrue} causes them to be encoded in \ldblquote base 64\rdblquote  (which is the \ldblquote safer\rdblquote  option), and {\f11 EFalse}
+ causes them to encoded directly. The contents of set O are listed in their entirety below.
+\par \pard \qj\widctlpar 
+\par \pard \qc\widctlpar {\b\f56 !"#$%&*;<=>@[]^_`\{|\}}{\f56 
+\par }\pard \qj\widctlpar 
+\par \pard \qj\fi720\widctlpar 
+The variant of UTF-8 used internally by Java differs from standard UTF-8 in two ways. First, the specific case of the NULL character (0x0000) is encoded in the two-byte format, and second, only the one-, two- and three-byte formats are used
+ (i.e. not the four-byte format which is normally used for Unicode surrogate-pairs). Generating this variant of UTF-8 is not supported via {\f11 CnvUtfConverter}; however, it is possible by using {\f11 CCnvCharacterSetConverter} with a UID of {\f11 
+KCharacterSetIdentifierJavaConformantUtf8}.
+\par The {\f11 TInt} value returned by all four member functions is either one of the negative error values defined in {\f11 CnvUtfConverter}\rquote s {\f11 enum TError}{\cs16\super \chftn {\footnote \pard\plain \s15\qj\widctlpar \f4\fs20 {\cs16\super \chftn }
+ Although there is currently only one error code in {\f11 CnvUtfConverter::TError}, this may be extended in the future, so CHARCONV clients should program defensively to allow for this.}}
+ or the number of elements left at the end of the input descriptor which were not converted, either (i) because there was no room left in the output descriptor, or (ii) because the input descriptor ended with an incomplete sequence (e.g. half-way through 
+a multi-byte character).
+\par {\pntext\pard\plain\f1\fs20 \'b7\tab}\pard \qj\fi-283\li283\widctlpar{\*\pn \pnlvlblt\pnf1\pnstart1\pnindent283\pnhang{\pntxtb \'b7}}
+The ability to do partial conversions means that the CHARCONV client does not have to try to guess how big to make the output descriptor for a given inp
+ut descriptor, they can simply do the conversion in a loop using a smallish output descriptor (an output descriptor whose {\f11 MaxLength()} is less than about 20 elements would not be recommended) - the code in the \ldblquote Sample code\rdblquote 
+ section below gives a demonstration of how to do this. It is worth noting that even if the output descriptor was not big enough to hold the entire converted input text, it will not necessarily be full in the sense of have its {\f11 Length()} equal its {
+\f11 MaxLength()}. The only sure way to find out whether the whole input descriptor has been converted is to test whether the return value (if not negative) is zero or not.
+\par {\pntext\pard\plain\f1\fs20 \'b7\tab}
+The ability to cope with an input descriptor being truncated is useful if the client cannot guarantee whether the input descriptor will be complete, e.g. if they themselves are receiving it in chunks from an external source. All that the client needs to d
+o to handle this situation is to add the specified number of descriptor elements to the start of the input descriptor passed to the 
+next call. However, there is a binary compatibility issue here. For those clients whose input descriptor is known to be complete, if they perform the sort of loop found in the first two examples in the \ldblquote Sample code\rdblquote 
+ section, they would get into an infinit
+e loop if the input descriptor was corrupt such that it ended with an incomplete sequence, as the conversion function would always return a value greater than zero. To avoid this problem arising, the behavior of the conversion functions is actually such t
+hat if none of the input descriptor can be consumed because it consists {\i exclusively} of an incomplete sequence, the error {\f11 EErrorIllFormedInput} (defined in {\f11 CCnvCharacterSetConverter}\rquote s {\f11 enum TError}
+) will be returned. In order for this error not to be returned when the presence of an incomplete sequence at the end of the input descriptor does {\i not}
+ mean it is corrupt, the input descriptor must be long enough such that it cannot consist exclusively of an incomplete sequence - an input descriptor of at least 20 elements should be plenty long enough. (The third example in the \ldblquote Sample code
+\rdblquote  section below gives an illustration of how to use CHARCONV to convert fragmented input.)
+\par \pard \qj\fi720\widctlpar The third parameter to {\f11 ConvertToUnicodeFromUtf7} is used to save state information across multiple calls to {\f11 ConvertToUnicodeFromUtf7}
+ where each call starts off where the previous call reached in the input descriptor. At the start of each such series of calls to {\f11 ConvertToUnicodeFromUtf7}, this parameter must be set to {\f11 CnvUtfConverter::KStateDefault}
+ and thereafter not tampered with, but simply passed in to each {\f11 ConvertToUnicode} call.
+\par \pard\plain \s3\sb240\sa60\keepn\widctlpar \f5 Sample Code
+\par \pard\plain \qj\fi720\widctlpar \f4\fs20 The sample code below illustrates typical usage of {\f11 CnvUtfConverter} to convert to and from UTF-7. (Converting to and from UTF-8 is almost identical, the only differences being that {\f11 
+ConvertFromUnicodeToUtf8} and {\f11 ConvertToUnicodeFromUtf8} each only take two parameters.)
+\par \pard \qj\widctlpar 
+\par An example of how to convert, in small chunks, Unicode (UCS-2) to UTF-7:
+\par 
+\par \pard \widctlpar {\f11\fs14 LOCAL_C void EncodeL(const TDesC16& aUnicodeText)
+\par \tab \{
+\par \tab TBuf8<20> outputBuffer;
+\par \tab TPtrC16 remainderOfUnicodeText(aUnicodeText);
+\par \tab FOREVER
+\par \tab \tab \{
+\par \tab \tab const TInt returnValue=CnvUtfConverter::ConvertFromUnicodeToUtf7(outputBuffer,
+\par \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab remainderOfUnicodeText,
+\par }\pard \fi340\li5780\widctlpar {\f11\fs14 ETrue);
+\par }\pard \widctlpar {\f11\fs14 \tab \tab if (returnValue==CnvUtfConverter::EErrorIllFormedInput)
+\par \tab \tab \tab User::Leave(KErrCorrupt);
+\par \tab \tab else if (returnValue<0) // future-proof against "TError" expanding
+\par \tab \tab \tab User::Leave(KErrGeneral);
+\par 
+\par \tab \tab // ? - do something here with outputBuffer
+\par 
+\par \tab \tab if (returnValue==0)
+\par \tab \tab \tab break; // all of aUnicodeText has been converted and handled
+\par \tab \tab remainderOfUnicodeText.Set(remainderOfUnicodeText.Right(returnValue));
+\par \tab \tab \}
+\par \tab \}
+\par }\pard \qj\widctlpar 
+\par An example of how to convert, in small chunks, UTF-7 to Unicode (UCS-2):
+\par 
+\par \pard \widctlpar {\f11\fs14 LOCAL_C void DecodeL(const TDesC8& aUtf7)
+\par \tab \{
+\par \tab TBuf16<20> outputBuffer;
+\par \tab TPtrC8 remainderOfUtf7(aUtf7);
+\par \tab // "state" must be initialized to CnvUtfConverter::KStateDefault - it must not be tampered
+\par }\pard \fi340\widctlpar {\f11\fs14 // with thereafter but simply passed into each call of "ConvertToUnicodeFromUtf7"
+\par }\pard \widctlpar {\f11\fs14 \tab TInt state=CnvUtfConverter::KStateDefault;
+\par \tab FOREVER
+\par \tab \tab \{
+\par \tab \tab const TInt returnValue=CnvUtfConverter::ConvertToUnicodeFromUtf7(outputBuffer,
+\par }\pard \fi340\li5780\widctlpar {\f11\fs14 remainderOfUtf7,
+\par state);
+\par }\pard \widctlpar {\f11\fs14 \tab \tab if (returnValue==CnvUtfConverter::EErrorIllFormedInput)
+\par \tab \tab \tab User::Leave(KErrCorrupt);
+\par \tab \tab else if (returnValue<0) // future-proof against "TError" expanding
+\par \tab \tab \tab User::Leave(KErrGeneral);
+\par 
+\par \tab \tab // ? - do something here with outputBuffer
+\par 
+\par \tab \tab if (returnValue==0)
+\par \tab \tab \tab break; // all of aUtf7 has been converted and handled
+\par \tab \tab remainderOfUtf7.Set(remainderOfUtf7.Right(returnValue));
+\par \tab \tab \}
+\par \tab \}
+\par }\pard \qj\widctlpar 
+\par An example of how to convert, in small chunks, {\i fragmented} UTF-7 to Unicode (UCS-2):
+\par 
+\par \pard \widctlpar {\f11\fs14 LOCAL_C void DecodeL()
+\par \tab \{
+\par \tab const TInt KMaximumLengthOfBufferForUtf7=200;
+\par \tab TUint8 bufferForUtf7[KMaximumLengthOfBufferForUtf7];
+\par \tab TInt lengthOfBufferForUtf7=0;
+\par 
+\par \tab FOREVER
+\par \tab \tab \{
+\par \tab \tab TPtr8 nextChunkOfUtf7(bufferForUtf7+lengthOfBufferForUtf7,
+\par \tab \tab \tab \tab \tab \tab \tab KMaximumLengthOfBufferForUtf7-lengthOfBufferForUtf7);
+\par 
+\par \tab \tab // ? load nextChunkOfUtf7 here
+\par 
+\par \tab \tab const TInt lengthOfNextChunkOfUtf7=nextChunkOfUtf7.Length();
+\par \tab \tab lengthOfBufferForUtf7+=lengthOfNextChunkOfUtf7;
+\par 
+\par \tab \tab const TBool isLastChunkOfUtf7= // ? find out from the source of the UTF-7 whether this is
+\par \tab \tab // the last chunk and set this variable accordingly, e.g. the source may define that the
+\par \tab \tab // last chunk is of length zero, in which case the expression
+\par \tab \tab // "(lengthOfNextChunkOfUtf7==0)" would be assigned to this variable; note that even if
+\par \tab \tab // the length of this chunk is zero, we can't just exit this function here as
+\par \tab \tab // bufferForUtf7 may not be empty (i.e. lengthOfBufferForUtf7>0)
+\par 
+\par \tab \tab TBuf16<20> outputBuffer;
+\par \tab \tab TPtrC8 remainderOfUtf7(bufferForUtf7, lengthOfBufferForUtf7);
+\par \tab \tab // "state" must be initialized to CnvUtfConverter::KStateDefault - it must not be tampered
+\par \tab \tab // with thereafter but simply passed into each call of "ConvertToUnicodeFromUtf7"
+\par \tab \tab TInt state=CnvUtfConverter::KStateDefault;
+\par \tab \tab FOREVER
+\par \tab \tab \tab \{
+\par \tab \tab \tab const TInt lengthOfRemainderOfUtf7=remainderOfUtf7.Length();
+\par \tab \tab \tab if (isLastChunkOfUtf7)
+\par \tab \tab \tab \tab \{
+\par \tab \tab \tab \tab if (lengthOfRemainderOfUtf7==0)
+\par \tab \tab \tab \tab \tab return; // the single point of exit of this function
+\par \tab \tab \tab \tab \}
+\par \tab \tab \tab else
+\par \tab \tab \tab \tab \{
+\par \tab \tab \tab \tab // As this isn't the last chunk, we don't want ConvertToUnicodeFromUtf7 to return
+\par \tab \tab \tab \tab // CnvUtfConverter::EErrorIllFormedInput if the input descriptor ends with an
+\par \tab \tab \tab \tab // incomplete sequence - but it will only do this if *none* of the input
+\par \tab \tab \tab \tab // descriptor can be consumed. Therefore if the input descriptor is long enough
+\par \tab \tab \tab \tab // (20 elements or longer is plenty adequate) there is no danger of this error
+\par \tab \tab \tab \tab // being returned for this reason. If it's shorter than that, we'll simply put it
+\par \tab \tab \tab \tab // at the start of the buffer so that it gets converted with the next chunk.
+\par \tab \tab \tab \tab if (lengthOfRemainderOfUtf7<20)
+\par \tab \tab \tab \tab \tab \{
+\par \tab \tab \tab \tab \tab // put any remaining UTF-7 at the start of bufferForUtf7
+\par \tab \tab \tab \tab \tab lengthOfBufferForUtf7=lengthOfRemainderOfUtf7;
+\par \tab \tab \tab \tab \tab Mem::Copy(bufferForUtf7, remainderOfUtf7.Ptr(), lengthOfBufferForUtf7);
+\par \tab \tab \tab \tab \tab break;
+\par \tab \tab \tab \tab \tab \}
+\par \tab \tab \tab \tab \}
+\par 
+\par \tab \tab \tab const TInt returnValue=CnvUtfConverter::ConvertToUnicodeFromUtf7(outputBuffer,
+\par \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab remainderOfUtf7,
+\par \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab \tab state);
+\par \tab \tab \tab if (returnValue==CnvUtfConverter::EErrorIllFormedInput)
+\par \tab \tab \tab \tab User::Leave(KErrCorrupt);
+\par \tab \tab \tab else if (returnValue<0) // future-proof against "TError" expanding
+\par \tab \tab \tab \tab User::Leave(KErrGeneral);
+\par 
+\par \tab \tab \tab // ? - do something here with outputBuffer
+\par 
+\par \tab \tab \tab remainderOfUtf7.Set(remainderOfUtf7.Right(returnValue));
+\par \tab \tab \tab \}
+\par \tab \tab \}
+\par \tab \}
+\par }}

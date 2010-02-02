@@ -1,0 +1,16 @@
+[purpose]
+
+text encoding utility, converts between Unicode, codepage 1252 and UTF8 (amongst others)
+
+[categories]
+development
+
+[files]
+tools\charconv_1.exe
+
+[owner]
+Runtime & Tools		# CHARCONV
+
+[IPR]
+Copyright (c) 2000 Symbian Ltd.  All rights reserved.
+

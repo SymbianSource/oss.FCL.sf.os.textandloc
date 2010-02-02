@@ -1,0 +1,106 @@
+/*
+* Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:     This module is a plug-in module for Shift-JIS with Pictograph.
+*                Basicaly, Vodafone Pictograph is encoded by ISO2022, 
+*                but Japanese FEP needs a pictograph as one character code 
+*                in Shift-JIS character code set.
+*
+*/
+
+
+
+
+
+#ifdef EKA2
+///////////////////////////////////////////////////////////////
+
+TARGET               EucJpDirectmap.dll
+TARGETTYPE           PLUGIN
+CAPABILITY           All -Tcb
+
+uid                  0x10009D8D 0x10207353
+VENDORID		0x70000001
+
+SOURCEPATH			../src/plugins
+
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+USERINCLUDE		../inc
+USERINCLUDE		../src/inc
+USERINCLUDE		../src/shared
+
+source               EucJpDirectmap.CPP
+
+LIBRARY              euser.lib
+LIBRARY              charconv.lib
+LIBRARY              ecom.lib
+library              convutils.lib 
+library              jisx0201_2.lib
+library              jisx0208_2.lib
+library              jisx0212.lib
+library              CnvShiftJisDirectmap.lib
+
+SOURCEPATH		../resource
+
+Start resource       EucJpDirectmap.RSS
+Targetpath           /resource/charconv
+End
+
+start resource       10207353.rss
+target               EucJpDirectmap.RSC
+end
+
+SMPSAFE
+
+///////////////////////////////////////////////////////////////
+#else // Not EKA2
+///////////////////////////////////////////////////////////////
+// 2.8 Code
+target          EucJpDirectmap.CPL
+targetpath      /system/charconv
+targettype      dll
+uid             0x1000601a 0x101F86A6
+VENDORID		0x70000001
+
+SOURCEPATH			../src/plugins
+
+USERINCLUDE		../inc
+USERINCLUDE		../src/inc
+USERINCLUDE		../src/shared
+source          EucJpDirectmap.CPP
+
+library         euser.lib
+library         convutils.lib 
+library         jisx0201_2.lib
+library         jisx0208_2.lib
+library         jisx0212.lib
+library         CnvShiftJisDirectmap.lib
+
+SOURCEPATH		../resource
+start resource  EucJpDirectmap.RSS
+lang            sc
+end
+
+#if defined(ARMCC)
+deffile         /epoc32/include/def/EABI/CONVPLUG.DEF 
+#elif defined(WINSCW)
+deffile         /epoc32/release/winscw/CONVPLUG.DEF 
+#elif defined(WINS)
+deffile         /epoc32/release/wins/CONVPLUG.DEF 
+#else
+deffile         /epoc32/release/marm/CONVPLUG.DEF 
+#endif
+
+CAPABILITY      CAP_GENERAL_DLL
+///////////////////////////////////////////////////////////////
+#endif

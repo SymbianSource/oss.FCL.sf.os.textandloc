@@ -1,0 +1,7 @@
+EXPORTS
+	ReplacementForUnconvertibleUnicodeCharacters__11CnvShiftJis @ 1 NONAME R3UNUSED ; CnvShiftJis::ReplacementForUnconvertibleUnicodeCharacters(void)
+	ConvertFromUnicode__11CnvShiftJisQ225CCnvCharacterSetConverter11TEndiannessRC6TDesC8R5TDes8RC7TDesC16RQ225CCnvCharacterSetConverter24TArrayOfAscendingIndices @ 2 NONAME ; CnvShiftJis::ConvertFromUnicode(CCnvCharacterSetConverter::TEndianness, TDesC8 const &, TDes8 &, TDesC16 const &, CCnvCharacterSetConverter::TArrayOfAscendingIndices &)
+	ConvertToUnicode__11CnvShiftJisQ225CCnvCharacterSetConverter11TEndiannessR6TDes16RC6TDesC8RiT4 @ 3 NONAME ; CnvShiftJis::ConvertToUnicode(CCnvCharacterSetConverter::TEndianness, TDes16 &, TDesC8 const &, int &, int &)
+	ConvertFromUnicode__11CnvShiftJisQ225CCnvCharacterSetConverter11TEndiannessRC6TDesC8R5TDes8RC7TDesC16RQ225CCnvCharacterSetConverter24TArrayOfAscendingIndicesRCt6TArray1ZQ212CnvUtilities13SCharacterSet @ 4 NONAME ; CnvShiftJis::ConvertFromUnicode(CCnvCharacterSetConverter::TEndianness, TDesC8 const &, TDes8 &, TDesC16 const &, CCnvCharacterSetConverter::TArrayOfAscendingIndices &, TArray<CnvUtilities::SCharacterSet> const &)
+	ConvertToUnicode__11CnvShiftJisQ225CCnvCharacterSetConverter11TEndiannessR6TDes16RC6TDesC8RiT4RCt6TArray1ZQ212CnvUtilities7SMethod @ 5 NONAME ; CnvShiftJis::ConvertToUnicode(CCnvCharacterSetConverter::TEndianness, TDes16 &, TDesC8 const &, int &, int &, TArray<CnvUtilities::SMethod> const &)
+

@@ -1,0 +1,18 @@
+[purpose]
+
+SNMTOOL is used to create plug-in data files which contain mappings between Internet standard identifiers of character sets (which may be either names e.g. "preferred MIME name", or "MIB enums") and their equivalent Symbian UIDs.
+
+[categories]
+development
+
+[files]
+tools\snmtool.bat
+tools\snmtool.pl
+tools\PARSER.PM
+tools\WRITER.PM
+
+[owner]
+Application frameworks		# CHARCONV
+
+[IPR]
+Copyright (c) 2000-2009 Nokia Corporation and/or its subsidiary(-ies). All rights reserved.

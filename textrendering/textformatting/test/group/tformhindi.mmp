@@ -1,0 +1,36 @@
+/*
+* Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description: 
+*
+*/
+
+
+target tformhindi.exe
+
+targettype	EXE
+
+sourcepath ../src
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+userinclude ../src
+userinclude ../../inc
+
+source tformhindi.cpp
+
+library euser.lib form.lib gdi.lib ws32.lib etext.lib bitgdi.lib fbscli.lib
+
+exportunfrozen
+
+VENDORID 0x70000001
+
+SMPSAFE
