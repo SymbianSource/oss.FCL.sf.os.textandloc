@@ -20,10 +20,7 @@
 
 REM Shaper
 
-#ifdef WITH_FLEXIBLE_MM
-ECOM_PLUGIN(iculayoutengine_fmm.dll, iculayoutengine_fmm.rsc)
-#else
 ECOM_PLUGIN(IcuLayoutEngine.dll, IcuLayoutEngine.RSC)
-#endif
+
 
 #endif

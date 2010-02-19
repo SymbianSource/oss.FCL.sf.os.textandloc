@@ -37,8 +37,6 @@ PRJ_EXPORTS
 #endif
 ../inc/FRMCONST_PARTNER.H SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(frmconst_partner.h)
 
-../inc/InlineText_Internal.h /epoc32/include/inlinetext_internal.h
-
 ../inc/FRMCONST.H SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(frmconst.h)
 ../inc/FRMFRAME.H SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(frmframe.h)
 ../inc/FRMLAYDT.H SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(frmlaydt.h)

@@ -21,11 +21,7 @@
 
 REM Font File & Object Manager
 
-#ifdef WITH_FLEXIBLE_MM
-file=ABI_DIR\BUILD_DIR\fntstr_fmm.dll 	System\Libs\FntStr.dll 
-#else
 file=ABI_DIR\BUILD_DIR\fntstr.dll 	System\Libs\FntStr.dll 
-#endif
 
 
 #endif

@@ -74,7 +74,7 @@ that any size is okay, because a UI will probably try to create a listbox contai
 
 Array stored in Twips as that is the only form of the value currently used.
 @internalComponent
-*/
+*/ 
 #define POINTSIZE_IN_TWIPS(p)	((p) * 20)
 const TInt gOpenFontSizeInTwipsArray[] =
 	{
@@ -538,39 +538,36 @@ CBitmapFont::CBitmapFont(
 	COpenFont*			aOpenFont):
 	iFontSpecInTwips(aFontSpecInTwips),
 	iAlgStyle(aAlgStyle),
-	iHeap(aHeap),
-	iOpenFont(aOpenFont)
+	iHeap(aHeap)
 	{
-#ifdef FNTSTORE_SUPPORT_FMM
-	iOpenFontOffset=reinterpret_cast<TInt>(aOpenFont)-reinterpret_cast<TInt>(this);
-#endif // FNTSTORE_SUPPORT_FMM
+    // Set iOpenFont to be the offset of aOpenFont from the address of CBitmapFont.
+    // In order to be able to identify iOpenFont as an offset instead of a pointer,
+    // bitwise or the offset with 1.  Pointers will always be byte aligned (and therefore even).
+    if (aOpenFont)
+        {
+        iOpenFont = reinterpret_cast<COpenFont*>((reinterpret_cast<TInt>(aOpenFont) - reinterpret_cast<TInt>(this)) | 1);
+        __ASSERT_DEBUG((reinterpret_cast<TInt>(iOpenFont) & 1),Panic(EFntPointerNotByteAligned));
+        }
+    else
+        {
+        iOpenFont = NULL;
+        }
 	}
 
 /** This member is private and not intended for use. */
 void CBitmapFont::ConstructL()
 	{
-#ifdef FNTSTORE_SUPPORT_FMM
 	if (!IsOpenFont())
 		FontBitmap()->UseL();
-#else
-	if (!iOpenFont)
-		FontBitmap()->UseL();	
-#endif // FNTSTORE_SUPPORT_FMM
 	}
 
 /** This member is private and not intended for use. */
 CBitmapFont::~CBitmapFont()
 	{	
-#ifdef FNTSTORE_SUPPORT_FMM
 	if (!IsOpenFont() && iFontBitmapOffset)
 		FontBitmap()->Release();
 	else if (IsOpenFont())
 		delete OpenFont();
-#else
-	if (!iOpenFont)
-		FontBitmap()->Release();
-	delete iOpenFont;
-#endif // FNTSTORE_SUPPORT_FMM
 	}	
 
 CBitmapFont* CBitmapFont::NewL(
@@ -616,13 +613,8 @@ has the UID value of the CFontBitmap it uses.
 @return A font identifier. */
 TUid CBitmapFont::Uid() const
 	{
-#ifdef FNTSTORE_SUPPORT_FMM
 	if (IsOpenFont())
 		return TUid::Uid(0);	
-#else
-	if (iOpenFont)
-		return TUid::Uid(0);	
-#endif // FNTSTORE_SUPPORT_FMM
 	else
 		return FontBitmap()->iUid;
 	}
@@ -635,13 +627,8 @@ For an open font this will be the design height (notional rather than exact).
 */
 EXPORT_C TInt CBitmapFont::DoHeightInPixels() const
 	{
-#ifdef FNTSTORE_SUPPORT_FMM
 	if (IsOpenFont())
 		return Height(OpenFont()->Metrics().Size());	
-#else
-	if (iOpenFont)
-		return Height(iOpenFont->Metrics().Size());	
-#endif // FNTSTORE_SUPPORT_FMM
 	else
 		return Height(FontBitmap()->iCellHeightInPixels);
 	}
@@ -658,13 +645,8 @@ Don't rely on it to get exact metrics at the pixel level.
 */
 EXPORT_C TInt CBitmapFont::DoAscentInPixels() const
 	{
-#ifdef FNTSTORE_SUPPORT_FMM
 	if (IsOpenFont())
 		return Height(OpenFont()->Metrics().Ascent());	
-#else
-	if (iOpenFont)
-		return Height(iOpenFont->Metrics().Ascent());	
-#endif // FNTSTORE_SUPPORT_FMM
 	else
 		return Height(FontBitmap()->iAscentInPixels);
 	}
@@ -766,13 +748,8 @@ EXPORT_C TInt CBitmapFont::DoTextCount(const TDesC &aText,TInt aWidthInPixels,TI
 @return The maximum character width in pixels. */
 EXPORT_C TInt CBitmapFont::DoMaxCharWidthInPixels() const
 	{
-#ifdef FNTSTORE_SUPPORT_FMM
 	if (IsOpenFont())
 		return Width(OpenFont()->Metrics().MaxWidth());	
-#else
-	if (iOpenFont)
-		return Width(iOpenFont->Metrics().MaxWidth());	
-#endif // FNTSTORE_SUPPORT_FMM
 	else
 		return Width(FontBitmap()->iMaxCharWidthInPixels);
 	}
@@ -786,13 +763,8 @@ is used the value may be different.
 @return The normal maximum character width in pixels. */
 EXPORT_C TInt CBitmapFont::DoMaxNormalCharWidthInPixels() const
 	{
-#ifdef FNTSTORE_SUPPORT_FMM
 	if (IsOpenFont())
 		return Width(OpenFont()->Metrics().MaxWidth());
-#else
-	if (iOpenFont)
-		return Width(iOpenFont->Metrics().MaxWidth());
-#endif // FNTSTORE_SUPPORT_FMM
 	else
 		return Width(FontBitmap()->iMaxNormalCharWidthInPixels);
 	}
@@ -827,13 +799,8 @@ uses memory and other resources (e.g., file handles) owned by the server.
 the cache; otherwise EFalse. */
 EXPORT_C TBool CBitmapFont::Rasterize(TInt aSessionHandle, TInt aCode, TOpenFontGlyphData* aGlyphData) const
 	{
-#ifdef FNTSTORE_SUPPORT_FMM
 	if (IsOpenFont())
 		return OpenFont()->Rasterize(aSessionHandle, aCode, aGlyphData);
-#else
-	if (iOpenFont)
-		return iOpenFont->Rasterize(aSessionHandle, aCode, aGlyphData);
-#endif // FNTSTORE_SUPPORT_FMM
 	else
 		return EFalse;
 	}
@@ -856,11 +823,7 @@ EXPORT_C TCharacterMetrics CBitmapFont::CharacterMetrics(TInt aCode,const TUint8
 	This function does not work for Open Fonts because the character data need not be
 	shared between sessions and a session handle is needed; GetCharacterData should be used instead.
 	*/
-#ifdef FNTSTORE_SUPPORT_FMM
 	if (IsOpenFont())
-#else
-	if (iOpenFont)
-#endif // FNTSTORE_SUPPORT_FMM
 		{
 		aBytes = NULL;
 		return TCharacterMetrics();
@@ -908,18 +871,10 @@ is in an open font and has not yet been rasterized) returns EFalse.
 EXPORT_C TBool CBitmapFont::GetCharacterData(TInt aSessionHandle,TInt aCode,
 											 TOpenFontCharMetrics& aMetrics,const TUint8*& aBitmap) const
 	{
-#ifdef FNTSTORE_SUPPORT_FMM
 	if (IsOpenFont())
-#else
-	if (iOpenFont)
-#endif // FNTSTORE_SUPPORT_FMM
 		{
 		const TOpenFontCharMetrics* nm;
-#ifdef FNTSTORE_SUPPORT_FMM
 		if (OpenFont()->GetCharacterData(aSessionHandle,aCode,nm,aBitmap))
-#else
-		if (iOpenFont->GetCharacterData(aSessionHandle,aCode,nm,aBitmap))
-#endif // FNTSTORE_SUPPORT_FMM
 			{
 			aMetrics = *nm;
 			return ETrue;
@@ -945,13 +900,8 @@ from the distance to neighbouring baselines.
  
 EXPORT_C void CBitmapFont::GetFontMetrics(TOpenFontMetrics& aMetrics) const
 	{
-#ifdef FNTSTORE_SUPPORT_FMM
 	if (IsOpenFont())
 		aMetrics = OpenFont()->Metrics();
-#else
-	if (iOpenFont)
-		aMetrics = iOpenFont->Metrics();
-#endif // FNTSTORE_SUPPORT_FMM
 	else
 		{
 		new(&aMetrics) TOpenFontMetrics;
@@ -975,17 +925,9 @@ At present no attempt is made to sythesize these attributes for bitmap fonts
 attributes. */
 EXPORT_C TBool CBitmapFont::GetFaceAttrib(TOpenFontFaceAttrib& aAttrib) const
 	{
-#ifdef FNTSTORE_SUPPORT_FMM
 	if (IsOpenFont())
-#else
-	if (iOpenFont)
-#endif // FNTSTORE_SUPPORT_FMM
 		{
-#ifdef FNTSTORE_SUPPORT_FMM
 		const TOpenFontFaceAttrib* a = OpenFont()->FaceAttrib();
-#else
-		const TOpenFontFaceAttrib* a = iOpenFont->FaceAttrib();
-#endif // FNTSTORE_SUPPORT_FMM
 		if (a)
 			{
 			aAttrib = *a;
@@ -1000,13 +942,8 @@ EXPORT_C TBool CBitmapFont::GetFaceAttrib(TOpenFontFaceAttrib& aAttrib) const
 @return Bitmap encoding value. */
 EXPORT_C TInt CBitmapFont::BitmapEncoding() const
 	{
-#ifdef FNTSTORE_SUPPORT_FMM
 	if (IsOpenFont())
 		return 0;
-#else
-	if (iOpenFont)
-		return 0;
-#endif // FNTSTORE_SUPPORT_FMM
 	else
 		return FontBitmap()->iBitmapEncoding;
 	}
@@ -1017,13 +954,8 @@ EXPORT_C TInt CBitmapFont::BitmapEncoding() const
 @return ETrue if the font has the specified character; otherwise EFalse. */
 EXPORT_C TBool CBitmapFont::HasCharacterL(TInt aCode) const
 	{
-#ifdef FNTSTORE_SUPPORT_FMM
 	if (IsOpenFont())
 		return OpenFont()->HasCharacterL(aCode);
-#else
-	if (iOpenFont)
-		return iOpenFont->HasCharacterL(aCode);
-#endif // FNTSTORE_SUPPORT_FMM
 	else
 		{
 		const TUint8* bytes;
@@ -1043,13 +975,8 @@ bitmap font object (so no rasterization is required) or if is an open font
 @return ETrue if the character needs to be rasterized; otherwise EFalse. */
 EXPORT_C TBool CBitmapFont::CharacterNeedsToBeRasterized(TInt aSessionHandle,TInt aCode) const
 	{
-#ifdef FNTSTORE_SUPPORT_FMM
 	if (IsOpenFont())
 		return OpenFont()->CharacterNeedsToBeRasterized(aSessionHandle,aCode);
-#else
-	if (iOpenFont)
-		return iOpenFont->CharacterNeedsToBeRasterized(aSessionHandle,aCode);
-#endif // FNTSTORE_SUPPORT_FMM
 	else
 		return FALSE;	// characters in bitmap fonts do not need to be rasterized	
 	}
@@ -1177,17 +1104,11 @@ TInt CBitmapFont::Height(TInt aNum) const
 CFontBitmap* CBitmapFont::FontBitmap() const
 /** This member is private and not intended for use. */
 	{
-#ifdef FNTSTORE_SUPPORT_FMM
-	__ASSERT_ALWAYS(!IsOpenFont(),Panic(EFntTypefaceHasNoFontBitmaps));
-	if(iFontBitmapOffset)
-		return reinterpret_cast<CFontBitmap*>(reinterpret_cast<TInt>(this)+iFontBitmapOffset);
-	else
-		return NULL;
-#else
-	__ASSERT_ALWAYS(!iOpenFont,Panic(EFntTypefaceHasNoFontBitmaps));
-	TInt fontbitmap=TInt(this)+iFontBitmapOffset;
-	return((CFontBitmap*)fontbitmap);
-#endif // FNTSTORE_SUPPORT_FMM
+    __ASSERT_ALWAYS(!IsOpenFont(),Panic(EFntTypefaceHasNoFontBitmaps));
+    if(iFontBitmapOffset)
+        return reinterpret_cast<CFontBitmap*>(reinterpret_cast<TInt>(this)+iFontBitmapOffset);
+    else
+        return NULL;
 	}
 
 /** Gets a font table.
@@ -1198,18 +1119,12 @@ CFontBitmap* CBitmapFont::FontBitmap() const
 @return KErrNone on success, specific error code on failure.
 @internalTechnology
 */
-EXPORT_C
-TInt CBitmapFont::GetFontTable(TUint32 aTag, TAny *&aTableContent, 
+EXPORT_C TInt CBitmapFont::GetFontTable(TUint32 aTag, TAny *&aTableContent, 
         TInt &aLength, TInt aSessionHandle) 
     {
     COpenFont *fontPtr = NULL;
-#ifdef FNTSTORE_SUPPORT_FMM
     if (IsOpenFont())
         fontPtr = OpenFont();
-#else
-    if (iOpenFont)
-        fontPtr = iOpenFont;
-#endif // FNTSTORE_SUPPORT_FMM
     else
         return KErrNotSupported;
     
@@ -1252,13 +1167,8 @@ EXPORT_C void CBitmapFont::ReleaseFontTable(TUint32 aTag,
         TInt aSessionHandle)
     {
     COpenFont *fontPtr = NULL;
-#ifdef FNTSTORE_SUPPORT_FMM
     if (IsOpenFont())
         fontPtr = OpenFont();
-#else
-    if (iOpenFont)
-        fontPtr = iOpenFont;
-#endif // FNTSTORE_SUPPORT_FMM
     else
         return;
     
@@ -1284,13 +1194,8 @@ EXPORT_C void CBitmapFont::ReleaseGlyphOutlines(TInt aCount, const TUint *aCodes
         TBool aHinted, TInt aSessionHandle)
     {
     COpenFont *fontPtr = NULL;
-    #ifdef FNTSTORE_SUPPORT_FMM
         if (IsOpenFont())
             fontPtr = OpenFont();
-    #else
-        if (iOpenFont)
-            fontPtr = iOpenFont;
-    #endif // FNTSTORE_SUPPORT_FMM
         else
             return;
     
@@ -1328,13 +1233,8 @@ EXPORT_C TInt CBitmapFont::GetGlyphOutline(TUint aCode,
         TBool aHinted, TAny *&aOutline, TInt &aLength, TInt aSessionHandle)
     {
     COpenFont *fontPtr = NULL;
-    #ifdef FNTSTORE_SUPPORT_FMM
         if (IsOpenFont())
             fontPtr = OpenFont();
-    #else
-        if (iOpenFont)
-            fontPtr = iOpenFont;
-    #endif // FNTSTORE_SUPPORT_FMM
         else
             return KErrNotSupported;
     

@@ -2124,8 +2124,7 @@ TBool RTmDrawingInterpreter::UsesAdjustedHighlight() const
 
 void RTmDrawingInterpreter::Draw()
 	{
-	if (iClipRect.iBr.iY < TextLayoutTopLeft().iY
-		|| (iFlags & EInvisible))
+	if (iFlags & EInvisible)
 		return;
 
 	iGc.Reset();

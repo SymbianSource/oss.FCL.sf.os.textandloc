@@ -44,7 +44,6 @@ PRJ_EXPORTS
 PRJ_MMPFILES
 
 ../group/FNTSTORE.MMP
-../group/fntstore_fmm.mmp
 
 PRJ_TESTMMPFILES
 
@@ -52,6 +51,7 @@ PRJ_TESTMMPFILES
 ../group/tcachedeletionprocess.mmp 
 ../group/T_WriteInvalidFontFile.mmp
 ../group/T_RemoveInvalidFontFile.mmp
+../group/tfontsessioncacheproc.mmp 
 
 PRJ_TESTEXPORTS
 
@@ -85,6 +85,7 @@ PRJ_TESTEXPORTS
 ../tfs/scripts/fntstoretest_T_LinkedFontUpdateInitial.script	z:/fntstoretest/fntstoretest_T_LinkedFontUpdateInitial.script
 ../tfs/scripts/fntstoretest_T_LinkedFontUpdateStage1.script		z:/fntstoretest/fntstoretest_T_LinkedFontUpdateStage1.script
 ../tfs/scripts/fntstoretest_T_LinkedFontUpdateStage2.script		z:/fntstoretest/fntstoretest_T_LinkedFontUpdateStage2.script
+../tfs/scripts/fntstoretest_T_FontSessionCache.script 			z:/fntstoretest/fntstoretest_T_FontSessionCache.script
 
 ../tfs/CEUROPE.GDR z:/resource/fonts/ceurope.gdr
 
@@ -145,5 +146,6 @@ PRJ_TESTEXPORTS
 
 //file for setdefaulttypefacename panic testing
 ../tfs/scripts/tsetdefaulttypefacename.ini z:/fntstoretest/tsetdefaulttypefacename.ini
+
 
 

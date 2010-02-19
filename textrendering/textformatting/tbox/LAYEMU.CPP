@@ -682,7 +682,7 @@ to the top of the visible region.
 @return The y coordinate of the bottom of the last formatted line. */
 EXPORT_C TInt CTextLayout::YBottomLastFormattedLine() const
 	{
-	return iText->LayoutHeight() - iBandTop;
+	return Max(0, iText->LayoutHeight() - iBandTop );
 	}
 
 /** Returns the height in pixels of the formatted text.
