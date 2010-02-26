@@ -614,7 +614,7 @@ private:
 	TDowngradeForExoticLineTerminatingCharacters iDowngradeForExoticLineTerminatingCharacters;
 	TBuf8<KMaximumLengthOfReplacementForUnconvertibleUnicodeCharacters> iReplacementForUnconvertibleUnicodeCharacters;
 	CStandardNamesAndMibEnums* iStandardNamesAndMibEnums;
-	TBool iFullyConstructed;
+	TBool iTlsDataConstructed;
 	CCharsetCnvCache* iCharsetCnvCache;
 	};
 
