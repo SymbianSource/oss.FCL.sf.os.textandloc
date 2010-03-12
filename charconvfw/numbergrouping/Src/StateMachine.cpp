@@ -71,7 +71,7 @@ void CStateMachine::AddStateTransistionL(TChar aChar, TInt aState, TInt aNextSta
 
 void CStateMachine::AddStateTransistionL(TInt aIndex, TInt aState, TInt aNextState)
 {
-	if(aIndex > iMaxNumberChars || aState > iMaxNumberStates || aNextState > iMaxNumberStates)
+    if(aIndex < 0 || aIndex > iMaxNumberChars || aState > iMaxNumberStates || aNextState > iMaxNumberStates)
 		User::Leave(KErrGeneral);
 
 	iStateTable[static_cast<TInt>(aIndex)][static_cast<TInt>(aState)] = static_cast<TInt>(aNextState);

@@ -4012,7 +4012,9 @@ TInt CTextLayout::ScrollL(TInt aDy,TAllowDisallow aScrollBlankSpace,
 	if (aDy > 0)		// text moves down; iBandTop decreases
 		{
 		if (aTopNoLimitBorder)
-	        iBandTop = desired_bandtop;
+		    {
+	        iBandTop = Max(0 - iText->LayoutHeight(),desired_bandtop);
+		    }
 		else
 		    iBandTop = Max(0,desired_bandtop);//Disallow text scrolled beyond top border
 		
@@ -4056,6 +4058,19 @@ TInt CTextLayout::ScrollL(TInt aDy,TAllowDisallow aScrollBlankSpace,
 			if (!AddFormattingAtEndL(param, height_increase,paragraphs_increase))
 				break;
 			}
+		
+		// Shift the whole band upwards if we're at the very end of the text
+		// and there's no more text to format. This prevents a situation were
+		// iText->LayoutHeight() < BandHeightInPixels.
+		if ( aBottomNoLimitBorder && iText->LayoutHeight() - iBandTop < visible_height )
+		    {
+		    if ( iText->EndChar() > iText->Source()->DocumentLength() )
+		        {
+		        iBandTop = desired_bandtop;
+		        return pixels_scrolled;
+		        }
+		    }
+
 		}
 
 	// Scroll blank space off the display if desired.

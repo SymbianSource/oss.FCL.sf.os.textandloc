@@ -20,7 +20,6 @@ PRINT Run All Font Store tests
 //
 LOAD_SUITE TFntStoreServer
 RUN_TEST_STEP 300 TFntStoreServer TFnt
-RUN_TEST_STEP 300 TFntStoreServer TCache
 RUN_TEST_STEP 100 TFntStoreServer TFntMem
 RUN_TEST_STEP 100 TFntStoreServer TFontBitmap
 RUN_TEST_STEP 100 TFntStoreServer TFsOpen

@@ -59,7 +59,6 @@ SYSTEMINCLUDE   ../../inc
 LIBRARY         euser.lib
 LIBRARY         bafl.lib
 LIBRARY         efsrv.lib
-LIBRARY         commonengine.lib
 LIBRARY         centralrepository.lib      // Central repository
 
 // End of file.

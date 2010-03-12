@@ -82,7 +82,6 @@ API interface MOpenFontTrueTypeExtension.
 @released
 */
 const TUid KUidOpenFontTrueTypeExtension = {0x1027553E};
-const TUid KUidOpenFontGlyphOutlineExtension = {0x102872CE};
 
 /**
 Supplied to CShaper::ExtendedInterface() to get the language and script
@@ -338,8 +337,6 @@ public:
 	inline TInt FontLineGap() const;
 	inline TInt FontMaxHeight() const;
 	void DeleteShaper() const;
-	TInt GetFontTable(TUint32 aTag, TAny*& aTableContent, TInt& aLength);
-	TInt GetGlyphOutline(TUint aCode, TBool aHinted, TAny*& aOutline, TInt& aLength);
 	
 protected:	
 	/** WARNING: Function for internal use ONLY. Compatibility is not guaranteed in future releases.
@@ -555,12 +552,6 @@ public:
 	virtual TBool HasTrueTypeTable(TUint32 aTag) = 0;
 	};
 
-class MOpenFontGlyphOutlineExtension 
-    {
-public:
-    virtual TInt GetGlyphOutline(TUint aCode, TBool aIsGlyphId, 
-            TBool aHinted, TAny*& aOutline, TInt& aLength) = 0;
-    };
 /** 
 Font attribute base class. 
 

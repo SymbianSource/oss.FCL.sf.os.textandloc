@@ -61,7 +61,6 @@ SOURCE			t_linkedfontscomparison.cpp
 SOURCE			t_linkedfontscapability.cpp
 SOURCE			T_LinkedFontUpdateTests.cpp
 SOURCE          T_IsolatedFontStore.cpp
-SOURCE          T_Cache.CPP
 SOURCE			T_FontSessionCache.cpp
 
 SOURCEPATH      ../src

@@ -32,7 +32,6 @@ data=DATAZ_\fntstoretest\fntstoretest.bat			\fntstoretest.bat
 //script files
 data=DATAZ_\fntstoretest\fntstoretest_T_All.script				\fntstoretest\fntstoretest_T_All.script
 data=DATAZ_\fntstoretest\fntstoretest_T_Fnt.script						\fntstoretest\fntstoretest_T_Fnt.script
-data=DATAZ_\fntstoretest\fntstoretest_T_Cache.script					\fntstoretest\fntstoretest_T_Cache.script
 data=DATAZ_\fntstoretest\fntstoretest_T_FntMem.script					\fntstoretest\fntstoretest_T_FntMem.script
 data=DATAZ_\fntstoretest\fntstoretest_T_FontBitmap.script				\fntstoretest\fntstoretest_T_FontBitmap.script
 data=DATAZ_\fntstoretest\fntstoretest_T_FsOpen.script					\fntstoretest\fntstoretest_T_FsOpen.script

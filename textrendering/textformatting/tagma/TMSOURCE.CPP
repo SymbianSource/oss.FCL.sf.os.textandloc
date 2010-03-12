@@ -251,6 +251,9 @@ The pen is used to draw lines, the outlines of filled shapes, and text.
 EXPORT_C void MTmCustom::SetPenColor(CGraphicsContext& aGc,TLogicalRgb aColor) const
 	{	
 	MTmCustomExtension c;
+	TUint index = aColor.SystemColorIndex();
+	if (index)
+	   aColor = SystemColor(index,aColor) & 0xFFFFFF;
 	c.SetPenColor(aGc,aColor);
 	}
 

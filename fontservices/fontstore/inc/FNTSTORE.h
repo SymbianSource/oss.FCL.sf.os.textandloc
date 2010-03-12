@@ -65,7 +65,6 @@ class CTypefaceSupportInfo;
 class COpenFontRasterizer;
 class CLinkedTypefaceGroup;
 IMPORT_C extern const TInt8 KLinkedFontDrive;
-IMPORT_C extern const TUint32 KFontTable_GlyphOutline_CacheMaxMem;
 
 /**
 WARNING: Class for internal use ONLY.  Compatibility is not guaranteed in future releases.
@@ -163,14 +162,7 @@ public:
 	inline COpenFont* OpenFont() const;
 	inline TGlyphBitmapType GlyphBitmapType() const;
 	IMPORT_C TUint32 UniqueFontId();
-	IMPORT_C TInt GetFontTable(TUint32 aTag, TAny*& aTableContent, 
-	        TInt& aLength, TInt aSessionHandle);
-    IMPORT_C TInt GetGlyphOutline(TUint aCode,  
-            TBool aHinted, TAny*& aOutline, TInt& aLength, TInt aSessionHandle);
-    IMPORT_C void ReleaseGlyphOutlines(TInt aCount, const TUint* aCodes,  
-            TBool aHinted, TInt aSessionHandle);
-    IMPORT_C void ReleaseFontTable(TUint32 aTag, TInt aSessionHandle);
-    
+	
 private:
 	// From CFont
 	IMPORT_C virtual TUid DoTypeUid() const;
@@ -283,15 +275,6 @@ public:
 	IMPORT_C void operator = (const COpenFontLinkedTypefaceSpecification& aRhs);
 	};
 	
-
-
-class TUnhintedOutlineId;
-class THintedOutlineId;
-class CFontTableCache;
-class CUnhintedOutlineCache;
-class CHintedOutlineCache;
-class TFontTableGlyphOutlineCacheMemMonitor;
-
 class CFontStore : public CTypefaceStore
 /** 
 A store for fonts.
@@ -350,27 +333,6 @@ public:
 	IMPORT_C void UpdateLinkedTypefaceL(const TLinkedTypefaceSpecificationArgs& aLinkedTypefaceSpec);
 	IMPORT_C void LoadFontsAtStartupL();
 	IMPORT_C TBool GetFontFilePath(const TDesC& aFontName, TFileName& aFilePath) const;
-    IMPORT_C void CleanupCacheOnFbsSessionTermination(TInt aSessionHandle);
-	
-	TInt CacheFontTable(TUid aFileUid, TUint32 aTag, TAny*& aContent, TInt aLength);
-	TInt ReleaseFontTable(TUid aFileUid, TUint32 aTag, TInt aSessionHandle);
-	TInt FindFontTableInCache(TUid aFileUid, TUint32 aTag, TAny*& aContent, TInt& aLength);
-	TInt IncFontTableRefCount(TUid aFileUid, TUint32 aTag, TInt aSessionHandle);
-	TInt DecFontTableRefCount(TUid aFileUid, TUint32 aTag, TInt aSessionHandle);
-	TInt CacheUnhintedOutline(const TUnhintedOutlineId& aOutlineId, TAny* aData, 
-	        TInt aLength, TAny*& aOutline, TInt& aLen);
-	TInt CacheHintedOutline(const THintedOutlineId& aOutlineId, TAny* aData, TInt aLength,
-	        TAny*& aOutline, TInt& aLen);
-	TInt ReleaseUnhintedOutline(const TUnhintedOutlineId& aOutlineId, TInt aSessionHandle);
-	TInt ReleaseHintedOutline(const THintedOutlineId& aOutlineId, TInt aSessionHandle);
-	TInt IncreaseUnhintedOutlineRefCount(const TUnhintedOutlineId& aOutlineId, TInt aSessionHandle);
-	TInt IncreaseHintedOutlineRefCount(const THintedOutlineId& aOutlineId, TInt aSessionHandle);
-	TInt FindUnhintedOutlineInCache(const TUnhintedOutlineId& aOutlineId, TAny*& aData, 
-	        TInt &aLength);
-	TInt FindHintedOutlineInCache(const THintedOutlineId& aOutlineId, TAny*& aData, TInt& aLength);
-    void CleanupCacheOnOpenFontRemoval(COpenFont* aFont);
-    void CleanupCacheOnOpenFontFileRemoval(COpenFontFile* aFontFile);
-
 private:
 	CFontStore(RHeap* aHeap);
 	void ConstructL();
@@ -433,11 +395,7 @@ private:
 	CArrayPtrFlat<CFontBitmap> iFontBitmapList;
 	CArrayFixFlat<TTypefaceFontBitmap> iTypefaceFontBitmapList;
 	CArrayPtrFlat<COpenFontFile> iOpenFontFileList;
-	TInt iReserved[2];		// keep iDefaultBitmapType at the correct offset
-    CFontTableCache *iFontTableCache;
-    CUnhintedOutlineCache *iUnhintedOutlineCache;
-    CHintedOutlineCache *iHintedOutlineCache;
-    TFontTableGlyphOutlineCacheMemMonitor *iCacheMemMon;
+	TInt iReserved[6];		// keep iDefaultBitmapType at the correct offset
 	CArrayPtrFlat<COpenFontRasterizer> iOpenFontRasterizerList;
 	COpenFontSessionCacheList* iOpenFontSessionCacheList;
 	TInt iOpenFontUid;

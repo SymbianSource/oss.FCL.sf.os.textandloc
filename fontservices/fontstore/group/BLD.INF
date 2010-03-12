@@ -67,7 +67,6 @@ PRJ_TESTEXPORTS
 
 ../tfs/scripts/fntstoretest_T_All.script						z:/fntstoretest/fntstoretest_t_all.script
 ../tfs/scripts/fntstoretest_T_Fnt.script						z:/fntstoretest/fntstoretest_t_fnt.script
-../tfs/scripts/fntstoretest_T_Cache.script						z:/fntstoretest/fntstoretest_T_Cache.script
 ../tfs/scripts/fntstoretest_T_FntMem.script						z:/fntstoretest/fntstoretest_t_fntmem.script
 ../tfs/scripts/fntstoretest_T_FontBitmap.script					z:/fntstoretest/fntstoretest_t_fontbitmap.script
 ../tfs/scripts/fntstoretest_T_FsOpen.script						z:/fntstoretest/fntstoretest_t_fsopen.script

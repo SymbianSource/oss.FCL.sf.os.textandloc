@@ -520,8 +520,6 @@ EXPORT_C COpenFont::~COpenFont()
 	{
 	//Delete the shaper
 	delete iShaper;
-
-	File()->GetFontStore()->CleanupCacheOnOpenFontRemoval(this);
 	
 	COpenFontGlyphCache* glyphCache = GetGlyphCache();
 	if (glyphCache != NULL)
@@ -821,54 +819,6 @@ void COpenFont::DeleteShaper() const
 	{
 	delete iShaper;
 	}
-
-TInt COpenFont::GetFontTable(TUint32 aTag, TAny*& aTableContent, TInt& aLength) 
-    {
-    // get the extension API for GetTrueTypeTable() if available
-    TAny* ext = NULL;
-    ExtendedInterface(KUidOpenFontTrueTypeExtension, ext);
-    MOpenFontTrueTypeExtension* extensionInterface = 
-        reinterpret_cast<MOpenFontTrueTypeExtension*>(ext);
-
-    TInt ret = KErrNone;
-    if (extensionInterface == NULL)
-        {
-        ret = KErrNotSupported;
-        }
-    else 
-        {
-        TUint32 tag = aTag;
-        TInt len = 0;
-        aTableContent = extensionInterface->GetTrueTypeTable(ret, tag, &len);
-        if (KErrNone == ret) 
-            {
-            aLength = len;
-            }
-        }
-    return ret;
-    }
-
-TInt COpenFont::GetGlyphOutline(TUint aCode, 
-        TBool aHinted, TAny*& aOutline, TInt &aLength) 
-    {
-    // get the extension API for GetTrueTypeTable() if available
-    TAny* ext = NULL;
-    ExtendedInterface(KUidOpenFontGlyphOutlineExtension, ext);
-    MOpenFontGlyphOutlineExtension *extensionInterface = 
-        reinterpret_cast<MOpenFontGlyphOutlineExtension*>(ext);
-
-    TInt ret = KErrNone;
-    if (extensionInterface == NULL)
-        {
-        ret = KErrNotSupported;
-        }
-    else 
-        {
-        ret = extensionInterface->GetGlyphOutline(aCode, ETrue, 
-                aHinted, aOutline, aLength);
-        }
-    return ret;
-    }
 
 /** Given the passed pointer aAny, return an offset from it to the "this" pointer
 of this COpenFont object.
@@ -1698,11 +1648,6 @@ and the logic is handled in CFontStore::RemoveFile().
 */
 EXPORT_C COpenFontFile::~COpenFontFile()
 	{
-    CFontStore *fs = GetFontStore();
-    if (fs != NULL)
-        {
-        fs->CleanupCacheOnOpenFontFileRemoval(this);
-        }
 	delete iData;
 	}
 
