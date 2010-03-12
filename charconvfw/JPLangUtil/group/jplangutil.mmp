@@ -45,4 +45,4 @@ SOURCEPATH      ../src
 SOURCE          jplangutil.cpp
 
 LIBRARY         euser.lib
-DEFFILE         jplangutil.def
+DEFFILE         JPLANGUTIL.DEF

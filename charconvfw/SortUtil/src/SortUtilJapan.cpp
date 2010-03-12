@@ -24,7 +24,7 @@
 #include "SortUtilJapan.h"
 #include "SortUtilImpl.h"
 #include "SortUtilImplExport.h"
-#include <JpLangUtil.h>
+#include <jplangutil.h>
 
 // Unnamed namespace for local definitions
 namespace

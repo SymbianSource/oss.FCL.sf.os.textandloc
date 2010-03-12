@@ -20,7 +20,7 @@
 
 #include <barsread.h>
 #include <eikenv.h>
-#include <CentralRepository.h>
+#include <centralrepository.h>
 #include <NumberGroupingCRKeys.h>
 
 const TText KNumberGroupingWildcard('n');

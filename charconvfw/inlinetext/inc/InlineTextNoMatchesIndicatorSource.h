@@ -22,12 +22,12 @@
 
 // INCLUDES
 
-#include "inlinetextbase.h"
+#include "InlineTextBase.h"
 #ifndef SYMBIAN_ENABLE_SPLIT_HEADERS
 #include <tagma.h>
 #else
 #include <tagma.h>
-#include <tagmaLayoutAndSource.h>
+#include <tagmalayoutandsource.h>
 #endif
 
 // CONSTANTS

@@ -22,7 +22,7 @@
 #define __JPLANGUTIL_TABLES_H__
 
 // INCLUDES
-#include <E32STD.H>
+#include <e32std.h>
 
 // CONSTANTS
 const TText KMiddleDotMap[] =      { 0xff65 , 0x30fb };

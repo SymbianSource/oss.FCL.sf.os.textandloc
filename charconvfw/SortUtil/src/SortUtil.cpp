@@ -25,7 +25,7 @@
 #include "SortUtil.h"
 
 #ifdef __WINS__     
-#include <FeatMgr.h>    
+#include <featmgr.h>    
 #endif
 
 // LOCAL CONSTANTS AND MACROS

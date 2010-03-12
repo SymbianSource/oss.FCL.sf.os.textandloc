@@ -19,8 +19,8 @@
 
 
 // INCLUDES FILES
-#include "JPLANGUTIL.H"
-#include "JPLANGUTIL.TABLES.H"
+#include "jplangutil.h"
+#include "jplangutil.tables.h"
 
 // LOCAL DEFINES
 
