@@ -41,6 +41,8 @@ enum TFntStorePanic
 	EFntNoFontFound,
 	EFntRemovingAlreadyDeletedLinkedFont,
 	EFntOverFlow,
+	EFntMetricsNotOnHeap,
+	EFntPointerNotByteAligned,
 	};
 
 /**
@@ -53,7 +55,6 @@ GLREF_C void Panic(TFntStorePanic aPanic);
 class COpenFontSessionCacheListItem;
 class COpenFont;
 
-#ifdef FNTSTORE_SUPPORT_FMM
 class COpenFontSessionCacheList
 /**
 @internalComponent
@@ -76,30 +77,6 @@ inline COpenFontSessionCacheList::COpenFontSessionCacheList():
 	iStartOffset(0)
 	{
 	}
-#else
-class COpenFontSessionCacheList
-/**
-@internalComponent
-*/
-	{
-	friend class COpenFont;
-
-	public:
-	inline COpenFontSessionCacheList();
-	void Delete(RHeap* aHeap);
-	void DeleteCache(RHeap* aHeap,TInt aSessionHandle);
-
-	private:
-	void DeleteFontGlyphs(RHeap* aHeap,const COpenFont* aFont);
-
-	COpenFontSessionCacheListItem* iStart;
-	};
-
-inline COpenFontSessionCacheList::COpenFontSessionCacheList():
-	iStart(NULL)
-	{
-	}
-#endif // FNTSTORE_SUPPORT_FMM
 
 /**
 @internalComponent

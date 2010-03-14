@@ -339,17 +339,15 @@ public:
 	inline TInt FontMaxHeight() const;
 	void DeleteShaper() const;
 	TInt GetFontTable(TUint32 aTag, TAny*& aTableContent, TInt& aLength);
-	TInt GetGlyphOutline(TUint aCode, TBool aHinted, 
-	            TAny*& aOutline, TInt& aLength);
-#ifdef FNTSTORE_SUPPORT_FMM
-private:	
+	TInt GetGlyphOutline(TUint aCode, TBool aHinted, TAny*& aOutline, TInt& aLength);
+	
+protected:	
 	/** WARNING: Function for internal use ONLY. Compatibility is not guaranteed in future releases.
 	*/
 	TInt PointerToThisOffset(const TAny* aAny);
 	/** WARNING: Function for internal use ONLY. Compatibility is not guaranteed in future releases.
 	*/
 	TAny* ThisOffsetToPointer(const TInt aOffset);
-#endif // FNTSTORE_SUPPORT_FMM
 		
 protected:
 	RHeap* iHeap;
@@ -383,57 +381,44 @@ protected:
 private:
 	const COpenFontGlyph* Glyph(TInt aSessionHandle,TInt aCode) const;
 protected:
-#ifdef FNTSTORE_SUPPORT_FMM
+
 	/** WARNING: Function for internal use ONLY. Compatibility is not guaranteed in future releases.
 	*/
 	const COpenFontGlyph* FontCacheGlyph(TInt aCode,TInt*& aNode);
-	
-	/** Used to calculate an offset that is applied to pointers to objects on the
-	FBServ shared heap to convert them to valid pointers in the current process.
-	Add the value returned here to pointers to items on the shared heap to get a 
-	valid pointer to the item in the current process.
-	  
-	WARNING: Function for internal use ONLY. Compatibility is not guaranteed in future releases.	  
-	  
-	@return Returns an offset between the "this" pointer that this object had on 
-	construction and its current "this" pointer.  
-	*/
-	inline TInt Offset() const;
-#else
-	/** WARNING: Function for internal use ONLY. Compatibility is not guaranteed in future releases.
-	*/
-	const COpenFontGlyph* FontCacheGlyph(TInt aCode,COpenFontGlyphTreeEntry**& aNode);	
-#endif // FNTSTORE_SUPPORT_FMM
-	/** WARNING: Function for internal use ONLY. Compatibility is not guaranteed in future releases.
-	*/
 	const COpenFontGlyph* FontCacheGlyph(TInt aCode);
+	
+	void SetGlyphCache(COpenFontGlyphCache* aGlyphCache);
+	
 private:
 	const COpenFontGlyph* SessionCacheGlyph(RHeap* aHeap,TInt aSessionHandle,TInt aCode,
 											COpenFontSessionCache*& aCache,TInt& aIndex,TBool aCreate) const;
 	void RasterizeHelperL(TInt aCode,TOpenFontGlyphData* aGlyphData,TOpenFontGlyphData*& aTempGlyphData);
-#ifdef FNTSTORE_SUPPORT_FMM
-	inline COpenFontSessionCacheList* SessionCacheList();
-#endif // FNTSTORE_SUPPORT_FMM
+
+	COpenFontSessionCacheList* SessionCacheList()const;
+	
+    void SetSessionCacheList(COpenFontSessionCacheList* aSessionCacheList);
+    
+    void SetFile(COpenFontFile* aFile);
 private:
-	COpenFontFile* iFile;									// the file used by this font; null if it has been deleted
-															// or cannot be used
+    
+    // Offset from the address of the file used by this font.
+    // If the file has been deleted or cannot be used, the offest will be zero.
+    TInt iFileOffset;
+    
 	TInt iFaceIndex;										// index of the face in the font file
 protected:
-	/** WARNING: Member variable for internal use ONLY. Compatibility is not guaranteed in future releases. Please use the provided APIs only. 
-	 */
-	COpenFontGlyphCache* iGlyphCache;						// the per-font glyph cache; owned by the font
+    /**
+    WARNING: Compatibility is not guaranteed in future releases. Please use the provided APIs only.
+    Offset from the address of this font of the per-font glyph cache which is owned by the font
+    @internalTechnology
+    */  
+    TInt iGlyphCacheOffset;
 private:
-	COpenFontSessionCacheList* iSessionCacheList;			// the list of per-session glyph caches; owned by CFontStore
-#ifdef FNTSTORE_SUPPORT_FMM
-	/** The initial "this" pointer that this object has when created. When this 
-	object is used in a different process the offset between this starting 
-	"this" pointer and the current "this" pointer can be used to calculate
-	the offset to other objects that also exist on the shared FBServ heap. 
-	@see Offset() */
-	TInt iStartingThis;				
-#else
+    // Offset from the address of this font of the list of per-session glyph
+    // caches which are owned by CFontStore
+    TInt iSessionCacheListOffset;
+
 	TAny* iReserved; // unused; for future expansion
-#endif // FNTSTORE_SUPPORT_FMM
 	};
 
 /** Open Font System Extension Interface abstract base class.
@@ -1507,11 +1492,7 @@ These are the attributes of the font represented by this object.
 @return The typeface attributes. */
 inline const TOpenFontFaceAttrib* COpenFont::FaceAttrib() const
 	{
-#ifdef FNTSTORE_SUPPORT_FMM
-	return iFile ? &File()->FaceAttrib(iFaceIndex) : NULL;
-#else
-	return iFile ? &iFile->FaceAttrib(iFaceIndex) : NULL;
-#endif // FNTSTORE_SUPPORT_FMM
+    return iFileOffset == 0 ? NULL : &File()->FaceAttrib(iFaceIndex);
 	}
 
 /** Gets a pointer to the COpenFontFile which created this object.
@@ -1523,11 +1504,7 @@ to access the rasterizer context (engine).
 @return The COpenFontFile which created this object. */
 inline COpenFontFile* COpenFont::File() const
 	{
-#ifdef FNTSTORE_SUPPORT_FMM
-	return iFile?reinterpret_cast<COpenFontFile*>(reinterpret_cast<TInt>(iFile)+Offset()):NULL;
-#else
-	return iFile;
-#endif // FNTSTORE_SUPPORT_FMM
+    return iFileOffset == 0 ? NULL : reinterpret_cast<COpenFontFile*>(const_cast<COpenFont*>(PtrAdd(this, iFileOffset)));
 	}
 
 /** Gets the index of this typeface within the font file.
@@ -1647,26 +1624,6 @@ inline TInt COpenFont::FontMaxHeight() const
 	{
 	return iFontMaxAscent + iFontMaxDescent;
 	}
-
-#ifdef FNTSTORE_SUPPORT_FMM
-inline COpenFontSessionCacheList* COpenFont::SessionCacheList()
-	{
-	return iSessionCacheList?reinterpret_cast<COpenFontSessionCacheList*>(reinterpret_cast<TInt>(iSessionCacheList)+Offset()):NULL;
-	}
-
-/** Used to calculate an offset that can be applied to pointers to objects on the
-FBServ shared heap to convert them to valid pointers in the current process.
-Add the value returned here to pointers to items on the shared heap to get a 
-valid pointer to the item in the current process.
-  
-@return Returns an offset between the "this" pointer that this object had on 
-construction and its current "this" pointer.  
- */
-inline TInt COpenFont::Offset() const
-	{
-	return reinterpret_cast<TInt>(this)-iStartingThis;
-	}
-#endif // FNTSTORE_SUPPORT_FMM
 
 /** Default C++ constructor.
 

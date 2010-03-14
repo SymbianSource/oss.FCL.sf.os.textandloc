@@ -19,8 +19,13 @@
 #ifndef INLINETEXT_H_
 #define INLINETEXT_H_
 
+#include <e32std.h>
 #include <tagma.h>
-#include <InlineText_Internal.h>
+
+/**
+@publishedPartner
+*/
+const TUid KInlineTextApiExtensionUid = { 0x101FD03D };
 
 
 /**

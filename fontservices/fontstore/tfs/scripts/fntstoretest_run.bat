@@ -31,6 +31,7 @@ testexecute.exe	 z:\fntstoretest\fntstoretest_t_cachedeletion.script
 testexecute.exe	 z:\fntstoretest\fntstoretest_t_setdefaulttypefacename.script
 testexecute.exe	 z:\fntstoretest\fntstoretest_t_linkedfonts.script
 testexecute.exe	 z:\fntstoretest\fntstoretest_t_cache.script
+testexecute.exe  z:\fntstoretest\fntstoretest_t_fontsessioncache.script
 
 @echo off
 md e:\logs

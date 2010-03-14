@@ -33,6 +33,7 @@ RUN_TEST_STEP 100 TFntStoreServer TGetNearestFont
 RUN_TEST_STEP 100 TFntStoreServer TCorruptFonts
 RUN_TEST_STEP 300 TFntStoreServer TShaperCache
 RUN_TEST_STEP 300 TFntStoreServer TCacheDeletion
+RUN_TEST_STEP 300 TFntStoreServer TFontSessionCache
 RUN_TEST_STEP !PanicCode=-40 !PanicString="FBSERV" 100 TFntStoreServer TSetDefaultTypefaceName
 RUN_TEST_STEP 100 TFntStoreServer TLinkedFonts
 RUN_TEST_STEP 100 TFntStoreServer TGetNearestFontCapability

@@ -10,6 +10,7 @@
 * Nokia Corporation - initial contribution.
 *
 * Contributors:
+* Monotype Imaging Inc. - MYuppyGB-Medium font
 *
 * Description: 
 * Font utilities and test UI fonts
@@ -55,6 +56,9 @@ eon_font.iby			/epoc32/rom/include/eon_font.iby
 ../truetype/DejaVuSerifCondensed-Bold.ttf		z:/resource/fonts/DejaVuSerifCondensed-Bold.ttf
 ../truetype/DejaVuSerifCondensed-Italic.ttf		z:/resource/fonts/DejaVuSerifCondensed-Italic.ttf
 ../truetype/DejaVuSerifCondensed-BoldItalic.ttf	z:/resource/fonts/DejaVuSerifCondensed-BoldItalic.ttf
+
+../truetype/MYuppyGB-Medium.ttf	z:/resource/fonts/MYuppyGB-Medium.ttf
+
 #endif
 
 PRJ_MMPFILES

@@ -63,11 +63,8 @@ private:
 	TInt iSession; //Not owned
 	TInt iUsageCounter; //
 
-#ifdef FNTSTORE_SUPPORT_FMM
+
 	const COpenFontGlyph* GlyphLinked(TInt aCode,TInt*& aNode);
-#else 
-	const COpenFontGlyph* GlyphLinked(TInt aCode,COpenFontGlyphTreeEntry**& aNode);
-#endif // FNTSTORE_SUPPORT_FMM
 	void RasterizeL(TInt aCode,TOpenFontGlyphData* aGlyphData);
 	};
 

@@ -111,10 +111,16 @@ public:
 	const TBitmapFontCharacterMetrics* Metric(TInt aIndex) const;
 	TInt NumberOfMetrics() const;
 private:
+	TBitmapFontCharacterMetrics* MetricsFromOffset(TInt aIndex) const;
+private:
 	RHeap* iHeap;
 	TStreamId iMetricsStartId;
-	TInt iCharacterMetricsStartPtr;	// Sometimes this address is on the metrics heap and sometimes in a ROM file
+    // Sometimes this address is on the metrics heap and sometimes in a ROM file
+    // If the address is on the heap, then this is actually an offset from
+    // the address of this class.
+    TInt iCharacterMetricsStartPtr;	
 	TInt iNumberOfMetrics;
+	TBool iMetricsOnHeap;
 	};
 
 NONSHARABLE_CLASS(CFontBitmap) : public CBase

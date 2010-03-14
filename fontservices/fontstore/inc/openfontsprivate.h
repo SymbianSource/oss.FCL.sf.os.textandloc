@@ -20,7 +20,6 @@
 #define __OPENFONTS_PRIVATE_H__
 
 #include <e32hashtab.h>
-
 class COpenFontShaperCacheEntry;
 
 /* MSB is set to indicate a glyph code rather than a unicode value
@@ -38,7 +37,6 @@ public:
 	CFontStore* iFontStore;			// pointer to the CFontStore instance that loaded the COpenFontFile
 	};
 
-#ifdef FNTSTORE_SUPPORT_FMM
 /**
  @internalComponent
  */
@@ -67,33 +65,6 @@ private:
 	// calculated as (bitmapPointer)-(this)
 	TInt iBitmapOffset;				
 	};
-#else
-/**
- @internalComponent
- */
-class COpenFontGlyph
-	{
-public:
-	COpenFontGlyph(TInt aCode, TInt aGlyphIndex, const TOpenFontCharMetrics& aMetrics):
-		iCode(aCode), iGlyphIndex(aGlyphIndex), iMetrics(aMetrics), iBitmap(NULL) { }
-	
-	static COpenFontGlyph* NewL(RHeap* aHeap, TInt aCode, TInt aGlyphIndex,
-								const TOpenFontCharMetrics& aMetrics, const TDesC8& aBitmap);
-
-	static void Delete(RHeap* aHeap, COpenFontGlyph* aGlyph);
-
-	TInt iCode;						// the Unicode value of the character
-	TInt iGlyphIndex;				// the glyph index
-	TOpenFontCharMetrics iMetrics;	// the metrics
-	TUint8* iBitmap;				// the run-length-encoded bitmap
-
-protected:
-	TBool SetBitmap(RHeap* aHeap, const TDesC8& aBitmap);
-	~COpenFontGlyph();
-	};
-#endif // FNTSTORE_SUPPORT_FMM
-
-#ifdef FNTSTORE_SUPPORT_FMM
 /**
  Binary tree of glyphs. Each glyph can have left and right child nodes which are added
  depending on the value of their glyph code relative to the parent's glyph code.
@@ -110,69 +81,45 @@ public:
 
 private:
 	/** The left COpenFontGlyphTreeEntry from this entry. Represented by an offset from the
-	current heap base. Use COpenFont::ThisOffsetToPointer() to convert to a valid 
-	COpenFontGlyphTreeEntry pointer. */
-	TInt iLeftOffset; 
-	/** The right COpenFontGlyphTreeEntry from this entry. Represented by an offset from the
-	current heap base. Use COpenFont::ThisOffsetToPointer() to convert to a valid 
-	COpenFontGlyphTreeEntry pointer. */
-	TInt iRightOffset;
+     current heap base. Use COpenFont::ThisOffsetToPointer() to convert to a valid 
+     COpenFontGlyphTreeEntry pointer. */
+    TInt iLeftOffset;
+    /** The right COpenFontGlyphTreeEntry from this entry. Represented by an offset from the
+     current heap base. Use COpenFont::ThisOffsetToPointer() to convert to a valid 
+     COpenFontGlyphTreeEntry pointer. */
+    TInt iRightOffset;
+    /** Pointer to next glyph that was added to the glyph cache.  This enables 
+     non-recursive deletion of the cache. This is only ever accessed from server
+     process, so can be a direct pointer, not an offset. */
+    COpenFontGlyphTreeEntry* iNext;
 
 private:
 	COpenFontGlyphTreeEntry(TInt aCode, TInt aGlyphIndex, const TOpenFontCharMetrics& aMetrics)
-	 :	COpenFontGlyph(aCode, aGlyphIndex, aMetrics), iLeftOffset(0), iRightOffset(0) {}
+	 :	COpenFontGlyph(aCode, aGlyphIndex, aMetrics), iLeftOffset(0), iRightOffset(0),iNext(NULL){}
 
 	~COpenFontGlyphTreeEntry();
 	};
-#else
-/**
- binary tree of glyphs
 
+/**
+ * Template for offset implementation of pointer to pointer
  @internalComponent
  */
-class COpenFontGlyphTreeEntry: public COpenFontGlyph
-	{
+template<class T>
+class ROffsetArray
+    {
 public:
-	static COpenFontGlyphTreeEntry* New(RHeap* aHeap, TInt aCode, TInt aGlyphIndex,
-										const TOpenFontCharMetrics& aMetrics, const TDesC8& aBitmap);
-
-	COpenFontGlyphTreeEntry* iLeft;		// pointer to left node in tree
-	COpenFontGlyphTreeEntry* iRight;	// pointer to right node in tree
-	COpenFontGlyphTreeEntry* iNext;		// pointer to next glyph in the list; so that the cache can be deleted non-recursively
-
+    ROffsetArray();
+    TInt Create(RHeap* aHeap, TInt aCount);
+    void Close(RHeap* aHeap);
+    TInt Count() const;
+    T* operator[](TInt aIndex) const;
+    void SetAt(TInt aIndex, T* aEntry);
 private:
-	COpenFontGlyphTreeEntry(TInt aCode, TInt aGlyphIndex, const TOpenFontCharMetrics& aMetrics)
-	 :	COpenFontGlyph(aCode, aGlyphIndex, aMetrics), iLeft(NULL), iRight(NULL), iNext(NULL) { }
-	
-	~COpenFontGlyphTreeEntry();
-	};
-#endif // FNTSTORE_SUPPORT_FMM
+    TInt iOffset;
+    TInt iCount;
+    };
 
-#ifdef FNTSTORE_SUPPORT_FMM
-/**
- RArray for storing offsets to COpenFontGlyphTreeEntry objects. Stores each
- COpenFontGlyphTreeEntry as an offset from the "this" pointer of this object.
- Allows glyph entries to be added, accessed and deleted from the glyph array
- from different processes.  
- 
- @internalComponent
- */
-class RArrayGlyphEntries : public RArray<TInt>
-	{
-public:
-	inline const COpenFontGlyphTreeEntry& operator[](TInt anIndex) const;
-	inline COpenFontGlyphTreeEntry& operator[](TInt anIndex);
-	TInt Append(COpenFontGlyphTreeEntry& anEntry);
-private:
-	inline const COpenFontGlyphTreeEntry* Entry(TInt anIndex) const;
-	inline COpenFontGlyphTreeEntry** EntryMemberOffSet() const;
-	inline TAny** EntryMember() const;
-private:
-	TInt iEntriesOffset;
-	};
-#endif // FNTSTORE_SUPPORT_FMM
 
-#ifdef FNTSTORE_SUPPORT_FMM
 /**
  The per-font glyph cache. For now, just the members that used to be directly in
  COpenFont. Now it is a private class it can be elaborated to do character-to-glyph-index
@@ -183,7 +130,7 @@ private:
 class COpenFontGlyphCache
 	{
 public:
-	COpenFontGlyphCache(): iGlyphTreeOffset(0), iGlyphCacheMemory(0), iShaperCacheSentinel(NULL), iShapingInfoCacheMemory(0), iNumberOfShaperCacheEntries(0) { }
+	COpenFontGlyphCache(): iGlyphTreeOffset(0), iGlyphCacheMemory(0),iGlyphList(NULL),iShaperCacheSentinel(NULL), iShapingInfoCacheMemory(0), iNumberOfShaperCacheEntries(0) { }
 	TShapeHeader* SearchShaperCache(TInt aSessionHandle, TFontShapeFunctionParameters*& aParams);
 	TShapeHeader* Insert(TInt aSessionHandle, RHeap* aHeap, CShaper::TInput aInput, TShapeHeader* aShapeHeader, TInt& aAddedBytes);
 	TInt DeleteLeastRecentlyUsedEntry(RHeap* aHeap);
@@ -192,79 +139,32 @@ public:
 public:
 	TInt iGlyphTreeOffset;									// an offset to root of the glyph cache; a binary tree
 	TInt iGlyphCacheMemory;									// memory used by the glyph tree in bytes
+	COpenFontGlyphTreeEntry* iGlyphList;                   // the glyphs, organized as a list
 	COpenFontShaperCacheEntry* iShaperCacheSentinel;
 	TInt iShapingInfoCacheMemory;
-	TInt iNumberOfShaperCacheEntries;
-	RArrayGlyphEntries iGlyphArray;
+	TInt iNumberOfShaperCacheEntries;	
 	};
-#else
-/**
- The per-font glyph cache. For now, just the members that used to be directly in
- COpenFont. Now it is a private class it can be elaborated to do character-to-glyph-index
- mapping when that is needed.
-
- @internalComponent
- */
-class COpenFontGlyphCache
-	{
-public:
-	COpenFontGlyphCache(): iGlyphTree(NULL), iGlyphCacheMemory(0), iGlyphList(NULL), iShaperCacheSentinel(NULL), iShapingInfoCacheMemory(0), iNumberOfShaperCacheEntries(0) { }
-	TShapeHeader* SearchShaperCache(TInt aSessionHandle, TFontShapeFunctionParameters*& aParams);
-	TShapeHeader* Insert(TInt aSessionHandle, RHeap* aHeap, CShaper::TInput aInput, TShapeHeader* aShapeHeader, TInt& aAddedBytes);
-	TInt DeleteLeastRecentlyUsedEntry(RHeap* aHeap);
-	TBool ShaperCacheIsEmpty();
-	
-public:
-	COpenFontGlyphTreeEntry* iGlyphTree;					// the root of the glyph cache; a binary tree
-	TInt iGlyphCacheMemory;									// memory used by the glyph tree in bytes
-	COpenFontGlyphTreeEntry* iGlyphList;					// the glyphs, organized as a list
-	COpenFontShaperCacheEntry* iShaperCacheSentinel;
-	TInt iShapingInfoCacheMemory;
-	TInt iNumberOfShaperCacheEntries;
-	};
-#endif // FNTSTORE_SUPPORT_FMM
 
 /**
  @internalComponent
  */
-#ifdef FNTSTORE_SUPPORT_FMM
+
 class COpenFontSessionCacheEntry: public COpenFontGlyph
 	{
 public:
 	static COpenFontSessionCacheEntry* New(RHeap* aHeap, const COpenFont* aFont, TInt aCode, TInt aGlyphIndex,
 										   const TOpenFontCharMetrics& aMetrics, const TDesC8& aBitmap);
-	inline COpenFont* Font()const;
+	inline const COpenFont* Font()const;
 
 private:
-	COpenFontSessionCacheEntry(const COpenFont* aFont, TInt aCode, TInt aGlyphIndex, const TOpenFontCharMetrics& aMetrics):
-		COpenFontGlyph(aCode, aGlyphIndex, aMetrics)
-		, iFontOffset(reinterpret_cast<TInt>(aFont) - reinterpret_cast<TInt>(this))	
-		    { }
+	inline COpenFontSessionCacheEntry(const COpenFont* aFont, TInt aCode, TInt aGlyphIndex, const TOpenFontCharMetrics& aMetrics);
 	~COpenFontSessionCacheEntry();
 public:
     TInt iLastAccess;               // serial number of the last access to the glyph
 
 private: 
-    const TInt iFontOffset;          // offset of the font that contains this glyph, (not owned by this class!)    
+    TInt iFontOffset;          // offset of the font that contains this glyph, (not owned by this class!)    
 	};
-
-#else
-class COpenFontSessionCacheEntry: public COpenFontGlyph
-    {
-public:
-    static COpenFontSessionCacheEntry* New(RHeap* aHeap, const COpenFont* aFont, TInt aCode, TInt aGlyphIndex,
-                                           const TOpenFontCharMetrics& aMetrics, const TDesC8& aBitmap);
-
-private:
-    COpenFontSessionCacheEntry(const COpenFont* aFont, TInt aCode, TInt aGlyphIndex, const TOpenFontCharMetrics& aMetrics):
-        COpenFontGlyph(aCode, aGlyphIndex, aMetrics), iFont(aFont) { }
-    ~COpenFontSessionCacheEntry();
-public:
-    const COpenFont* iFont;         // the font that contains this glyph, (not owned by this class!)
-    TInt iLastAccess;               // serial number of the last access to the glyph
-    };
-   
-#endif    //FNTSTORE_SUPPORT_FMM
 
 /**
  A glyph cache for a particular session.
@@ -272,7 +172,6 @@ public:
 
  @internalComponent
  */
-#ifdef FNTSTORE_SUPPORT_FMM
 class COpenFontSessionCache
     {
 public:
@@ -282,44 +181,19 @@ public:
     TInt SessionHandle() { return iSessionHandle; }
     const COpenFontGlyph* Glyph(const COpenFont* aFont, TInt aCode, TInt& aIndex);
     void Insert(RHeap* aHeap, COpenFontSessionCacheEntry* aEntry, TInt aIndex);
-    inline TInt* Entry()const;
-    inline COpenFontSessionCacheEntry* ToCOpenFontSessionCacheEntryPointer(TInt aOffset)const;
     
 private:
-    COpenFontSessionCache(TInt aSessionHandle, TInt aEntries);
+    COpenFontSessionCache(TInt aSessionHandle);
     ~COpenFontSessionCache();
 public:
     TInt iSessionHandle;    
-    TInt iEntries;
     TInt iLastAccess;
-private:    
-    TInt iEntryOffset;    // Offset of the pointer to an offset array which is of COpenFontSessionCacheEntry*    
+    ROffsetArray<COpenFontSessionCacheEntry> iEntryArray;
     };
-#else
-class COpenFontSessionCache
-	{
-public:
-	static COpenFontSessionCache* NewL(RHeap* aHeap, TInt aSessionHandle, TInt aEntries);
-	void Delete(RHeap* aHeap);
-	
-	TInt SessionHandle() { return iSessionHandle; }
-	const COpenFontGlyph* Glyph(const COpenFont* aFont, TInt aCode, TInt& aIndex);
-	void Insert(RHeap* aHeap, COpenFontSessionCacheEntry* aEntry, TInt aIndex);
 
-private:
-	COpenFontSessionCache(TInt aSessionHandle, TInt aEntries);
-	~COpenFontSessionCache();
-public:
-	TInt iSessionHandle;
-	TInt iEntries;
-	TInt iLastAccess;
-	COpenFontSessionCacheEntry** iEntry;
-	};
-#endif //FNTSTORE_SUPPORT_FMM
 /**
  @internalComponent
  */
-#ifdef FNTSTORE_SUPPORT_FMM
 class COpenFontSessionCacheListItem
 	{
 public:
@@ -336,20 +210,6 @@ private:
 	TInt iNextOffset;
 	TInt iCacheOffset;
 	};
-#else
-class COpenFontSessionCacheListItem
-	{
-public:
-	COpenFontSessionCacheListItem(COpenFontSessionCache* aCache): iNext(NULL), iCache(aCache) { }
-	void Delete(RHeap* aHeap);
-private:
-	~COpenFontSessionCacheListItem();
-public:
-	COpenFontSessionCacheListItem* iNext;	// the next cache in the list
-	COpenFontSessionCache* iCache;			// the cache if non-null;
-	};	
-#endif // FNTSTORE_SUPPORT_FMM
-
 
 class TFontTableGlyphOutlineCacheMemMonitor
     {
@@ -570,5 +430,25 @@ private:
     RHashMap<THintedOutlineId, COutlineCacheItem*> iItemIdMap; // map the identity to an index in 'iCacheItems'.
     };
 
+
+// inline functions
+inline COpenFontSessionCacheEntry::COpenFontSessionCacheEntry(const COpenFont* aFont, TInt aCode, TInt aGlyphIndex,const TOpenFontCharMetrics& aMetrics) :
+    COpenFontGlyph(aCode, aGlyphIndex, aMetrics)
+    {
+    iFontOffset = aFont ? reinterpret_cast<TInt>(aFont) - reinterpret_cast<TInt>(this) : 0;
+    }
+
+
+inline const COpenFont* COpenFontSessionCacheEntry::Font() const
+    {
+    if (iFontOffset)
+        {
+        return reinterpret_cast<const COpenFont*> (PtrAdd(this, iFontOffset));
+        }
+    else
+        {
+        return NULL;
+        }
+    }
 
 #endif	// __OPENFONTSPRIVATE_H__

@@ -29,10 +29,6 @@ PRJ_EXPORTS
 
 PRJ_MMPFILES
 	IcuLayoutEngine.mmp
-#ifndef WINS	
-	iculayoutengine_fmm.mmp
-#endif
-
 	
 PRJ_TESTMMPFILES
 	TC_SHAP_shapeText.mmp

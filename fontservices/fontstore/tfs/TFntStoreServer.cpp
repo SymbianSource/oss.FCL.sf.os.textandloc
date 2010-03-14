@@ -44,6 +44,7 @@
 #include "t_linkedfontscapability.h"
 #include "T_LinkedFontUpdateTests.h"
 #include "T_CACHE.H" 
+#include "T_FontSessionCache.h"
 
 CTFntStoreServer* CTFntStoreServer::NewL()
 /**
@@ -122,14 +123,10 @@ CTestStep* CTFntStoreServer::CreateTestStep(const TDesC& aStepName)
    Implementation of CTestServer pure virtual
  */
 	{
-	if(aStepName == KTFntStep)
-		{
-		return new CTFntStep();
-		}
-	else if(aStepName == KTCacheStep)
-	    	{
-	    	return new CTCacheStep();
-	    	}
+	if (aStepName == KTFntStep)
+        {
+        return new CTFntStep();
+        }
 	else if(aStepName == KTFntMemStep)
 		{
 		return new CTFntMemStep();
@@ -188,24 +185,32 @@ CTestStep* CTFntStoreServer::CreateTestStep(const TDesC& aStepName)
 		}
 	else if (aStepName == KTLinkedFontsMemoryStep)
 		{
-		return new CTLinkedFontsMemoryStep();
-		}
-	else if (aStepName == KTLinkedFontsComparisonStep)
-		{
-		return new CTLinkedFontsComparisonStep();
-		}
-	else if (aStepName == KTLinkedFontsCapabilityStep)
-		{
-		return new CTLinkedFontsCapabilityStep();
-		}
-		else if (aStepName == KTLinkedFontsUpdateStage1Step)
-		{
-		return new CTLinkedFontsUpdateStage1Step();
-		}
-		else if (aStepName == KTLinkedFontsUpdateStage2Step)
-		{
-		return new CTLinkedFontsUpdateStage2Step();
-		}
+        return new CTLinkedFontsMemoryStep();
+        }
+    else if (aStepName == KTLinkedFontsComparisonStep)
+        {
+        return new CTLinkedFontsComparisonStep();
+        }
+    else if (aStepName == KTLinkedFontsCapabilityStep)
+        {
+        return new CTLinkedFontsCapabilityStep();
+        }
+    else if (aStepName == KTLinkedFontsUpdateStage1Step)
+        {
+        return new CTLinkedFontsUpdateStage1Step();
+        }
+    else if (aStepName == KTLinkedFontsUpdateStage2Step)
+        {
+        return new CTLinkedFontsUpdateStage2Step();
+        }
+    else if (aStepName == KTCacheStep)
+        {
+        return new CTCacheStep();
+        }
+    else if (aStepName == KTFontSessionCacheStep)
+        {
+        return new CTFontSessionCacheStep();
+        }
 	RDebug::Printf("Test Step is either mis-spelt or doesn't exist - see CTFntStoreServer::CreateTestStep");
 	return NULL;
 	}
