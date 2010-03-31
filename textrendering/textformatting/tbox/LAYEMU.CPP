@@ -4013,7 +4013,7 @@ TInt CTextLayout::ScrollL(TInt aDy,TAllowDisallow aScrollBlankSpace,
 		{
 		if (aTopNoLimitBorder)
 		    {
-	        iBandTop = Max(0 - iText->LayoutHeight(),desired_bandtop);
+	        iBandTop = desired_bandtop;
 		    }
 		else
 		    iBandTop = Max(0,desired_bandtop);//Disallow text scrolled beyond top border
