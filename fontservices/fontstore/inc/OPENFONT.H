@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 1998-2009 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 1998-2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -39,7 +39,6 @@ class CFont;
 class COpenFontFile;
 class COpenFontGlyph;
 class COpenFontGlyphCache;
-class COpenFontGlyphTreeEntry;
 class COpenFontPositioner;
 class COpenFontSessionCache;
 class COpenFontSessionCacheList;
@@ -250,7 +249,6 @@ private:
 											// is actually of size iBitmapBufferSize.
 	};
 
-class COpenFontGlyph;
 /**
 Open Font System font abstract base class.
 
@@ -338,14 +336,6 @@ public:
 	inline TInt FontMaxHeight() const;
 	void DeleteShaper() const;
 	
-protected:	
-	/** WARNING: Function for internal use ONLY. Compatibility is not guaranteed in future releases.
-	*/
-	TInt PointerToThisOffset(const TAny* aAny);
-	/** WARNING: Function for internal use ONLY. Compatibility is not guaranteed in future releases.
-	*/
-	TAny* ThisOffsetToPointer(const TInt aOffset);
-		
 protected:
 	RHeap* iHeap;
 	TOpenFontMetrics iMetrics;
@@ -377,16 +367,11 @@ protected:
 	TInt iFontLineGap;
 private:
 	const COpenFontGlyph* Glyph(TInt aSessionHandle,TInt aCode) const;
-protected:
 
-	/** WARNING: Function for internal use ONLY. Compatibility is not guaranteed in future releases.
-	*/
-	const COpenFontGlyph* FontCacheGlyph(TInt aCode,TInt*& aNode);
 	const COpenFontGlyph* FontCacheGlyph(TInt aCode);
 	
 	void SetGlyphCache(COpenFontGlyphCache* aGlyphCache);
 	
-private:
 	const COpenFontGlyph* SessionCacheGlyph(RHeap* aHeap,TInt aSessionHandle,TInt aCode,
 											COpenFontSessionCache*& aCache,TInt& aIndex,TBool aCreate) const;
 	void RasterizeHelperL(TInt aCode,TOpenFontGlyphData* aGlyphData,TOpenFontGlyphData*& aTempGlyphData);
@@ -403,14 +388,10 @@ private:
     TInt iFileOffset;
     
 	TInt iFaceIndex;										// index of the face in the font file
-protected:
-    /**
-    WARNING: Compatibility is not guaranteed in future releases. Please use the provided APIs only.
-    Offset from the address of this font of the per-font glyph cache which is owned by the font
-    @internalTechnology
-    */  
+
+	// Offset from the address of this font of the per-font glyph cache which is owned by the font
     TInt iGlyphCacheOffset;
-private:
+
     // Offset from the address of this font of the list of per-session glyph
     // caches which are owned by CFontStore
     TInt iSessionCacheListOffset;

@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2006-2009 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 2006-2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -19,6 +19,8 @@
 #ifndef __OPENFONTS_PRIVATE_H__
 #define __OPENFONTS_PRIVATE_H__
 
+#include <hextree.h>
+
 class COpenFontShaperCacheEntry;
 
 /* MSB is set to indicate a glyph code rather than a unicode value
@@ -37,70 +39,37 @@ public:
 	};
 
 /**
+ Note: this class must be self-contained, since instances are added to an RHexTree,
+ that is, it must be possible to destroy instances simply with RHeap::Free().
  @internalComponent
  */
 class COpenFontGlyph
 	{
 public:
-	COpenFontGlyph(TInt aCode, TInt aGlyphIndex, const TOpenFontCharMetrics& aMetrics):
-		iCode(aCode), iGlyphIndex(aGlyphIndex), iMetrics(aMetrics), iBitmapOffset(0) { }
-	
-	static COpenFontGlyph* NewL(RHeap* aHeap, TInt aCode, TInt aGlyphIndex,
-								const TOpenFontCharMetrics& aMetrics, const TDesC8& aBitmap);
-
-	static void Delete(RHeap* aHeap, COpenFontGlyph* aGlyph);	
-	TUint8* Bitmap() const;	
-
-	TInt iCode;						// the Unicode value of the character
-	TInt iGlyphIndex;				// the glyph index
-	TOpenFontCharMetrics iMetrics;	// the metrics	
+    static COpenFontGlyph* New(RHeap* aHeap, TInt aCode, TInt aGlyphIndex,
+                               const TOpenFontCharMetrics& aMetrics, const TDesC8& aBitmap);
+	inline static void Delete(RHeap* aHeap, COpenFontGlyph* aGlyph);
+	inline const TUint8* Bitmap() const;
 
 protected:
-	TBool SetBitmap(RHeap* aHeap, const TDesC8& aBitmap);
-	~COpenFontGlyph();
-	
+	COpenFontGlyph(TInt aCode, TInt aGlyphIndex, const TOpenFontCharMetrics& aMetrics)
+		: iCode(aCode), iGlyphIndex(aGlyphIndex), iMetrics(aMetrics), iBitmapOffset(0) {}
+	~COpenFontGlyph() {}
+	void SetBitmap(const TAny* aBitmap);
+
+public:
+	const TInt iCode;						// the Unicode value of the character
+	const TInt iGlyphIndex;					// the glyph index
+	const TOpenFontCharMetrics iMetrics;	// the metrics
+
 private:
 	// an offset from this COpenFontGlyph object to a pointer to the run-length-encoded bitmap, 
 	// calculated as (bitmapPointer)-(this)
-	TInt iBitmapOffset;				
-	};
-/**
- Binary tree of glyphs. Each glyph can have left and right child nodes which are added
- depending on the value of their glyph code relative to the parent's glyph code.
-
- @internalComponent
- */
-class COpenFontGlyphTreeEntry: public COpenFontGlyph
-	{
-	friend class COpenFont;
-	
-public:
-	static COpenFontGlyphTreeEntry* New(RHeap* aHeap, TInt aCode, TInt aGlyphIndex,
-										const TOpenFontCharMetrics& aMetrics, const TDesC8& aBitmap);
-
-private:
-	/** The left COpenFontGlyphTreeEntry from this entry. Represented by an offset from the
-     current heap base. Use COpenFont::ThisOffsetToPointer() to convert to a valid 
-     COpenFontGlyphTreeEntry pointer. */
-    TInt iLeftOffset;
-    /** The right COpenFontGlyphTreeEntry from this entry. Represented by an offset from the
-     current heap base. Use COpenFont::ThisOffsetToPointer() to convert to a valid 
-     COpenFontGlyphTreeEntry pointer. */
-    TInt iRightOffset;
-    /** Pointer to next glyph that was added to the glyph cache.  This enables 
-     non-recursive deletion of the cache. This is only ever accessed from server
-     process, so can be a direct pointer, not an offset. */
-    COpenFontGlyphTreeEntry* iNext;
-
-private:
-	COpenFontGlyphTreeEntry(TInt aCode, TInt aGlyphIndex, const TOpenFontCharMetrics& aMetrics)
-	 :	COpenFontGlyph(aCode, aGlyphIndex, aMetrics), iLeftOffset(0), iRightOffset(0),iNext(NULL){}
-
-	~COpenFontGlyphTreeEntry();
+	TInt iBitmapOffset;
 	};
 
 /**
- * Template for offset implementation of pointer to pointer
+ * Template for offset implementation of pointer array
  @internalComponent
  */
 template<class T>
@@ -118,7 +87,6 @@ private:
     TInt iCount;
     };
 
-
 /**
  The per-font glyph cache. For now, just the members that used to be directly in
  COpenFont. Now it is a private class it can be elaborated to do character-to-glyph-index
@@ -129,16 +97,23 @@ private:
 class COpenFontGlyphCache
 	{
 public:
-	COpenFontGlyphCache(): iGlyphTreeOffset(0), iGlyphCacheMemory(0),iGlyphList(NULL),iShaperCacheSentinel(NULL), iShapingInfoCacheMemory(0), iNumberOfShaperCacheEntries(0) { }
+	COpenFontGlyphCache(RHeap* aHeap)
+	  : iGlyphTreeById(aHeap),
+		iGlyphTreeByUnicode(aHeap),
+		iGlyphCacheMemory(0),
+		iShaperCacheSentinel(NULL),
+		iShapingInfoCacheMemory(0),
+		iNumberOfShaperCacheEntries(0)
+		{}
 	TShapeHeader* SearchShaperCache(TInt aSessionHandle, TFontShapeFunctionParameters*& aParams);
 	TShapeHeader* Insert(TInt aSessionHandle, RHeap* aHeap, CShaper::TInput aInput, TShapeHeader* aShapeHeader, TInt& aAddedBytes);
 	TInt DeleteLeastRecentlyUsedEntry(RHeap* aHeap);
 	TBool ShaperCacheIsEmpty();
 	
 public:
-	TInt iGlyphTreeOffset;									// an offset to root of the glyph cache; a binary tree
+	RHexTree<COpenFontGlyph> iGlyphTreeById;				// a hex tree of glyphs indexed by glyph ID
+	RHexTree<COpenFontGlyph> iGlyphTreeByUnicode;			// a hex tree of glyphs indexed by Unicode code point
 	TInt iGlyphCacheMemory;									// memory used by the glyph tree in bytes
-	COpenFontGlyphTreeEntry* iGlyphList;                   // the glyphs, organized as a list
 	COpenFontShaperCacheEntry* iShaperCacheSentinel;
 	TInt iShapingInfoCacheMemory;
 	TInt iNumberOfShaperCacheEntries;	
@@ -147,12 +122,12 @@ public:
 /**
  @internalComponent
  */
-
 class COpenFontSessionCacheEntry: public COpenFontGlyph
 	{
 public:
 	static COpenFontSessionCacheEntry* New(RHeap* aHeap, const COpenFont* aFont, TInt aCode, TInt aGlyphIndex,
 										   const TOpenFontCharMetrics& aMetrics, const TDesC8& aBitmap);
+	inline static void Delete(RHeap* aHeap, COpenFontSessionCacheEntry* aEntry);
 	inline const COpenFont* Font()const;
 
 private:
@@ -190,34 +165,37 @@ public:
     ROffsetArray<COpenFontSessionCacheEntry> iEntryArray;
     };
 
-/**
- @internalComponent
- */
-class COpenFontSessionCacheListItem
-	{
-public:
-	COpenFontSessionCacheListItem(COpenFontSessionCache* aCache);
-
-	COpenFontSessionCacheListItem* Next();
-	void SetNext(COpenFontSessionCacheListItem* aNext);
-	COpenFontSessionCache* Cache(); 
-
-	void Delete(RHeap* aHeap);
-private:
-	~COpenFontSessionCacheListItem();
-private:
-	TInt iNextOffset;
-	TInt iCacheOffset;
-	};
-
 
 // inline functions
+
+inline void COpenFontGlyph::Delete(RHeap* aHeap, COpenFontGlyph* aGlyph)
+	{
+	aHeap->Free(aGlyph);
+	}
+
+/**
+@return A pointer to the bitmap data stored with this glyph, or NULL
+if no bitmap has been stored with this glyph.
+ */
+inline const TUint8* COpenFontGlyph::Bitmap() const
+	{
+	if (iBitmapOffset)
+		{
+		return reinterpret_cast<const TUint8*>(PtrAdd(this, iBitmapOffset));
+		}
+	return NULL;
+	}
+
 inline COpenFontSessionCacheEntry::COpenFontSessionCacheEntry(const COpenFont* aFont, TInt aCode, TInt aGlyphIndex,const TOpenFontCharMetrics& aMetrics) :
     COpenFontGlyph(aCode, aGlyphIndex, aMetrics)
     {
     iFontOffset = aFont ? reinterpret_cast<TInt>(aFont) - reinterpret_cast<TInt>(this) : 0;
     }
 
+inline void COpenFontSessionCacheEntry::Delete(RHeap* aHeap, COpenFontSessionCacheEntry* aEntry)
+	{
+	COpenFontGlyph::Delete(aHeap, aEntry);
+	}
 
 inline const COpenFont* COpenFontSessionCacheEntry::Font() const
     {
@@ -225,10 +203,7 @@ inline const COpenFont* COpenFontSessionCacheEntry::Font() const
         {
         return reinterpret_cast<const COpenFont*> (PtrAdd(this, iFontOffset));
         }
-    else
-        {
-        return NULL;
-        }
+    return NULL;
     }
 
 #endif	// __OPENFONTSPRIVATE_H__

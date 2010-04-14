@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2003-2009 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 2003-2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -383,7 +383,7 @@ TShapeHeader* COpenFont::InsertShapedDataIntoCache(TInt aSessionHandle,TFontShap
             {
             return NULL;
             }
-        new (glyphCache) COpenFontGlyphCache;
+        new (glyphCache) COpenFontGlyphCache(iHeap);
         SetGlyphCache(glyphCache);
         }
     // If there is no sentinel present, i.e. new cache
@@ -524,12 +524,8 @@ EXPORT_C COpenFont::~COpenFont()
 	COpenFontGlyphCache* glyphCache = GetGlyphCache();
 	if (glyphCache != NULL)
 		{
-		COpenFontGlyphTreeEntry* next = NULL;
-		for (COpenFontGlyphTreeEntry* g = glyphCache->iGlyphList; g != NULL; g = next)
-			{
-			next = g->iNext;
-			COpenFontGlyph::Delete(iHeap, g);
-			}
+		glyphCache->iGlyphTreeById.ResetAndDestroy();
+		glyphCache->iGlyphTreeByUnicode.ResetAndDestroy();
 
 		// Delete the shaper cache as well
 		if (glyphCache->iShaperCacheSentinel)
@@ -563,19 +559,6 @@ EXPORT_C COpenFont::~COpenFont()
         {
         file->RemoveFontFromList(this);
         }
-	}
-
-COpenFontGlyph::~COpenFontGlyph()
-	{
-	}
-
-void COpenFontGlyph::Delete(RHeap* aHeap, COpenFontGlyph* aGlyph)
-	{
-	if (aGlyph != NULL)
-		{
-		aHeap->Free(aGlyph->Bitmap());
-		aHeap->Free(aGlyph);
-		}
 	}
 
 EXPORT_C void COpenFont::operator delete(TAny *aFont)
@@ -616,21 +599,12 @@ TBool COpenFont::Rasterize(TInt aSessionHandle, TInt aCode,
 			{
 			return EFalse;
 			}
-		new(glyphCache) COpenFontGlyphCache;
+		new(glyphCache) COpenFontGlyphCache(iHeap);
 		SetGlyphCache(glyphCache);
 		}
 
 	// Look in the Font Cache	
-	TInt* nodeInsertPtr = NULL;	
-	const COpenFontGlyph* g = FontCacheGlyph(aCode, nodeInsertPtr);		 	
-
-	// If it is not found there look in the session cache.
-	COpenFontSessionCache* cache = NULL;
-	TInt index = 0;
-	if (g == NULL)
-		{
-		g = SessionCacheGlyph(iHeap, aSessionHandle, aCode, cache, index, EFalse);
-		}
+	const COpenFontGlyph* g = FontCacheGlyph(aCode);		 	
 
 	// If it has already been rasterized return it.
 	if (g != NULL)
@@ -656,56 +630,48 @@ TBool COpenFont::Rasterize(TInt aSessionHandle, TInt aCode,
 
 	TBool glyph_data_valid = ETrue;
 	const TOpenFontGlyphData* cur_glyph_data = temp_glyph_data ? temp_glyph_data : aGlyphData;
-	const COpenFontGlyph* new_glyph = NULL;
+	COpenFontGlyph* new_glyph = NULL;
 
 	// If the maximum per-font cache memory will not be exceeded, put the glyph into the font cache.
-	TInt bytes = sizeof(COpenFontGlyphTreeEntry) + cur_glyph_data->BytesNeeded();	
+	TInt bytes = sizeof(COpenFontGlyph) + cur_glyph_data->BytesNeeded();	
 	if(glyphCache != NULL && bytes + glyphCache->iGlyphCacheMemory <= KMaxGlyphCacheMemory)
 		{
-		COpenFontGlyphTreeEntry* new_entry = COpenFontGlyphTreeEntry::New(iHeap, aCode, cur_glyph_data->GlyphIndex(), *cur_glyph_data->Metrics(), cur_glyph_data->Bitmap());
-		new_glyph=new_entry;
-		if (new_entry != NULL)
+		new_glyph = COpenFontGlyph::New(iHeap, aCode, cur_glyph_data->GlyphIndex(), *cur_glyph_data->Metrics(), cur_glyph_data->Bitmap());
+		if (new_glyph != NULL)
             {
-            // Add the glyph to a leaf node using the nodeInsertPtr that was returned by FontCacheGlyph()
-            // This is the first node if the glyph cache is empty. This updates the cache atomically.
-            *nodeInsertPtr = PointerToThisOffset(new_entry);
-
-            // If new_entry is not the first in the cache, set the previous 
-            // entry to link to this so that a linked-list of entries can be
-            // maintained to simplify deletion.
-            COpenFontGlyphTreeEntry* tree = static_cast<COpenFontGlyphTreeEntry*> (ThisOffsetToPointer(glyphCache->iGlyphTreeOffset));
-            if (new_entry != tree)
-                {
-                while (tree->iNext != NULL)
-                    {
-                    tree = tree->iNext;
-                    }
-                tree->iNext = new_entry;
-                }
-            else
-                {
-                // First entry in tree, initialise iGlyphList
-                glyphCache->iGlyphList = new_entry;
-                }
-
-            glyphCache->iGlyphCacheMemory += bytes;
-            }//if (new_entry)
+			if ((aCode & 0x80000000) != 0)
+				{
+				error = glyphCache->iGlyphTreeById.SetAt(aCode & 0x7FFFFFFF, new_glyph);
+				}
+			else
+				{
+				error = glyphCache->iGlyphTreeByUnicode.SetAt(aCode, new_glyph);
+				}
+			if (error == KErrNone)
+			    {
+                glyphCache->iGlyphCacheMemory += bytes;
+			    }
+			else
+			    {
+                iHeap->Free(new_glyph);
+                new_glyph = NULL;
+			    }
+            }
 		}
+	// Otherwise put the glyph into the per-session cache.
 	else
 		{
-		error = KErrGeneral;
-		}
-
-	// Otherwise put the glyph into the per-session cache.
-	if (error != KErrNone)
-		{
-		// If the session cache is not yet known find it or create one.
-		if (cache == NULL)
-			{
-			SessionCacheGlyph(iHeap, aSessionHandle, aCode, cache, index, TRUE);
-			}
+		// Look in the session cache. Do not expect to find the glyph here
+		// since the session cache has already been searched client-side.
+		// However, SessionCacheGlyph() is called so that the session cache is
+		// created if needed and an index is found where the new glyph will be
+		// placed when added to the session cache.
+		COpenFontSessionCache* cache = NULL;
+		TInt index = 0;
+		(void)SessionCacheGlyph(iHeap, aSessionHandle, aCode, cache, index, ETrue);
 		if (cache == NULL)
 			{			
+			iHeap->Free(temp_glyph_data);
 			return EFalse;
 			}
 
@@ -820,39 +786,6 @@ void COpenFont::DeleteShaper() const
 	delete iShaper;
 	}
 
-/** Given the passed pointer aAny, return an offset from it to the "this" pointer
-of this COpenFont object.
-@param aAny A pointer to an object that exists on the shared heap, i.e. the same heap
-that this CCOpenFont object was created on.
-@return An offset relative to the "this" pointer for this object, this offset can
-be converted back to a pointer using ThisOffsetToPointer().
-@see ThisOffsetToPointer().
-@internalComponent 
- */
-TInt COpenFont::PointerToThisOffset(const TAny* aAny)
-	{
-	if (aAny != NULL)
-		{
-		return ((TInt)aAny - (TInt)this);
-		}
-	return 0;
-	}
-
-/** Given the passed passed offset aThisOffset, convert it to a pointer relative to
-the "this" pointer for this object.
-@param aThisOffset An offset that was generated using PointerToThisOffset().
-@return A pointer that has been created by adding (this+aThisOffset).
-@see PointerToThisOffset().
-@internalComponent 
- */
-TAny* COpenFont::ThisOffsetToPointer(const TInt aThisOffset)
-	{
-	if (aThisOffset)
-		{
-		return (TAny*)((TInt)this + aThisOffset);
-		}
-	return NULL;
-	}		
 
 /**
 A constructor initialised with a TCharacterMetrics object.
@@ -961,86 +894,17 @@ The cache is now created in COpenFont::Rasterize which can only be called within
 @return A pointer to the requested glyph if it was found in the glyph cache, NULL if it was not found.
 */
 const COpenFontGlyph* COpenFont::FontCacheGlyph(TInt aCode)
-	{		
+	{
 	if (COpenFontGlyphCache* glyphCache = GetGlyphCache())
-		{		
-		COpenFontGlyphTreeEntry* node = NULL;		
-		if (glyphCache->iGlyphTreeOffset)
-			{			
-			node = static_cast<COpenFontGlyphTreeEntry*>(ThisOffsetToPointer(glyphCache->iGlyphTreeOffset));
+		{
+		if ((aCode & 0x80000000) != 0)
+			{
+			return glyphCache->iGlyphTreeById.At(aCode & 0x7FFFFFFF);
 			}
-				
-		while (node != NULL)
+		else
 			{
-			TInt code = node->iCode;
-			if(code == aCode)
-				{
-				// Found the glyph
-				return node;
-				}		
-			else if(code > aCode)
-				{									
-				node = static_cast<COpenFontGlyphTreeEntry*>(ThisOffsetToPointer(node->iLeftOffset));			
-				}
-			else
-				{										
-				node = static_cast<COpenFontGlyphTreeEntry*>(ThisOffsetToPointer(node->iRightOffset));			
-				}
-			}		
-		}
-	// No glyph found
-	return NULL;
-	}
-	
-/**
-Retrieve glyph data from the per-font glyph cache.
-If it is not found return NULL and place the address of the node pointer
-to receive a new glyph in aNodeInsertPtr. 
-If the cache hasn't been created, then return NULL.
-Previous versions of this function created the cache, but as this function can potentially
-run in the context of threads other than FBSERV the alloc could panic if iHeap's chunk had to 
-be resized - this is not allowed by the kernel.
-The cache is now created in COpenFont::Rasterize which can only be called within the context of FBSERV
-@param aCode The code for the glpyh to look for in the cache
-@param aNodeInsertPtr Returns a pointer to a final empty left or right leaf node
-in the glpyh tree where the searched for glyph can be inserted if necessary.
-@return A pointer to the requested glyph if it was found in the glyph cache, NULL if it was not found.
-*/
-const COpenFontGlyph* COpenFont::FontCacheGlyph(TInt aCode, TInt*& aNodeInsertPtr)
-	{		
-	aNodeInsertPtr = NULL;	
-
-	if (COpenFontGlyphCache* glyphCache = GetGlyphCache())
-		{		
-        COpenFontGlyphTreeEntry* node = NULL;
-        if (glyphCache->iGlyphTreeOffset)
-            {
-            node = static_cast<COpenFontGlyphTreeEntry*> (ThisOffsetToPointer(glyphCache->iGlyphTreeOffset));
-            }
-        else
-            {
-            aNodeInsertPtr = &glyphCache->iGlyphTreeOffset;
-            }
-
-        while (node != NULL)
-			{
-			TInt code = node->iCode;
-			if(code == aCode)
-				{
-				// Found the glyph
-				return node;
-				}		
-			else if(code > aCode)
-				{					
-				aNodeInsertPtr = &node->iLeftOffset;
-				node = static_cast<COpenFontGlyphTreeEntry*>(ThisOffsetToPointer(node->iLeftOffset));			
-				}
-			else
-				{						
-				aNodeInsertPtr = &node->iRightOffset;
-				node = static_cast<COpenFontGlyphTreeEntry*>(ThisOffsetToPointer(node->iRightOffset));			
-				}
-			}		
+			return glyphCache->iGlyphTreeByUnicode.At(aCode);
+			}
 		}
 
 	// No glyph found
@@ -1074,34 +938,12 @@ const COpenFontGlyph* COpenFont::SessionCacheGlyph(RHeap* aHeap,
 	TInt& aIndex, TBool aCreate) const
 	{
 	aIndex = 0;
-	COpenFontSessionCacheListItem* prev = NULL;
-
-	COpenFontSessionCacheList* cachelist = const_cast<COpenFont*>(this)->SessionCacheList();
-	RSemaphore sem;
-	if(KErrNone != sem.OpenGlobal(KSessionCacheSemaphoreName))
-	    {
-	    RDebug::Print(_L("COpenFont::SessionCacheGlyphe() can't open SessionCacheSemaphore"));
-	    return NULL;
-	    }
-	sem.Wait();
-	COpenFontSessionCacheListItem* cacheListStart=cachelist->Start();
-	if(cacheListStart != NULL)
+	COpenFontSessionCacheList* cacheList = SessionCacheList();
+	aCache = cacheList->FindCache(aSessionHandle);
+	if (aCache != NULL)
 		{
-		for (COpenFontSessionCacheListItem* p = cacheListStart; p; p = p->Next())
-			{
-			COpenFontSessionCache* cache=p->Cache();
-			if (cache->iSessionHandle == aSessionHandle)
-				{
-				aCache = cache;
-				sem.Signal();
-				sem.Close();
-				return aCache->Glyph(this,aCode,aIndex);
-				}
-			prev = p;
-			}
+		return aCache->Glyph(this, aCode, aIndex);
 		}
-	sem.Signal();
-	sem.Close();
 	
 	if (aCreate)
 		{
@@ -1110,23 +952,11 @@ const COpenFontGlyph* COpenFont::SessionCacheGlyph(RHeap* aHeap,
 		
 		if ((!error) && new_cache != NULL)
 			{
-			COpenFontSessionCacheListItem* new_item = (COpenFontSessionCacheListItem*)aHeap->Alloc(sizeof(COpenFontSessionCacheListItem));
-			if (new_item == NULL)
+			if (cacheList->AddCache(new_cache) != KErrNone)
 				{
 				new_cache->Delete(aHeap);	
 				aHeap->Free(new_cache);
 				return NULL;
-				}
-
-			new(new_item) COpenFontSessionCacheListItem(new_cache);
-
-			if (prev != NULL)
-				{
-				prev->SetNext(new_item);
-				}
-			else
-				{
-				cachelist->SetStart(new_item);
 				}
 
 			aCache = new_cache;
@@ -1165,68 +995,35 @@ void COpenFont::SetGlyphCache(COpenFontGlyphCache* aGlyphCache)
 Create a glyph data object on the shared heap, given the code, metrics and the data bytes.
 The data is copied; ownership remains with the caller.
 */
-COpenFontGlyph* COpenFontGlyph::NewL(RHeap* aHeap, TInt aCode, TInt aGlyphIndex, const TOpenFontCharMetrics& aMetrics, const TDesC8& aBitmap)
+COpenFontGlyph* COpenFontGlyph::New(RHeap* aHeap, TInt aCode, TInt aGlyphIndex, const TOpenFontCharMetrics& aMetrics, const TDesC8& aBitmap)
 	{
-	COpenFontGlyph* glyph = (COpenFontGlyph*)aHeap->AllocL(sizeof(COpenFontGlyph));
-	new(glyph) COpenFontGlyph(aCode, aGlyphIndex, aMetrics);
-	if (!glyph->SetBitmap(aHeap, aBitmap))
-		{
-		aHeap->Free(glyph);
-		User::Leave(KErrNoMemory);
-		}
+	COpenFontGlyph* glyph = (COpenFontGlyph*)aHeap->Alloc(sizeof(COpenFontGlyph) + aBitmap.Size());
+    if (glyph == NULL)
+        {
+        return NULL;
+        }
+    new(glyph) COpenFontGlyph(aCode, aGlyphIndex, aMetrics);
+	glyph->SetBitmap(glyph + 1);
+	Mem::Copy(glyph + 1, aBitmap.Ptr(), aBitmap.Size());
 	return glyph;
-	}	
-
-COpenFontGlyphTreeEntry* COpenFontGlyphTreeEntry::New(RHeap* aHeap, TInt aCode, TInt aGlyphIndex, const TOpenFontCharMetrics& aMetrics, const TDesC8& aBitmap)
-	{
-	COpenFontGlyphTreeEntry* entry = (COpenFontGlyphTreeEntry*)aHeap->Alloc(sizeof(COpenFontGlyphTreeEntry));
-	if (entry == NULL)
-		return NULL;
-	new(entry) COpenFontGlyphTreeEntry(aCode, aGlyphIndex, aMetrics);
-	if (!entry->SetBitmap(aHeap, aBitmap))
-		{
-		aHeap->Free(entry);
-		entry = NULL;
-		}
-	return entry;
 	}
 
 COpenFontSessionCacheEntry* COpenFontSessionCacheEntry::New(RHeap* aHeap, const COpenFont* aFont, TInt aCode, TInt aGlyphIndex, const TOpenFontCharMetrics& aMetrics, const TDesC8& aBitmap) 
 	{
-	COpenFontSessionCacheEntry* entry = (COpenFontSessionCacheEntry*)aHeap->Alloc(sizeof(COpenFontSessionCacheEntry));
+	COpenFontSessionCacheEntry* entry = (COpenFontSessionCacheEntry*)aHeap->Alloc(sizeof(COpenFontSessionCacheEntry) + aBitmap.Size());
 	if (entry == NULL)
-		return NULL;
-	new(entry) COpenFontSessionCacheEntry(aFont, aCode, aGlyphIndex, aMetrics);
-	if (!entry->SetBitmap(aHeap, aBitmap))
 		{
-		aHeap->Free(entry);
-		entry = NULL;
+		return NULL;
 		}
+	new(entry) COpenFontSessionCacheEntry(aFont, aCode, aGlyphIndex, aMetrics);
+	entry->SetBitmap(entry + 1);
+	Mem::Copy(entry + 1, aBitmap.Ptr(), aBitmap.Size());
 	return entry;
 	}
 
-/**
-@return A pointer to the run-length-encoded bitmap stored with this glyph, or NULL
-if no bitmap has been stored with this glyph.
- */
-TUint8* COpenFontGlyph::Bitmap() const
+void COpenFontGlyph::SetBitmap(const TAny* aBitmap)
 	{
-	if (iBitmapOffset)
-		{
-		return reinterpret_cast<TUint8*>(reinterpret_cast<TInt>(this) + iBitmapOffset);
-		}
-	return NULL;
-	}
-
-TBool COpenFontGlyph::SetBitmap(RHeap* aHeap, const TDesC8& aBitmap)
-	{
-	TUint8* bitmap = (TUint8*)aHeap->Alloc(aBitmap.Length());
-	if (bitmap == NULL)
-		return EFalse;
-	Mem::Copy(bitmap, aBitmap.Ptr(), aBitmap.Length());	
-	aHeap->Free(Bitmap());
-	iBitmapOffset = reinterpret_cast<TInt>(bitmap) - reinterpret_cast<TInt>(this);
-	return ETrue;
+	iBitmapOffset = reinterpret_cast<TInt>(aBitmap) - reinterpret_cast<TInt>(this);
 	}
 
 COpenFontSessionCache* COpenFontSessionCache::NewL(RHeap* aHeap, TInt aSessionHandle, TInt aEntries)
@@ -1244,17 +1041,16 @@ COpenFontSessionCache* COpenFontSessionCache::NewL(RHeap* aHeap, TInt aSessionHa
 
 void COpenFontSessionCache::Delete(RHeap* aHeap)
     {
-    TInt entries = iEntryArray.Count();
-    for (TInt i = 0; i < entries; ++i)
+    TInt numEntries = iEntryArray.Count();
+    for (TInt i = 0; i < numEntries; ++i)
         {
-        COpenFontSessionCacheEntry* e = iEntryArray[i];
-        if (e != NULL)
+        COpenFontSessionCacheEntry* entry = iEntryArray[i];
+        if (entry != NULL)
             {
-            COpenFont* font=const_cast<COpenFont*>(e->Font());
+            COpenFont* font=const_cast<COpenFont*>(entry->Font());
             if (font != NULL)
                 font->DecrementCachedRefCount(iSessionHandle,NULL,ETrue);
-            aHeap->Free(e->Bitmap());
-            aHeap->Free(e);
+            COpenFontSessionCacheEntry::Delete(aHeap, entry);
             }
         }
     iEntryArray.Close(aHeap);
@@ -1265,28 +1061,28 @@ const COpenFontGlyph* COpenFontSessionCache::Glyph(const COpenFont* aFont, TInt 
     aIndex = -1;
     TInt oldest = KMaxTInt;
     TInt oldest_index = 0;
-    TInt entries = iEntryArray.Count();
-    TInt index = GLYPH_CODE(aCode) % entries;   // simple hash function to shorten searches
-    for (TInt i = 0; i < entries; ++i, ++index)
+    TInt numEntries = iEntryArray.Count();
+    TInt index = GLYPH_CODE(aCode) % numEntries;   // simple hash function to shorten searches
+    for (TInt i = 0; i < numEntries; ++i, ++index)
         {
-        if (index >= entries)
+        if (index >= numEntries)
             index = 0;
-        COpenFontSessionCacheEntry* e = iEntryArray[index];
-        if (e == NULL)
+        COpenFontSessionCacheEntry* entry = iEntryArray[index];
+        if (entry == NULL)
             {
             if (aIndex == -1)
                 aIndex = index;
             }
         else
             { 
-            if (e->Font() == aFont && e->iCode == aCode)
+            if (entry->Font() == aFont && entry->iCode == aCode)
                 {
-                e->iLastAccess = iLastAccess++;
-                return e;
+                entry->iLastAccess = iLastAccess++;
+                return entry;
                 }
-            if (e->iLastAccess < oldest)
+            if (entry->iLastAccess < oldest)
                 {
-                oldest = e->iLastAccess;
+                oldest = entry->iLastAccess;
                 oldest_index = index;
                 }
             }
@@ -1300,8 +1096,10 @@ const COpenFontGlyph* COpenFontSessionCache::Glyph(const COpenFont* aFont, TInt 
 void COpenFontSessionCache::Insert(RHeap* aHeap, COpenFontSessionCacheEntry* aEntry, TInt aIndex)
 	{
     if (aIndex < 0 || aIndex >= iEntryArray.Count())
+        {
         Panic(EFntSessionCacheIndexOutOfRange);
-    COpenFontGlyph::Delete(aHeap, iEntryArray[aIndex]);
+        }
+    COpenFontSessionCacheEntry::Delete(aHeap, iEntryArray[aIndex]);
     iEntryArray.SetAt(aIndex, aEntry);
     aEntry->iLastAccess = iLastAccess++;
 	}
@@ -1312,123 +1110,34 @@ COpenFontSessionCache::COpenFontSessionCache(TInt aSessionHandle):
     {    
     }
 
-/*COpenFontSessionCacheListItem*/
-COpenFontSessionCacheListItem::COpenFontSessionCacheListItem(COpenFontSessionCache* aCache):
-	iNextOffset(NULL)
+TInt COpenFontSessionCacheList::AddCache(COpenFontSessionCache* aCache)
 	{
-    if(aCache != NULL)
-        {
-        iCacheOffset = reinterpret_cast<TInt>(aCache) - reinterpret_cast<TInt>(this);
-        }
-    else
-        {
-        iCacheOffset = NULL;
-        }
-	}
-
-COpenFontSessionCacheListItem::~COpenFontSessionCacheListItem()
-	{
-	}
-
-/** Delete a COpenFontSessionCacheListItem from the passed heap.
-
-@param aHeap The heap to delete the COpenFontSessionCacheListItem from.
- */
-void COpenFontSessionCacheListItem::Delete(RHeap* aHeap)
-	{
-    COpenFontSessionCache* cache = Cache();
-    if (cache != NULL)
-        {
-        cache->Delete(aHeap);   
-        aHeap->Free(cache);
-        }
-    iCacheOffset=NULL;
-    iNextOffset=NULL;
-	}	
-
-/** Get the next item to this cache list item.
-
-@return A pointer to the next item to this one in the session cache, or NULL
-if there is no next item.
- */
-COpenFontSessionCacheListItem* COpenFontSessionCacheListItem::Next()
-	{
-	if(iNextOffset)
+	for (TInt index = 0; index < EMaxNumCaches; ++index)
 		{
-		COpenFontSessionCacheListItem* next = reinterpret_cast<COpenFontSessionCacheListItem*>(reinterpret_cast<TInt>(this) + iNextOffset);
-		return next;
+		if (iSessionHandleArray[index] == 0)
+			{
+			iSessionHandleArray[index] = aCache->SessionHandle();
+			iCacheOffsetArray[index] = reinterpret_cast<TInt>(aCache) - reinterpret_cast<TInt>(this);
+			return KErrNone;
+			}
 		}
-	else
+	return KErrNoMemory;
+	}
+
+COpenFontSessionCache* COpenFontSessionCacheList::FindCache(TInt aSessionHandle) const
+	{
+	if (aSessionHandle == 0)
 		{
 		return NULL;
 		}
-	}
-
-/** Sets the next item to this in the session cache.
-
-@param aNext Set this cache list item as the next item to this one in the session cache list.
- */
-void COpenFontSessionCacheListItem::SetNext(COpenFontSessionCacheListItem* aNext)
-	{
-	if(aNext != NULL)
+	for (TInt index = 0; index < EMaxNumCaches; ++index)
 		{
-		iNextOffset = reinterpret_cast<TInt>(aNext) - reinterpret_cast<TInt>(this);
+		if (iSessionHandleArray[index] == aSessionHandle)
+			{
+			return reinterpret_cast<COpenFontSessionCache*>(reinterpret_cast<TInt>(this) + iCacheOffsetArray[index]);
+			}
 		}
-	else
-		{
-		iNextOffset = NULL;
-		}
-	}
-
-/** Get a pointer to the session cache that this cache list item is in.
-
-@return A pointer to the session cache that this cache list item is part of.
- */
-COpenFontSessionCache* COpenFontSessionCacheListItem::Cache()
-	{
-	if(iCacheOffset)
-		{
-		COpenFontSessionCache* cache = reinterpret_cast<COpenFontSessionCache*>(reinterpret_cast<TInt>(this) + iCacheOffset);
-		return cache;
-		}
-	else
-		{
-		return NULL;
-		}
-	}
-
-/** Get a pointer to the first item in the session cache.
-
-@return A pointer to the first item in the session cache.
- */
-COpenFontSessionCacheListItem* COpenFontSessionCacheList::Start()
-	{
-	if(iStartOffset)
-		{
-		COpenFontSessionCacheListItem* start = reinterpret_cast<COpenFontSessionCacheListItem*>(reinterpret_cast<TInt>(this) + iStartOffset);
-		return start;
-		}
-	else
-		{
-		return NULL;
-		}
-
-	}
-
-/** Set the passed item as the first item in the session cache. 
-
-@param aItem An item to be added to the session cache
- */
-void COpenFontSessionCacheList::SetStart(COpenFontSessionCacheListItem* aItem)
-	{
-	if(aItem != NULL)
-		{
-		iStartOffset = reinterpret_cast<TInt>(aItem) - reinterpret_cast<TInt>(this);
-		}
-	else
-		{
-		iStartOffset = 0;
-		}
+	return NULL;
 	}
 
 /** Delete all the items in the session cache if the current cache session handle
@@ -1439,40 +1148,22 @@ matches the passed session handle.
  */
 void COpenFontSessionCacheList::DeleteCache(RHeap* aHeap, TInt aSessionHandle)
 	{
-	COpenFontSessionCacheListItem* prev = NULL;
-	   RSemaphore sem;
-	    if(KErrNone != sem.OpenGlobal(KSessionCacheSemaphoreName))
-	        {
-	        RDebug::Print(_L("COpenFontSessionCacheList::DeleteCache() can't open SessionCacheSemaphore"));
-	        return;
-	        }	    
-	    
-	    for (COpenFontSessionCacheListItem* curr = Start(); curr; prev = curr, curr = curr->Next())
-        {
-        COpenFontSessionCache* cache = curr->Cache();
-        if (cache != NULL && cache->iSessionHandle == aSessionHandle)
-            {
-            for (TInt i = 0; i < KSessionCacheSemaphoreCount; i++)
-                {
-                //coverity[lock]
-                //coverity[double_lock]
-                sem.Wait();
-                }
-
-            if (curr == Start())
-                SetStart(curr->Next());
-            else
-                prev->SetNext(curr->Next());
-
-            curr->Delete(aHeap);
-            aHeap->Free(curr);
-
-            sem.Signal(KSessionCacheSemaphoreCount);
-            sem.Close();
-            return;
-            }
+	if (aSessionHandle == 0)
+		{
+		return;
+		}
+	for (TInt index = 0; index < EMaxNumCaches; ++index)
+		{
+		if (iSessionHandleArray[index] == aSessionHandle)
+			{
+			COpenFontSessionCache* cache = reinterpret_cast<COpenFontSessionCache*>(PtrAdd(this, iCacheOffsetArray[index]));
+			cache->Delete(aHeap);
+			aHeap->Free(cache);
+			iSessionHandleArray[index] = 0;
+			iCacheOffsetArray[index] = 0;
+			return;
+			}
         }
-	    sem.Close();
 	}
 
 /** Delete all the items in the current session cache.
@@ -1481,30 +1172,16 @@ void COpenFontSessionCacheList::DeleteCache(RHeap* aHeap, TInt aSessionHandle)
  */
 void COpenFontSessionCacheList::Delete(RHeap* aHeap)
 	{
-    RSemaphore sem;
-    if(KErrNone != sem.OpenGlobal(KSessionCacheSemaphoreName))
-        {
-        RDebug::Print(_L("COpenFontSessionCacheList::Delete() can't open SessionCacheSemaphore"));
-        return;
-        }		
-	COpenFontSessionCacheListItem* cur = Start();
-	COpenFontSessionCacheListItem* next = NULL;
-
-    for(TInt i=0; i<KSessionCacheSemaphoreCount; i++)
-     {
-	//coverity[lock]
-	//coverity[double_lock]
-     sem.Wait();     
-     }
-	while (cur != NULL)
+	for (TInt index = 0; index < EMaxNumCaches; ++index)
 		{
-		next = cur->Next();
-		cur->Delete(aHeap);
-		aHeap->Free(cur);
-		cur = next;
+		if (iCacheOffsetArray[index] != 0)
+			{
+			COpenFontSessionCache* cache = reinterpret_cast<COpenFontSessionCache*>(PtrAdd(this, iCacheOffsetArray[index]));
+			cache->Delete(aHeap);
+			aHeap->Free(cache);
+			}
 		}
-    sem.Signal(KSessionCacheSemaphoreCount);
-    sem.Close();
+	Mem::FillZ(this, sizeof(COpenFontSessionCacheList));
 	}
 
 /**
@@ -1512,32 +1189,23 @@ Delete all glyphs belonging to a particular font.
 */
 void COpenFontSessionCacheList::DeleteFontGlyphs(RHeap* aHeap, const COpenFont* aFont)
 	{
-    RSemaphore sem;
-    if(KErrNone != sem.OpenGlobal(KSessionCacheSemaphoreName))
-        {
-        RDebug::Print(_L("COpenFontSessionCacheList::DeleteFontGlyphs can't global open SessionCacheSemaphore"));
-        return;
+	for (TInt index = 0; index < EMaxNumCaches; ++index)
+		{
+		if (iCacheOffsetArray[index] != 0)
+			{
+			COpenFontSessionCache* cache = reinterpret_cast<COpenFontSessionCache*>(PtrAdd(this, iCacheOffsetArray[index]));
+			TInt numEntries = cache->iEntryArray.Count();
+			for (TInt i = 0; i < numEntries; ++i)
+				{
+				COpenFontSessionCacheEntry* entry = cache->iEntryArray[i];
+				if (entry != NULL && entry->Font() == aFont)
+					{
+					COpenFontSessionCacheEntry::Delete(aHeap, entry);
+					cache->iEntryArray.SetAt(i, NULL);
+					}
+				}
+			}
         }
-    sem.Wait();      
-	for (COpenFontSessionCacheListItem* p = Start(); p; p = p->Next())
-        {
-        COpenFontSessionCache* cache = p->Cache();
-        if (cache != NULL)
-            {
-            TInt entries = cache->iEntryArray.Count();
-            for (TInt i = 0; i < entries; ++i)
-                {
-                COpenFontSessionCacheEntry* e = cache->iEntryArray[i];
-                if (e != NULL && e->Font() == aFont)
-                    {
-                    COpenFontSessionCacheEntry::Delete(aHeap, e);
-                    cache->iEntryArray.SetAt(i, NULL);
-                    }
-                }
-            } //if(cache != NULL)
-        }
-	sem.Signal();
-	sem.Close();
 	}
 
 /**

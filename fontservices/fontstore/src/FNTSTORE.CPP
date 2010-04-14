@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 1995-2009 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 1995-2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -183,40 +183,6 @@ static TUint32 FinishTimingL(TUint32 startTime);
 static TBool FileIsOnZ(TParse& aFileName);
 static TBool FileIsInList(TParse& aFileName, RArray<TParse>& aList);
 
-
-/** Helper function for converting a pointer to an offset from the passed
-heap base. Use OffsetToPointer() to convert the returned offset back to a
-useable pointer.
-@param aAny A pointer to be converted to an offset.
-@param aHeapBase The heap base of the current process.
-@return An offset representing the passed pointer that can be converted
-back to a pointer using the function OffsetToPointer(). 
-@see OffsetToPointer()
- */
-LOCAL_C TInt PointerToOffset(const TAny* aAny, TUint8* aHeapBase)
-    {
-    if (aAny && aHeapBase)
-        {
-        return (TInt)aAny - (TInt)aHeapBase;
-        }
-    return 0;
-    }
-
-/** Helper function for converting an offset (that was calculated using
-PointerToOffset()) back to a pointer relative to the passed heap base.
-@param aOffset The offset to be converted to a pointer.
-@param aHeapBase The heap base of the current process.
-@return A pointer relative to the passed heap base.
-@see PointerToOffset()
- */
-LOCAL_C TAny* OffsetToPointer(const TInt aOffset, TUint8* aHeapBase)
-    {
-    if (aOffset && aHeapBase)
-        {
-        return (TAny*)(aOffset + (TInt)aHeapBase);
-        }
-    return NULL;
-    }
 
 // CTypefaceSupportInfo
 CTypefaceSupportInfo::CTypefaceSupportInfo()
@@ -538,11 +504,11 @@ CBitmapFont::CBitmapFont(
 	{
     // Set iOpenFont to be the offset of aOpenFont from the address of CBitmapFont.
     // In order to be able to identify iOpenFont as an offset instead of a pointer,
-    // bitwise or the offset with 1.  Pointers will always be byte aligned (and therefore even).
+    // bitwise or the offset with 1.  Pointers will always be word aligned (and therefore even).
     if (aOpenFont)
         {
+        __ASSERT_DEBUG(!(reinterpret_cast<TInt>(aOpenFont) & 1), Panic(EFntPointerNotByteAligned));
         iOpenFont = reinterpret_cast<COpenFont*>((reinterpret_cast<TInt>(aOpenFont) - reinterpret_cast<TInt>(this)) | 1);
-        __ASSERT_DEBUG((reinterpret_cast<TInt>(iOpenFont) & 1),Panic(EFntPointerNotByteAligned));
         }
     else
         {
@@ -1189,26 +1155,6 @@ void CFontStore::ConstructL()
 
 	TMachineInfoV1Buf machineInfoBuffer;
 	User::LeaveIfError(UserHal::MachineInfo(machineInfoBuffer));
-	
-	//Create Handles which may be used by Fntstore
-	iHandleArray = new(ELeave) RArray<RHandleBase>();
-
-	RSemaphore SessionCacheSem;
-	TInt ret = SessionCacheSem.CreateGlobal(KSessionCacheSemaphoreName,KSessionCacheSemaphoreCount);
-	if(ret == KErrAlreadyExists)
-	    {
-	    User::LeaveIfError(SessionCacheSem.OpenGlobal(KSessionCacheSemaphoreName));
-	    }
-	else if (ret != KErrNone)
-	    {
-	    User::LeaveIfError(ret);	    
-	    }
-	ret = iHandleArray->Append(SessionCacheSem);
-	if(ret != KErrNone)
-	    {
-	    SessionCacheSem.Close();
-	    User::Leave(ret);
-	    }
 
 	const TSize twipSize = machineInfoBuffer().iPhysicalScreenSize;
 	const TSize pixelSize = machineInfoBuffer().iDisplaySizeInPixels;
@@ -1252,15 +1198,6 @@ EXPORT_C CFontStore::~CFontStore()
 		iOpenFontSessionCacheList->Delete(iHeap);
 		iHeap->Free(iOpenFontSessionCacheList);
 		}
-    if (iHandleArray)
-        {
-        for (TInt i = 0; i < iHandleArray->Count(); i++)
-            {
-            (*iHandleArray)[i].Close();
-            }
-        iHandleArray->Close();
-        delete iHandleArray;
-        }
 	iFs.Close();
 	}
 

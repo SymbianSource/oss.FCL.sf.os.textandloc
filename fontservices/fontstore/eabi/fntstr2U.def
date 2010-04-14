@@ -245,4 +245,10 @@ EXPORTS
 	_ZN10CFontStore21UpdateLinkedTypefaceLERK32TLinkedTypefaceSpecificationArgs @ 244 NONAME
 	_ZN28CLinkedTypefaceSpecification21UpdateLinkedTypefaceLER17CFbsTypefaceStore @ 245 NONAME
 	_ZNK10CFontStore15GetFontFilePathERK7TDesC16R4TBufILi256EE @ 246 NONAME
+	KFontTable_GlyphOutline_CacheMaxMem @ 247 NONAME ABSENT
+	_ZN10CFontStore35CleanupCacheOnFbsSessionTerminationEi @ 248 NONAME ABSENT
+	_ZN11CBitmapFont12GetFontTableEmRPvRii @ 249 NONAME ABSENT
+	_ZN11CBitmapFont15GetGlyphOutlineEjiRPvRii @ 250 NONAME ABSENT
+	_ZN11CBitmapFont16ReleaseFontTableEmi @ 251 NONAME ABSENT
+	_ZN11CBitmapFont20ReleaseGlyphOutlinesEiPKjii @ 252 NONAME ABSENT
 

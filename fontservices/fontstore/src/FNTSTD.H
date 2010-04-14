@@ -52,7 +52,7 @@ GLREF_C void Panic(TFntStorePanic aPanic);
 
 // COpenFontSessionCacheList is placed here rather than openfont.cpp because it is used in fntstore.cpp as well.
 
-class COpenFontSessionCacheListItem;
+class COpenFontSessionCache;
 class COpenFont;
 
 class COpenFontSessionCacheList
@@ -62,20 +62,21 @@ class COpenFontSessionCacheList
 	{
 public:
 	inline COpenFontSessionCacheList();
+	TInt AddCache(COpenFontSessionCache* aCache);
+	COpenFontSessionCache* FindCache(TInt aSessionHandle) const;
 	void Delete(RHeap* aHeap);
 	void DeleteCache(RHeap* aHeap,TInt aSessionHandle);
-
-	COpenFontSessionCacheListItem* Start();
-	void SetStart(COpenFontSessionCacheListItem* aItem);
-
 	void DeleteFontGlyphs(RHeap* aHeap,const COpenFont* aFont);
-
-	TInt iStartOffset;
+private:
+	enum { EMaxNumCaches = 256 };
+private:
+	TInt iSessionHandleArray[EMaxNumCaches];
+	TInt iCacheOffsetArray[EMaxNumCaches];
 	};
 
-inline COpenFontSessionCacheList::COpenFontSessionCacheList():
-	iStartOffset(0)
+inline COpenFontSessionCacheList::COpenFontSessionCacheList()
 	{
+	Mem::FillZ(this, sizeof(COpenFontSessionCacheList));
 	}
 
 /**

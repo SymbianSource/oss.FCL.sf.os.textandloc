@@ -19,8 +19,8 @@
 #include "ls_std.h"
 #include "locl_region.h"
 
-const TInt RegionAspect::CountryCode = 886;
-const TInt RegionAspect::UniversalTimeOffset = 8*3600;
+const TInt RegionAspect::CountryCode = 81;
+const TInt RegionAspect::UniversalTimeOffset = 9*3600;
 const TDateFormat RegionAspect::DateFormat = EDateJapanese;
 const TTimeFormat RegionAspect::TimeFormat = ETime12;
 const TLocalePos RegionAspect::CurrencySymbolPosition = ELocaleBefore;
@@ -36,15 +36,15 @@ const TLocalePos RegionAspect::AmPmSymbolPosition = ELocaleBefore;
 const TBool RegionAspect::AmPmSpaceBetween = EFalse;
 const TDaylightSavingZone RegionAspect::HomeDaylightSavingZone = EDstNone;
 const TUint RegionAspect::WorkDays = 0x1f;
-const TText * const RegionAspect::CurrencySymbol = _S("NT$");
-const TText* const RegionAspect::ShortDateFormatSpec =  _S("%F%*D/%*M/%Y"); // needs checking by a localisation team (this item was added since real localisation - the value given here has been set by a software developer so it may be wrong)
-const TText* const RegionAspect::LongDateFormatSpec = _S("%F%Y\x5e74%*M\x6708%*D\x65e5"); // needs checking by a localisation team (this item was added since real localisation - the value given here has been set by a software developer so it may be wrong)
+const TText * const RegionAspect::CurrencySymbol = _S("\x00a5");
+const TText* const RegionAspect::ShortDateFormatSpec = _S("%F%*Y/%*M/%D"); // needs checking by a localisation team (this item was added since real localisation - the value given here has been set by a software developer so it may be wrong)
+const TText* const RegionAspect::LongDateFormatSpec = _S("%F%Y\x5e74%*M\x6708%*D\x65e5");  // needs checking by a localisation team (this item was added since real localisation - the value given here has been set by a software developer so it may be wrong)
 const TText* const RegionAspect::TimeFormatSpec = _S("%F%*I:%T:%S %*A"); // needs checking by a localisation team (this item was added since real localisation - the value given here has been set by a software developer so it may be wrong)
 const TDay RegionAspect::StartOfWeek = EMonday;
 const TClockFormat RegionAspect::ClockFormat = EClockAnalog;
 const TUnitsFormat RegionAspect::UnitsGeneral = EUnitsMetric;
 const TUnitsFormat RegionAspect::UnitsDistanceShort = EUnitsMetric;
 const TUnitsFormat RegionAspect::UnitsDistanceLong = EUnitsMetric;
-const TUint16 RegionAspect::RegionCode = 392;
+const TUint16 RegionAspect::RegionCode = 158;
 const TUint RegionAspect::ExtraNegativeCurrencyFormatFlags = 0;
 
