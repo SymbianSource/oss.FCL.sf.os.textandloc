@@ -2,7 +2,7 @@
 * Copyright (c) 2002 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
-* under the terms of "Eclipse Public License v1.0"
+* under the terms of the License "Eclipse Public License v1.0"
 * which accompanies this distribution, and is available
 * at the URL "http://www.eclipse.org/legal/epl-v10.html".
 *
@@ -64,14 +64,13 @@ void CStateMachine::AddStateTransistionL(TChar aChar, TInt aState, TInt aNextSta
 	RArray<TInt> Dummy;
 	TInt CharIndex = MapIndex(aChar, Dummy);
 	Dummy.Close();
-	_LIT(KBufParsingError,"Parsing syntax error");
-	__ASSERT_ALWAYS( CharIndex >= 0 , User::Panic(KBufParsingError, KErrSyntaxError) );
+	
 	AddStateTransistionL(CharIndex, aState, aNextState);
 }
 
 void CStateMachine::AddStateTransistionL(TInt aIndex, TInt aState, TInt aNextState)
 {
-	if(aIndex > iMaxNumberChars || aState > iMaxNumberStates || aNextState > iMaxNumberStates)
+    if(aIndex < 0 || aIndex > iMaxNumberChars || aState > iMaxNumberStates || aNextState > iMaxNumberStates)
 		User::Leave(KErrGeneral);
 
 	iStateTable[static_cast<TInt>(aIndex)][static_cast<TInt>(aState)] = static_cast<TInt>(aNextState);

@@ -20,7 +20,6 @@
 #define __OPENFONTS_PRIVATE_H__
 
 #include <e32hashtab.h>
-
 class COpenFontShaperCacheEntry;
 
 /* MSB is set to indicate a glyph code rather than a unicode value
