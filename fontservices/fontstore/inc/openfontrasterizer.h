@@ -20,6 +20,8 @@
 #ifndef OPENFONTRASTERIZER_H
 #define OPENFONTRASTERIZER_H
 
+#include <ecom/ecom.h>
+
 class COpenFontFile;
 
 /**
