@@ -1172,7 +1172,7 @@ void CTLinkedFonts2::TestLinkedRegistrationAndFetchL()
 		TEST(CompareGroups(group2,groupf));
 			
 		//Check elements match 
-		TEST(fetchSpec->TypefaceCount() == fetchSpec->TypefaceCount());
+		TEST(typefaceSpec->TypefaceCount() == fetchSpec->TypefaceCount());
 		
 		CLinkedTypefaceElementSpec* elementf = fetchSpec->Typeface(0);
 		TEST(CompareElementSpecs(elementf, element1));

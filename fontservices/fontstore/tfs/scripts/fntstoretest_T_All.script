@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2008-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of "Eclipse Public License v1.0"
@@ -33,6 +33,7 @@ RUN_TEST_STEP 100 TFntStoreServer TGetNearestFont
 RUN_TEST_STEP 100 TFntStoreServer TCorruptFonts
 RUN_TEST_STEP 300 TFntStoreServer TShaperCache
 RUN_TEST_STEP 300 TFntStoreServer TCacheDeletion
+RUN_TEST_STEP 300 TFntStoreServer TFontSessionCache
 RUN_TEST_STEP !PanicCode=-40 !PanicString="FBSERV" 100 TFntStoreServer TSetDefaultTypefaceName
 RUN_TEST_STEP 100 TFntStoreServer TLinkedFonts
 RUN_TEST_STEP 100 TFntStoreServer TGetNearestFontCapability

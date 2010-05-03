@@ -217,7 +217,8 @@ TCharacterMetricsTable::TCharacterMetricsTable(RHeap* aHeap)
  :	iHeap(aHeap),
 	iMetricsStartId(KNullStreamId),
 	iCharacterMetricsStartPtr(0),
-	iNumberOfMetrics(0)
+	iNumberOfMetrics(0),
+	iMetricsOnHeap(EFalse)
 	{}
 
 void TCharacterMetricsTable::InternalizeL(RReadStream& aStream)
@@ -230,8 +231,9 @@ void TCharacterMetricsTable::InternalizeMetricsL(RReadStream& aStream)
 	{
 	aStream.ReadInt32L(); // size
 	TBitmapFontCharacterMetrics* charactermetricslist = static_cast<TBitmapFontCharacterMetrics*>(iHeap->AllocL(sizeof(TBitmapFontCharacterMetrics) * iNumberOfMetrics));
-	
-	iCharacterMetricsStartPtr = TInt(charactermetricslist); // Ptr to location on the heap ('cos the file is not in ROM)
+	iMetricsOnHeap = ETrue;
+	// Offset from this to location on the heap ('cos the file is not in ROM)
+	iCharacterMetricsStartPtr = reinterpret_cast<TInt>(charactermetricslist) - reinterpret_cast<TInt>(this);
 	TBitmapFontCharacterMetrics* pEnd = charactermetricslist + iNumberOfMetrics;
 	for (TBitmapFontCharacterMetrics* p = charactermetricslist; p < pEnd; p++)
 		{
@@ -255,28 +257,45 @@ void TCharacterMetricsTable::FixUp(TInt aFileAddress)
 	TBitmapFontCharacterMetrics* charactermetricslist = reinterpret_cast<TBitmapFontCharacterMetrics*>(aFileAddress + sizeof(TInt) + iMetricsStartId.Value());
 	iCharacterMetricsStartPtr = TInt(charactermetricslist);	// Ptr to location in a ROM file
 	iMetricsStartId = KNullStreamId;
+	iMetricsOnHeap = EFalse;
 	}
 
 void TCharacterMetricsTable::Delete()
 	{	// This routine is only called if the font file is in RAM, not ROM, and therefore the metrics have been stashed on the heap
-	if (iCharacterMetricsStartPtr)
-		{
-		iHeap->Free(reinterpret_cast<TAny*>(iCharacterMetricsStartPtr));
-		iCharacterMetricsStartPtr = 0;
-		}
+    if (iMetricsOnHeap && iCharacterMetricsStartPtr)
+        {
+        iHeap->Free(reinterpret_cast<TAny*>(MetricsFromOffset(0)));
+        iCharacterMetricsStartPtr = 0;
+        iMetricsOnHeap = EFalse;
+        }
 	}
 
 const TBitmapFontCharacterMetrics* TCharacterMetricsTable::Metric(TInt aIndex) const
 	{
 	__ASSERT_DEBUG((aIndex >= 0) && (aIndex <= iNumberOfMetrics), Panic(EFntMetricsIndexOutOfBounds));
-	// Sometimes the start ptr is to a metrics heap item and sometimes it points into a ROM file
-	return reinterpret_cast<const TBitmapFontCharacterMetrics*>(iCharacterMetricsStartPtr + (aIndex * sizeof(TBitmapFontCharacterMetrics)));
+    // Sometimes the start ptr is to a metrics heap item and sometimes it points into a ROM file
+    if (iMetricsOnHeap)
+        {
+        // Start ptr is to metrics heap item
+        return MetricsFromOffset(aIndex);
+        }
+    else
+        {
+        // Start ptr is to a file in ROM
+        return reinterpret_cast<const TBitmapFontCharacterMetrics*> (iCharacterMetricsStartPtr + (aIndex * sizeof(TBitmapFontCharacterMetrics)));
+        }
 	}
 
 TInt TCharacterMetricsTable::NumberOfMetrics() const
 	{
 	return iNumberOfMetrics;
 	}
+
+TBitmapFontCharacterMetrics* TCharacterMetricsTable::MetricsFromOffset(TInt aIndex) const
+    {
+    __ASSERT_DEBUG(iMetricsOnHeap,Panic(EFntMetricsNotOnHeap));
+    return reinterpret_cast<TBitmapFontCharacterMetrics*>(reinterpret_cast<TInt>(this) + iCharacterMetricsStartPtr+ (aIndex * sizeof(TBitmapFontCharacterMetrics)));
+    }
 
 CFontBitmap::CFontBitmap(RHeap* aHeap, CFontStoreFile* aFontStoreFile)
  :	iHeap(aHeap),

@@ -17,6 +17,7 @@
 
 #include "NumberGrouping.h"
 #include "RegularExpression.h"
+#include "cleanuputil.h"
 
 #include <barsread.h>
 #include <eikenv.h>
@@ -484,7 +485,7 @@ void CPNGNumberGrouping::doReadFormatInfoFromResourceFileL()
     iRegExp = NULL;
 
     RPointerArray<TDesC> parrGroupingPatternsList;
-    CleanupClosePushL(parrGroupingPatternsList);
+    CleanupResetAndDestroyPushL(parrGroupingPatternsList);
 
     TInt maxExtraCharacters(0);
 
@@ -547,12 +548,7 @@ void CPNGNumberGrouping::doReadFormatInfoFromResourceFileL()
 
     iRegExp = CRegularExpression::NewL(&parrGroupingPatternsList);
 
-    TInt nCount = parrGroupingPatternsList.Count();
-
-    for(TInt j = 0; j < nCount; ++j)
-        delete parrGroupingPatternsList[j];
-    parrGroupingPatternsList.Close();
-    CleanupStack::Pop();  // patterns list
+    CleanupStack::PopAndDestroy(&parrGroupingPatternsList);  // patterns list
     }
 
 void CPNGNumberGrouping::doNumberGroupingL() const

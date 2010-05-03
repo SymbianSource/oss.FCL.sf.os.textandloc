@@ -209,19 +209,22 @@ public:
 	TAlgStyle iAlgStyle;	// must not move this member
 
 private:
-	// Binary Compatibility warning - data member iOpenFont is referenced by inline methods
-	RHeap* iHeap;
-	TInt iFontBitmapOffset;	
-	COpenFont* iOpenFont; // if iOpenFont is non-null this is an open font and many functions are forwarded to it
-						
-#ifdef FNTSTORE_SUPPORT_FMM	
-	// If iOpenFontOffet is non-zero this is an open font
-	TInt iOpenFontOffset;
-#else
-	TUint32 iReserved;
-#endif // FNTSTORE_SUPPORT_FMM
+    // Binary Compatibility warning - data member iOpenFont is referenced by inline methods
+    RHeap* iHeap;
+    TInt iFontBitmapOffset;
+    
+    // In order to be able to work with the flexible memory model, iOpenFont is
+    // actually an offset from the address of this class.
+    // iOpenFont's type remains unchanged.
+    // As Qt code that uses OpenFont() must be able to run on new and old versions
+    // of Symbian OS, it must be able to determine whether iOpenFont is a pointer or
+    // an offset at run-time.  Therefore an offset will have its lowest significant bit set to 1.
+    // If iOpenFont is null, this object is not an open font.
+    // Assumption: a pointer always has least significant bit value of zero.
+    COpenFont* iOpenFont; // if iOpenFont is non-null this is an open font and many functions are forwarded to it
 
-	TUint32 iUniqueFontId;	// unique id for this instance of this font
+    TUint32 iReserved;
+    TUint32 iUniqueFontId; // unique id for this instance of this font
 	};
 
 /**
@@ -459,14 +462,10 @@ EFalse if it is using a bitmap font (a CFontBitmap).
 */
 inline TBool CBitmapFont::IsOpenFont() const
 	{
-#ifdef FNTSTORE_SUPPORT_FMM
-	return iOpenFontOffset!=0;
-#else
 	return iOpenFont != NULL;
-#endif // FNTSTORE_SUPPORT_FMM
 	}
 
-#ifdef FNTSTORE_SUPPORT_FMM
+
 /** Returns a pointer to the open font being used by the bitmap font object.
 
 @return A pointer to an open font.
@@ -474,23 +473,15 @@ inline TBool CBitmapFont::IsOpenFont() const
 */
 inline COpenFont* CBitmapFont::OpenFont() const
 	{ 
-	if (IsOpenFont())
-		{
-		return reinterpret_cast<COpenFont*>(reinterpret_cast<TInt>(this)+iOpenFontOffset);
-		}
-	return NULL;
+    if (reinterpret_cast<TInt>(iOpenFont) & 1)
+        {
+        return reinterpret_cast<COpenFont*>(const_cast<CBitmapFont*>(PtrAdd(this, reinterpret_cast<TInt>(iOpenFont) & ~1)));
+        }
+    else
+        {
+        return iOpenFont;
+        }
 	}
-#else
-/** Returns a pointer to the open font being used by the bitmap font object.
-
-@return A pointer to an open font.
-@see IsOpenFont()
-*/
-inline COpenFont* CBitmapFont::OpenFont() const
-	{ 
-	return iOpenFont;
-	}
-#endif // FNTSTORE_SUPPORT_FMM
 
 /** Gets the anti-aliasing setting for the font, see TGlyphBitmapType for 
 the range of values.

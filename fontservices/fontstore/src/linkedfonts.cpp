@@ -148,13 +148,6 @@ void CLinkedTypefaceSpecification::DoAddTypefaceL(CLinkedTypefaceElementSpec& aE
 	if (GroupById(aElementSpec.GroupId()) == NULL)
 		User::Leave(KErrArgument);
 	
-	TInt canIndex = CanonicalIndex();
-	if (aElementSpec.Canonical())
-		{
-		if (canIndex!=KErrNotFound)
-			User::Leave(KErrArgument);
-		}
-	
 	err = iBody->iTypefaces.Insert(&aElementSpec, aPos);
 
 	User::LeaveIfError(err);
