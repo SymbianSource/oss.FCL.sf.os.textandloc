@@ -154,6 +154,7 @@ RDebug::Printf("fail:line contents mismatch: test line: %S, reference line: %S",
 	
 TBool CBandValidator::GetVisibleLineInfosL(const CTextView& aView, RArray<TTmLineInfo>& aVisibleLines)
 	{
+    CleanupClosePushL(aVisibleLines);
 	const CTextLayout* layout = aView.Layout();
 	__ASSERT_ALWAYS(layout, User::Invariant());
 	const CTmTextLayout& tmLayout = layout->TagmaTextLayout();
@@ -163,6 +164,7 @@ TBool CBandValidator::GetVisibleLineInfosL(const CTextView& aView, RArray<TTmLin
 	TTmLineInfo startLine;	
 	if(!(tmLayout.LineNumberToLine(firstLineNumber, startLine)))
 		{
+        CleanupStack::Pop(&aVisibleLines);
 		return EFalse;
 		}
 //get last visible line
@@ -179,11 +181,13 @@ TBool CBandValidator::GetVisibleLineInfosL(const CTextView& aView, RArray<TTmLin
 			//it is, so just get the last formatted line
 			if(!(tmLayout.LineNumberToLine((tmLayout.Lines())-1, endLine)))
 				{
+                CleanupStack::Pop(&aVisibleLines);
 				return EFalse;
 				}
 			}
 		else
 			{
+            CleanupStack::Pop(&aVisibleLines);
 			return EFalse;
 			}
 		}
@@ -196,11 +200,14 @@ TBool CBandValidator::GetVisibleLineInfosL(const CTextView& aView, RArray<TTmLin
 		TTmLineInfo lineInfo;
 		if(!(tmLayout.LineNumberToLine(lineNumber, lineInfo)))
 			{
+            CleanupStack::Pop(&aVisibleLines);
 			return EFalse;
 			}
 		User::LeaveIfError(aVisibleLines.Append(lineInfo));
 		lineNumber++;
 		}
+	
+	CleanupStack::Pop(&aVisibleLines);
 	return ETrue;	
 	}
 	

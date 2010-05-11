@@ -698,7 +698,7 @@ void CPNGNumberGrouping::ReadGroupingSchemeL(
     RPointerArray<TDesC>& aGroupingPatternsList,
     TInt& aMaxExtraCharacters )
     {
-
+    CleanupResetAndDestroyPushL(aGroupingPatternsList);
     TPNGGroupingInfo* groupingInfo = new (ELeave) TPNGGroupingInfo;
     CleanupStack::PushL( groupingInfo );
 
@@ -762,7 +762,11 @@ void CPNGNumberGrouping::ReadGroupingSchemeL(
         User::Leave(err);
         }
     else
+        {
         CleanupStack::Pop( groupingInfo ); // Success. This object now not owned by the cleanupstack
+        }        
+    
+    CleanupStack::Pop(&aGroupingPatternsList);
     }
 
 void CPNGNumberGrouping::ParseForAfterPositions(
