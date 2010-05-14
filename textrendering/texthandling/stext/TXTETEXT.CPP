@@ -1101,8 +1101,6 @@ zero.
 	{return ((iByteStore->Size()/sizeof(TText))-1);}
 
 
-
-
 EXPORT_C void CPlainText::InsertL(TInt aInsertPos,const TChar& aChar)
 /** Inserts either a single character or a descriptor into the text object
 at a specified document position.
@@ -1117,11 +1115,28 @@ Must be valid, or a panic occurs.
 	__TEST_INVARIANT;
 	__ASSERT_ALWAYS(aInsertPos>=0 && aInsertPos<=DocumentLength(),Panic(ECharPosBeyondDocument));
 
-	TBuf<1> content;
-	content.Append(aChar);
-	DoPtInsertL(aInsertPos,content);
+	TInt contentLength = 1;
+	if (aChar < 0x10000)
+		{
+		TBuf<1> content;
+		content.Append(aChar);
+		DoPtInsertL(aInsertPos,content);
+		}
+	else
+		{
+		TText16 high = TChar::GetHighSurrogate(aChar);
+		TText16 low = TChar::GetLowSurrogate(aChar);
+		RDebug::Print(_L("CPlainText::InsertL(%d), %X expand to %X %X."), aInsertPos, aChar, high, low);
+	
+		TBuf<2> content;
+		contentLength = 2;
+		content.Append(high);
+		content.Append(low);
+		DoPtInsertL(aInsertPos,content);
+		}
 	if (FieldSetPresent())
-		iFieldSet->NotifyInsertion(aInsertPos,content.Length()); // length always 1 - optimise???
+		iFieldSet->NotifyInsertion(aInsertPos,contentLength);
+
 	SetHasChanged(ETrue);
 
 	__TEST_INVARIANT;

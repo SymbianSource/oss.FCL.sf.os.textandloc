@@ -22,7 +22,7 @@
 #define __JPLANGUTIL_H__
 
 // INCLUDES
-#include <E32STD.H>
+#include <e32std.h>
 
 // CONSTANTS
 

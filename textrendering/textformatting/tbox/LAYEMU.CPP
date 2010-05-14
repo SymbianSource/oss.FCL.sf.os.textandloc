@@ -47,32 +47,6 @@ const TInt KMaxProportionOfScreenToScroll = 1000;
  the KNumberOfLinesToKeepVisibleDuringScroll constant.*/
 const TInt KMinProportionOfScreenToScroll = 600;
 
-/**
-Tests for a high surrogate.
-@param a UTF16 value.
-@return ETrue if argument is a high surrogate.
-@internalComponent
-*/
-inline TBool IsHighSurrogate(TText a) { return 0xD800 == (a & 0xFC00); }
-/**
-Tests for a low surrogate.
-@param a UTF16 value.
-@return ETrue if argument is a high surrogate.
-@internalComponent
-*/
-inline TBool IsLowSurrogate(TText a) { return 0xDC00 == (a & 0xFC00); }
-/**
-Adds a high surrogate to a low surrogate to create a supplementary character.
-@param aHigh UTF16 high surrogate.
-@param aLow UTF16 low surrogate.
-@return Supplementary character represented by the pair <aHigh, aLow>.
-@pre aHigh is a high surrogate and aLow is a low surrogate.
-@internalComponent
-*/
-inline TChar PairSurrogates(TText aHigh, TText aLow)
-	{
-	return ((aHigh - 0xd7f7) << 10) + aLow;
-	}
 
 /**
 Constructs an iterator over the text referenced by aSource.
@@ -130,11 +104,11 @@ Gets the specified character, uniting surrogate pairs if appropriate.
 TChar CTextLayout::TUtf32SourceCache::GetUtf32(TInt aIndex)
 	{
 	TText code = GetUtf16(aIndex);
-	if (IsHighSurrogate(code) && iSource->DocumentLength() < aIndex + 1)
+	if (TChar::IsHighSurrogate(code) && iSource->DocumentLength() < aIndex + 1)
 		{
 		TText code2 = GetUtf16(aIndex + 1);
-		if (IsLowSurrogate(code2))
-			return PairSurrogates(code, code2);
+		if (TChar::IsLowSurrogate(code2))
+			return TChar::JoinSurrogate(code, code2);
 		}
 	return code;
 	}
@@ -1061,8 +1035,8 @@ EXPORT_C TInt CTextLayout::XyPosToDocPosL(TPoint &aXyPos,TUint) const
 				{
 				TUint highSurrogate = text[0];
 				TUint lowSurrogate = text[1];
-				if ( IsHighSurrogate( highSurrogate ) &&
-				     IsLowSurrogate( lowSurrogate ) )
+				if ( TChar::IsHighSurrogate( highSurrogate ) &&
+				        TChar::IsLowSurrogate( lowSurrogate ) )
 					--r;
 				}
 			}
@@ -2236,17 +2210,75 @@ EXPORT_C TBool CTextLayout::HandleCharEditL(TUint aType,TInt& aCursorPos,TInt& a
 		{
 		case EFCharacterInsert:
 		case EFParagraphDelimiter:
+			{
 			reformat_param.iStartChar = aCursorPos++;
 			reformat_param.iNewLength = 1;
+
+			// surrogate support
+			TPtrC textForSurrogate;
+			TTmCharFormat formatForSurrogate;
+		
+			iSource->GetText(aCursorPos-1, textForSurrogate, formatForSurrogate);
+			if ( textForSurrogate.Length() > 1 )
+				{
+				TUint highSurrogate = textForSurrogate[0];
+				TUint lowSurrogate = textForSurrogate[1];
+				if ( TChar::IsHighSurrogate( highSurrogate ) && TChar::IsLowSurrogate( lowSurrogate ) )
+					{
+					// if we are inserting a surrogate pair, do not break the pair
+					aCursorPos++;
+					reformat_param.iNewLength++;
+					}
+				}
 			break;
+			}
 		case EFLeftDelete:
+			{
 			reformat_param.iStartChar = --aCursorPos;
 			reformat_param.iOldLength = 1;
+
+			// surrogate support
+			TPtrC textForSurrogate;
+			TTmCharFormat formatForSurrogate;
+		
+			if (aCursorPos >= 1)
+				{
+				iSource->GetText(aCursorPos-1, textForSurrogate, formatForSurrogate);
+				if ( textForSurrogate.Length() > 1 )
+					{
+					TUint highSurrogate = textForSurrogate[0];
+					TUint lowSurrogate = textForSurrogate[1];
+					if ( TChar::IsHighSurrogate( highSurrogate ) && TChar::IsLowSurrogate( lowSurrogate ) )
+						{
+						// if we are deleting a surrogate pair, do not break the pair
+						reformat_param.iStartChar = --aCursorPos;
+						reformat_param.iOldLength++;
+						}
+					}
+				}
 			break;
+			}
 		case EFRightDelete:
+			{
 			reformat_param.iStartChar = aCursorPos;
 			reformat_param.iOldLength = 1;
+
+			// surrogate support
+			TPtrC textForSurrogate;
+			TTmCharFormat formatForSurrogate;
+		
+			iSource->GetText(aCursorPos, textForSurrogate, formatForSurrogate);
+			if ( textForSurrogate.Length() > 1 )
+				{
+				TUint highSurrogate = textForSurrogate[0];
+				TUint lowSurrogate = textForSurrogate[1];
+				if ( TChar::IsHighSurrogate( highSurrogate ) && TChar::IsLowSurrogate( lowSurrogate ) )
+					{
+					reformat_param.iOldLength++;
+					}
+				}
 			break;
+			}
 		default: break;
 		}
 

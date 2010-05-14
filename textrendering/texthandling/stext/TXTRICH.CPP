@@ -628,9 +628,23 @@ panic occurs.
 	__ASSERT_ALWAYS(aPos >= 0 && aPos <= DocumentLength(), Panic(ECharPosBeyondDocument));
 	__ASSERT_ALWAYS(aChar!= EPictureCharacter, Panic(ENonOverloadedInsertCalledWithPictureCharacter));
 
-	TBuf<1> content;
-	content.Append(aChar);
-	RtInsertL(aPos, content);
+	if (aChar < 0x10000)
+		{
+		TBuf<1> content;
+		content.Append(aChar);
+		RtInsertL(aPos, content);
+		}
+	else
+		{
+		TText16 high = TChar::GetHighSurrogate(aChar);
+		TText16 low = TChar::GetLowSurrogate(aChar);
+		RDebug::Print(_L("CRichText::InsertL(), %X expand to %X %X."), aChar, high, low);
+		
+		TBuf<2> content;
+		content.Append(high);
+		content.Append(low);
+		RtInsertL(aPos, content);
+		}
 
 	__TEST_INVARIANT;
 	}
