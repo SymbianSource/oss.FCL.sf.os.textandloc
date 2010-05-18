@@ -1043,7 +1043,7 @@ operator, or the CleanupStack::PopAndDestroy() function.
 EXPORT_C CCnvCharacterSetConverter* CCnvCharacterSetConverter::NewLC()
 	{
 	CCnvCharacterSetConverter* characterSetConverter=new(ELeave) CCnvCharacterSetConverter;
-	characterSetConverter->iFullyConstructed=EFalse;
+	characterSetConverter->iTlsDataConstructed=EFalse;
 	CleanupStack::PushL(characterSetConverter);
 	characterSetConverter->ConstructL();
 	return characterSetConverter;
@@ -1056,7 +1056,7 @@ EXPORT_C CCnvCharacterSetConverter::~CCnvCharacterSetConverter()
 	{
 	delete iStandardNamesAndMibEnums;
 	FeatureManager::UnInitializeLib();
-	if (iFullyConstructed)
+	if (iTlsDataConstructed)
 		{
 		TTlsData::CharacterSetConverterIsBeingDestroyed();		
 		}
@@ -2808,7 +2808,7 @@ void CCnvCharacterSetConverter::ConstructL()
 	iCharsetCnvCache = CCharsetCnvCache::NewL();
 	TTlsData::CharacterSetConverterIsBeingCreatedL();
 	FeatureManager::InitializeLibL();
-	iFullyConstructed = ETrue;
+	iTlsDataConstructed = ETrue;
 	}
 
 // set aIdentifierOfOnlyCharacterSetOfInterest to 0 if all character sets are of interest
