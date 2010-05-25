@@ -38,7 +38,7 @@ USERINCLUDE		../src/shared
 USERINCLUDE		../src/inc
 
 SOURCEPATH		../src/shared
-SOURCE			jisbase_shared_2.cpp
+SOURCE			JISBASE_SHARED_2.CPP
 
 LIBRARY			euser.lib
 LIBRARY			charconv.lib

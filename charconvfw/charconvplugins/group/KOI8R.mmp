@@ -25,9 +25,9 @@ uid                  0x10009D8D 0x10207401
 VENDORID		0x70000001
 
 SOURCEPATH			../src/plugins
-SOURCE               KOI8R.CPP
+SOURCE               KOI8R.cpp
 SOURCEPATH		/epoc32/build/generatedcpp/charconv
-SOURCE               G_KOI8R.CPP
+SOURCE               g_KOI8R.cpp
 
 OS_LAYER_SYSTEMINCLUDE_SYMBIAN
 USERINCLUDE		../inc
@@ -38,12 +38,12 @@ LIBRARY              ecom.lib
 
 SOURCEPATH		../resource
 
-Start resource       KOI8R.RSS
+Start resource       KOI8R.rss
 Targetpath           /resource/charconv
 End
 
 start resource       10207401.rss
-target               KOI8R.RSC
+target               koi8r.rsc
 
 end
 

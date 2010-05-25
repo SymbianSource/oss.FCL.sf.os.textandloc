@@ -42,6 +42,7 @@ EXPORT_C TBool CnvGb2312::IsCharGBBased(TInt& aConfidenceLevel, const TDesC8& aS
 	TInt sumOfWeight=0;		//sum of the weights of the chars which are included in the sample
 	TInt sumOutChar=0;		//the number of chars which are not common
 	TInt sumOfBadSecondByte=0;//the number of chars whose first byte is in the range but not the second
+	TInt sumOfBadSingleByte=0;	//the number of bad single byte, which is not in valid range
 	struct referenceChar
 		{
 		TUint charGBK;
@@ -105,13 +106,19 @@ EXPORT_C TBool CnvGb2312::IsCharGBBased(TInt& aConfidenceLevel, const TDesC8& aS
 				sumOfBadSecondByte++;				
 				}
 			}
+		// if seldom used characters
+		else if (aSample[i] < 0x20 || aSample[i] > 0x7F ) 
+			{
+			if (aSample[i]!=0x09 && aSample[i]!=0x0A && aSample[i]!=0x0D)
+				sumOfBadSingleByte++;
+			}
 		} // for 
 
 	TInt limit;
 	limit = (10*sampleLength)/100;
 	if (sumOfGoodChar > limit)
 		{
-		aConfidenceLevel=sumOfGoodChar*100/(sumOfBadSecondByte+sumOfGoodChar);
+		aConfidenceLevel=sumOfGoodChar*100/(sumOfBadSecondByte+sumOfGoodChar+sumOfBadSingleByte);
 		aConfidenceLevel=aConfidenceLevel-Max(0,((totalWeight-sumOfWeight)*sumOfGoodChar/1000));//against frequent chars 
 		aConfidenceLevel=aConfidenceLevel-(sumOutChar*100/sumOfGoodChar);//against gap
 		aConfidenceLevel=(aConfidenceLevel < 0)?0:aConfidenceLevel;

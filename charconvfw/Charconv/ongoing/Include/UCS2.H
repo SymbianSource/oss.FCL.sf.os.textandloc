@@ -26,7 +26,7 @@
 #define __UCS2_H__
 
 #if !defined(__E32STD_H__)
-#include <E32STD.H>
+#include <e32std.h>
 #endif
 
 #if !defined(__CHARCONV_H__)

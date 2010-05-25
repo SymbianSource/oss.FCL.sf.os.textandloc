@@ -25,9 +25,9 @@ uid                  0x10009D8D 0x10207409
 VENDORID		0x70000001
 
 SOURCEPATH			../src/plugins
-SOURCE               Win1255.CPP
+SOURCE               Win1255.cpp
 SOURCEPATH		/epoc32/build/generatedcpp/charconv
-SOURCE               G_Win1255.CPP 
+SOURCE               g_win1255.cpp 
 
 OS_LAYER_SYSTEMINCLUDE_SYMBIAN
 USERINCLUDE		../inc
@@ -38,12 +38,12 @@ LIBRARY              ecom.lib
 
 SOURCEPATH		../resource
 
-Start resource       WIN1255.RSS
+Start resource       Win1255.rss
 Targetpath           /resource/charconv
 End
 
 start resource       10207409.rss
-target               WIN1255.RSC
+target               win1255.rsc
 
 end
 

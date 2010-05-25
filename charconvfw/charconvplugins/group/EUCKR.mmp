@@ -38,12 +38,12 @@ LIBRARY              cp949table.lib
 
 SOURCEPATH		../resource
 
-Start resource       EUCKR.RSS
+Start resource       EUCKR.rss
 Targetpath           /resource/charconv
 End
 
 start resource       2000E527.rss
-target               EUCKR.RSC
+target               euckr.rsc
 end
 
 SMPSAFE

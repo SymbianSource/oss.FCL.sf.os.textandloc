@@ -42,7 +42,7 @@ USERINCLUDE		../src/shared
 USERINCLUDE		../../charconv_fw/src/charconv
 
 SOURCEPATH		../src/shared
-SOURCE			shiftjis_shared_2.cpp
+SOURCE			SHIFTJIS_SHARED_2.CPP
 SOURCE			shiftjiskddiau.cpp
 
 LIBRARY			euser.lib

@@ -43,7 +43,7 @@ foreach $inputFileName (glob('ISO8859*.TXT'))
 my $outputFileName='G_TISO8859X.CPP';
 open(OUTPUT_FILE, "> ..\\test\\source\\main\\$outputFileName") or die; # we're currently standing in charconv\data and we want the generated file to go into charconv\test\source\main
 print(OUTPUT_FILE "// $outputFileName\n//\n// Copyright (c) ".(1900+(gmtime(time))[5])." Symbian Ltd.  All rights reserved.\n//\n\n");
-print(OUTPUT_FILE "#include <E32STD.H>\n#include <CHARCONV.H>\n#include \"TISO8859X.H\"\n\n");
+print(OUTPUT_FILE "#include <e32std.h>\n#include <CHARCONV.H>\n#include \"TISO8859X.H\"\n\n");
 my $numberOfItems=@iso8859TestData;
 my $i;
 for ($i=0; $i<$numberOfItems; ++$i)

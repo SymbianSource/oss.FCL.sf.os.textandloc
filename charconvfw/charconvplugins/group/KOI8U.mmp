@@ -24,9 +24,9 @@ CAPABILITY           All -Tcb
 uid                  0x10009D8D 0x10207402
 
 SOURCEPATH			../src/plugins
-SOURCE               KOI8U.CPP
+SOURCE               KOI8U.cpp
 SOURCEPATH		/epoc32/build/generatedcpp/charconv
-SOURCE               G_KOI8U.CPP
+SOURCE               g_KOI8U.cpp
 
 OS_LAYER_SYSTEMINCLUDE_SYMBIAN
 USERINCLUDE		../inc
@@ -36,12 +36,12 @@ LIBRARY              charconv.lib
 LIBRARY              ecom.lib
 
 SOURCEPATH		../resource
-Start resource       KOI8U.RSS
+Start resource       KOI8U.rss
 Targetpath           /resource/charconv
 End
 
 start resource       10207402.rss
-target               KOI8U.RSC
+target               koi8u.rsc
 end
 
 SMPSAFE

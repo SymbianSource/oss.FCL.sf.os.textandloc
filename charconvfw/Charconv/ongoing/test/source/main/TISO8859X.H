@@ -26,7 +26,7 @@
 #define __TISO8859X_H__
 
 #if !defined(__E32STD_H__)
-#include <E32STD.H>
+#include <e32std.h>
 #endif
 
 struct STstIso8859TestDataItem
