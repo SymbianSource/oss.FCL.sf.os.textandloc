@@ -1,2 +1,0 @@
-Impliment aspect ratio for bitmap fonts
-
