@@ -1,0 +1,38 @@
+/*
+* Copyright (c) 2000-2004 Nokia Corporation and/or its subsidiary(-ies). 
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of the License "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:      
+*
+*/
+
+
+
+
+
+
+
+
+#ifndef __CHARCONV_IBY__
+#define __CHARCONV_IBY__
+
+file=ABI_DIR\BUILD_DIR\CHARCONV.DLL               Sys\Bin\CHARCONV.DLL
+file=ABI_DIR\BUILD_DIR\CONVNAMES.DLL              Sys\Bin\CONVNAMES.DLL
+data=ZRESOURCE\Charconv\BASIC.SNM                   Resource\Charconv\BASIC.SNM
+data=MULTI_LINGUIFY(RSC ZRESOURCE\Charconv\BUILTIN  Resource\Charconv\BUILTIN)
+
+// ConvUtil APIs are the public APIs provided by Symbian.
+// So, CONVUTILS.DLL must be included in all variants.
+file=ABI_DIR\BUILD_DIR\CONVUTILS.DLL                   Sys\Bin\CONVUTILS.DLL
+
+#endif
+

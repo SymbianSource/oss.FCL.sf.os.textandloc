@@ -1,0 +1,54 @@
+/*
+* Copyright (c) 2002 Nokia Corporation and/or its subsidiary(-ies). 
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of the License "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:    This is project specification file for the KOI8-U Belorusian/
+*                Ukrainian Cyrillic charconvplugin.
+*
+*/
+
+
+
+
+#include <platform_paths.hrh>
+
+TARGET               KOI8U.DLL
+TARGETTYPE           PLUGIN
+CAPABILITY           All -Tcb
+
+uid                  0x10009D8D 0x10207402
+
+SOURCEPATH           ../src
+SOURCE               KOI8U.cpp
+SOURCE               G_KOI8U.cpp
+
+// This is a SYSTEMINCLUDE macro containing the middleware
+// layer specific include directories
+MW_LAYER_SYSTEMINCLUDE
+OS_LAYER_SYSTEMINCLUDE
+
+SYSTEMINCLUDE   ../../../inc
+SYSTEMINCLUDE   ../../inc
+
+LIBRARY              EUSER.LIB
+LIBRARY              CHARCONV.LIB
+LIBRARY              ECOM.LIB
+
+Start resource       KOI8U.rss
+Targetpath           /resource/charconv
+End
+
+start resource       10207402.rss
+#ifdef SYMBIAN_SECURE_ECOM
+target               KOI8U.RSC
+#endif
+end

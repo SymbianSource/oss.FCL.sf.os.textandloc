@@ -1,0 +1,215 @@
+{\rtf1\ansi \deff4\deflang1033{\fonttbl{\f1\froman\fcharset2\fprq2 Symbol;}{\f4\froman\fcharset0\fprq2 Times New Roman;}{\f5\fswiss\fcharset0\fprq2 Arial;}{\f11\fmodern\fcharset0\fprq1 Courier New;}}
+{\colortbl;\red0\green0\blue0;\red0\green0\blue255;\red0\green255\blue255;\red0\green255\blue0;\red255\green0\blue255;\red255\green0\blue0;\red255\green255\blue0;\red255\green255\blue255;\red0\green0\blue128;\red0\green128\blue128;\red0\green128\blue0;
+\red128\green0\blue128;\red128\green0\blue0;\red128\green128\blue0;\red128\green128\blue128;\red192\green192\blue192;}{\stylesheet{\widctlpar \f4\fs20 \snext0 Normal;}{\s1\sb240\sa60\keepn\widctlpar \b\f5\fs28\kerning28 \sbasedon0\snext0 heading 1;}{
+\s2\sb240\sa60\keepn\widctlpar \b\i\f5 \sbasedon0\snext0 heading 2;}{\s3\sb240\sa60\keepn\widctlpar \f5 \sbasedon0\snext0 heading 3;}{\s4\sb240\sa60\keepn\widctlpar \b\f5 \sbasedon0\snext0 heading 4;}{\s5\sb240\sa60\widctlpar \f5\fs22 \sbasedon0\snext0 
+heading 5;}{\*\cs10 \additive Default Paragraph Font;}{\s15\widctlpar \f4\fs20 \sbasedon0\snext15 footnote text;}{\*\cs16 \additive\super \sbasedon10 footnote reference;}{\s17\sa120\widctlpar \f4\fs20 \sbasedon0\snext17 Body Text;}}{\info
+{\author Preferred Customer}{\operator Preferred Customer}{\creatim\yr1999\mo3\dy16\hr14\min36}{\revtim\yr2000\mo5\dy19\hr8\min42}{\printim\yr1999\mo3\dy17\hr16\min34}{\version7}{\edmins17}{\nofpages6}{\nofwords2641}{\nofchars15057}
+{\*\company Dell Computer Corporation}{\vern57395}}\paperw11906\paperh16838 \widowctrl\ftnbj\aenddoc\hyphcaps0\formshade \fet0\sectd \linex0\headery709\footery709\colsx709\endnhere {\*\pnseclvl1\pnucrm\pnstart1\pnindent720\pnhang{\pntxta .}}{\*\pnseclvl2
+\pnucltr\pnstart1\pnindent720\pnhang{\pntxta .}}{\*\pnseclvl3\pndec\pnstart1\pnindent720\pnhang{\pntxta .}}{\*\pnseclvl4\pnlcltr\pnstart1\pnindent720\pnhang{\pntxta )}}{\*\pnseclvl5\pndec\pnstart1\pnindent720\pnhang{\pntxtb (}{\pntxta )}}{\*\pnseclvl6
+\pnlcltr\pnstart1\pnindent720\pnhang{\pntxtb (}{\pntxta )}}{\*\pnseclvl7\pnlcrm\pnstart1\pnindent720\pnhang{\pntxtb (}{\pntxta )}}{\*\pnseclvl8\pnlcltr\pnstart1\pnindent720\pnhang{\pntxtb (}{\pntxta )}}{\*\pnseclvl9\pnlcrm\pnstart1\pnindent720\pnhang
+{\pntxtb (}{\pntxta )}}\pard\plain \s1\qj\sb240\sa60\keepn\widctlpar \b\f5\fs28\kerning28 Creating CHARCONV plug-in DLLs
+\par \pard\plain \qj\fi720\widctlpar \f4\fs20 
+Each CHARCONV plug-in DLL contains the necessary information on how to convert text between Unicode and a particular character set (such as ISO-8859-2, GB-2312-80, etc) - the latter henceforth being referred to as the {\b foreign character set}
+. Creating a plug-in DLL is a two-stage process, as follows:
+\par \pard \qj\widctlpar 
+\par {\pntext\pard\plain\fs20 1.\tab}\pard \qj\fi-283\li283\widctlpar{\*\pn \pnlvlbody\pndec\pnstart1\pnindent283\pnhang{\pntxta .}}The CNVTOOL program is run to generate a C++ file from two text files which are known as the {\b source file }and the {\b 
+control file}.
+\par {\pntext\pard\plain\fs20 2.\tab}The generated C++ file is compiled along with another (hand-written) C++ file to produce the DLL.
+\par \pard \qj\widctlpar 
+\par These source file and the control file are both case insensitive and permit comments beginning with a \ldblquote #\rdblquote 
+ character and extending to the end of the line. They also permit blank lines and leading and trailing white-space on non-blank lines. 
+\par \pard\plain \s2\sb240\sa60\keepn\widctlpar \b\i\f5 Using CNVTOOL
+\par \pard\plain \qj\fi720\widctlpar \f4\fs20 CNVTOOL is called from the command-line as follows:
+\par \pard \qj\widctlpar 
+\par {\b\f11 CNVTOOL }{\i\f11 <control-file> <source-file> <output-C++-file>
+\par }
+\par It also supports the following flags, which may be positioned anywhere in the parameter list (each has a short and a long form, shown below separated by a \lquote |\rquote ):
+\par 
+\par {\pntext\pard\plain\f1\fs20 \'b7\tab}\pard \qj\fi-283\li283\widctlpar{\*\pn \pnlvlblt\pnf1\pnstart1\pnindent283\pnhang{\pntxtb \'b7}}{\b\f11 -s}{\f11  | }{\b\f11 -generateSourceCode} - this should now always be 
+used. (Not using it will cause CNVTOOL to generate an old-style binary conversion-data file - this is deprecated, although still supported for backwards compatibility.)
+\par {\pntext\pard\plain\f1\fs20 \'b7\tab}{\b\f11 -c}{\f11  | }{\b\f11 -columns(}{\i\f11 <number-of-columns>}{\b\f11 : }{\i\f11 <column-of-foreign-character-set-codes>}{\b\f11 , }{\i\f11 <column-of-Unicode-codes>}{\b\f11 )}
+ - this should be used if the source file consists of a non-standard number of columns, or if the columns are in a non-standard order (see \ldblquote The format of the source file\rdblquote  below). \ldblquote 1\rdblquote  (rather than \ldblquote 0
+\rdblquote ) is the first column. If this flag is not used, then {\b\f11 -columns(2: 1, 2)} is assumed.
+\par {\pntext\pard\plain\f1\fs20 \'b7\tab}{\b\f11 -r}{\f11  | }{\b\f11 -omitReplacementForUnconvertibleUnicodeCharacters}
+ - this should be used if the replacement for unconvertible Unicode characters specified in the control file is not actually going to be used by the plug-in DLL. (This flag can only be used if {\b\f11 -generateSourceCode} is also used.)
+\par {\pntext\pard\plain\f1\fs20 \'b7\tab}{\b\f11 -p}{\f11  | }{\b\f11 -cutOutAnyPrivateUseUnicodeCharacterSlotsBeingUsed} - if this is not used and one or more private-use Unicode character slots {\i are} being used, a warning is generated.
+\par {\pntext\pard\plain\f1\fs20 \'b7\tab}{\b\f11 -u}{\f11  | }{\b\f11 -sourceFilesToSubtract(}{\i\f11 <source-file-1>}{\b\f11 , }{\i\f11 <source-file-2>}{\b\f11 , ...)} - this is for use when only a subset of the actual source file is to be used, the 
+conversion pairs contained in the source files listed under this flag being subtracted from the conversion pairs obtained from the actual source file.
+\par \pard\plain \s2\sb240\sa60\keepn\widctlpar \b\i\f5 The plug-in DLL
+\par \pard\plain \s3\sb240\sa60\keepn\widctlpar \f5 The interface
+\par \pard\plain \qj\fi720\widctlpar \f4\fs20 The interface to which the plug-in DLL must conform is defined in \\epoc32\\include\\CONVPLUG.H which should be {\f11 #include}
+-d into any C++ files implementing the exported functions of this interface. The implementations of the eight reserved functions should do nothing - i.e. have empty function bodies. The MMP file used to build the actual plug-in DLL should specify the {
+\b\f11 targetpath}, {\b\f11 targettype}, {\b\f11 uid} and {\b\f11 deffile} keywords as follows:
+\par \pard \qj\widctlpar 
+\par {\b\f11 targetpath\tab \tab \\system\\charconv
+\par 
+\par targettype\tab \tab dll
+\par 
+\par uid\tab \tab \tab 0x1000601a 0x}{\i\f11 <UID-in-hexadecimal>}{\b\f11 
+\par 
+\par #if defined(WINS)
+\par deffile\tab \tab \\epoc32\\release\\wins\\CONVPLUG.DEF
+\par #elif defined(MARM)
+\par deffile\tab \tab \\epoc32\\release\\marm\\CONVPLUG.DEF
+\par #else
+\par error
+\par #endif}
+\par 
+\par The second of the two UIDs (Universal IDentifiers) specified in the MMP file must be a number allocated by Symbian specifically for the required foreign character set. The first UID must have the value 0x1000601a.
+\par \pard\plain \s3\sb240\sa60\keepn\widctlpar \f5 Using the data structures generated by CNVTOOL
+\par \pard\plain \qj\fi720\widctlpar \f4\fs20 The C++ file generated by CNVTOOL contains two things: an instance of a {\f11 SCnvConversionData} data structure (this data structure is defined in \\epoc32\\include\\
+CONVDATA.H), and a function returning a descriptor which is the replacement for unconvertible Unicode characters. These two things can be accessed from hand-written C++ files by {\f11 #include}-ing \\epoc32\\include\\
+CONVGENERATEDCPP.H. (Note that if the CNVTOOL command-line included the  {\b\f11 -omitReplacementForUnconvertibleUnicodeCharacters} flag, then the descriptor-returning function cannot be used.)
+\par There are a number of utility functions that can be called by {\f11 ConvertFromUnicode} and {\f11 ConvertToUnicode}. The {\f11 CCnvCharacterSetConverter} class (defined in \\epoc32\\include\\
+CHARCONV.H) provides the two most basic of these utility functions which are its static member functions {\f11 DoConvertFromUnicode} and {\f11 DoConvertToUnicode}. The {\f11 CnvUtilities} class (defined in \\epoc32\\include\\
+CONVUTILS.H and whose code is in CONVUTILS.DLL) provides some other utility functions which are of use for more complex foreign character sets, including, among other types of character set, {\b modal} 
+character sets. (Modal character sets are those where the interpretation of a given byte of data is dependent on the current mode, mode changing being performed by certain defined {\b escape sequences} which occur in the byte stream.)
+\par \pard\plain \s3\sb240\sa60\keepn\widctlpar \f5 Requirements of the behaviour of the two conversion functions
+\par \pard\plain \qj\fi720\widctlpar \f4\fs20 The two conversion functions in the DLL interface ({\f11 ConvertFromUnicode} and {\f11 ConvertToUnicode}) must fulfill the following behavioural requirements. They must return either a negative error code in {\f11 
+CCnvCharacterSetConverter::TError}
+ or the number of elements and the end of the input descriptor which have not been converted, either because the output descriptor is full, or because there is a truncated sequence at the end of the input descriptor, e.g. only the first half of a Unicode 
+surrogate pair, or only the first byte of a multi-byte foreign-character-set character code, or a truncated escape sequence of a modal foreign character set. The functions should cope without returning an error if the output descriptor is too short o
+r if there is a truncated sequence at the end of the input descriptor, although if the input descriptor consists {\i purely} of a truncated sequence, they should return {\f11 CCnvCharacterSetConverter::EErrorIllFormedInput}.
+\par \pard\plain \s3\sb240\sa60\keepn\widctlpar \f5 Test code
+\par \pard\plain \qj\fi720\widctlpar \f4\fs20 It is obviously important to write code to test the plug-in DLL. This can be based on some of CHARCONV\rquote s own test code which can be found in \\charconv\\test\\source\\
+main (if access to this source directory is available).
+\par \pard\plain \s2\qj\sb240\sa60\keepn\widctlpar \b\i\f5 The format of the source file
+\par \pard\plain \qj\fi720\widctlpar \f4\fs20 The format of the source file is relatively straightforward. Each line consists of two hexadecimal numbers separated by white-space, each number being prefixed with {\b\f11 0x}
+. The first number is the encoding of a character in the foreign character set, and the second is the Unicode encoding of the same character.
+\par A number of files in this format are already available from The Unicode Consortium - either from the CD that comes with the book {\i The Unicode Standard, Version 2.0}, or from ftp://ftp.unicode.org/Public/MAPPINGS/ (the latter will probably have m
+ore up-to-date versions of these files than the former).
+\par In some cases the foreign character codes that appear in these text files need to be processed in some way before being used in the binary output file. Specifying how they should be processed is done by including a line of the following format in the sour
+ce file:
+\par \pard \qj\widctlpar 
+\par {\b\f11 SET_FOREIGN_CHARACTER_CODE_PROCESSING_CODE}{\f11  }{\i\f11 [Perl-code]}
+\par 
+\par This line affects all lines in the source file beneath it until the next such line. If nothing other than white-space appears after {\b\f11 SET_FOREIGN_CHARACTER_CODE_PROCESSING_CODE}
+, the foreign character codes in the subsequent lines are used unprocessed (just as they are if {\b\f11 SET_FOREIGN_CHARACTER_CODE_PROCESSING_CODE} is not used at all). The Perl code must return a number using the variable {\b\f11 $foreignCharacterCode}
+ as its input parameter. As an example, if the high-bit of each foreign character is off in the source file but is required to be on in the output file, the Perl code (assuming the foreign character set uses only one byte for each character) would be {
+\b\f11 return $foreignCharacterCode|0x80;}.
+\par \pard\plain \s2\qj\sb240\sa60\keepn\widctlpar \b\i\f5 The format of the control file
+\par \pard\plain \qj\fi720\widctlpar \f4\fs20 The format of the control file is somewhat more complicated than that of the source file. There are four sections to the control file: the {\b header}, the {\b foreign variable-byte data}, the {\b 
+foreign-to-Unicode data }and the {\b Unicode-to-foreign data}.
+\par \pard\plain \s3\qj\sb240\sa60\keepn\widctlpar \f5 The format of the header
+\par \pard\plain \qj\fi720\widctlpar \f4\fs20 The header consists of five lines in fixed order. Their format is as follows (alternatives are separated by a {\f11 |}, single space characters represent single or multiple white-space characters):
+\par \pard \qj\widctlpar 
+\par {\b\f11 UID}{\f11  }{\b\f11 0x}{\i\f11 <UID-in-hexadecimal>}{\f11 
+\par }{\b\f11 Endianness Unspecified}{\f11 |}{\b\f11 FixedLittleEndian}{\f11 |}{\b\f11 FixedBigEndian}{\f11 
+\par }{\b\f11 ReplacementForUnconvertibleUnicodeCharacters }{\i\f11 <see-below>}{\f11 
+\par }{\b\f11 ForeignCharacterCodeProcessingCode }{\i\f11 <see-below>}
+\par 
+\par \pard \qj\fi720\widctlpar The value of {\b\f11 UID} (Universal IDentifier) must be a number allocated by Symbian specifically for the required foreign character set. This may, and should, on pain of a warning being generated, be omitted if {\b\f11 
+-generateSourceCode} is used on the CNVTOOL command-line - instead this UID needs to be specified in the MMP file. The value of {\b\f11 Endianness}
+ is only an issue for foreign character sets where single characters may be encoded by more than one byte. The value of {\b\f11 ReplacementForUnconvertibleUnicodeCharacters}
+ is a series of one or more hexadecimal numbers (not greater than 0xff) separated by white-space, each prefixed with {\b\f11 0x}
+. These byte values are output for each Unicode character that has no equivalent in the foreign character set (when converting from foreign to Unicode).
+\par {\b\f11 ForeignCharacterCodeProcessingCode} is now obsolete and no longer has any effect. It can safely be omitted from the control file. (Using it will generate a warning from the Perl script).
+\par \pard\plain \s3\qj\sb240\sa60\keepn\widctlpar \f5 The format of the foreign variable-byte data
+\par \pard\plain \qj\fi720\widctlpar \f4\fs20 This section begins and ends with the following two lines, respectively:
+\par \pard \qj\widctlpar 
+\par {\b\f11 StartForeignVariableByteData}
+\par {\b\f11 EndForeignVariableByteData}
+\par 
+\par \pard \qj\fi720\widctlpar In between these two lines are one or more lines, each consisting of two hexadecimal numbers (each prefixed with {\b\f11 0x} and not gre
+ater than 0xff) followed by a decimal number - all three are separated by white-space. Each of these lines indicates how many bytes make up a foreign character code for a given range of values for the initial foreign byte. The two hexadecimal numbers are 
+the start and end of the range of values for the initial foreign byte (inclusive), and the decimal number is the number of {\i subsequent} bytes. The way these bytes are put together to make the foreign character code is determined by the value of {
+\b\f11 Endianness} in the header of the control file. As an example - if the foreign character set uses only a single byte per character and it\rquote 
+s first character has code 0x07 and its last character has code 0xe6, the foreign variable-byte data would be:
+\par \pard \qj\widctlpar 
+\par {\b\f11 StartForeignVariableByteData
+\par 0x07 0xe6 0}
+\par {\b\f11 EndForeignVariableByteData}
+\par \pard\plain \s3\qj\sb240\sa60\keepn\widctlpar \f5 The format of the foreign-to-Unicode data
+\par \pard\plain \qj\fi720\widctlpar \f4\fs20 This section begins and ends with the following two lines, respectively:
+\par \pard \qj\widctlpar 
+\par {\b\f11 StartForeignToUnicodeData}
+\par {\b\f11 EndForeignToUnicodeData}
+\par 
+\par In between these two lines are one or more of lines in {\b format A} (defined below). These may be optionally followed by one or more of lines in {\b format B} (defined below), in which case the lines in format A and format B are separated by the line:
+
+\par 
+\par {\b\f11 ConflictResolution}
+\par 
+\par \pard \qj\fi720\widctlpar Each line in format A indicates the conversion algorithm to be used for a particular range of foreign character codes. There are four possible conversion algorithms:
+\par \pard \qj\widctlpar 
+\par {\pntext\pard\plain\fs20 1.\tab}\pard \qj\fi-283\li283\widctlpar{\*\pn \pnlvlbody\pndec\pnstart1\pnindent283\pnhang{\pntxta .}}{\b direct} - this is where each character in the range has the same encoding in Unicode as in the foreign character set,
+\par {\pntext\pard\plain\fs20 2.\tab}{\b offset} - this is where the offset from the foreign encoding to the Unicode encoding is the same for each character in the range,
+\par {\pntext\pard\plain\fs20 3.\tab}{\b indexed table (16)}
+ - this is where a contiguous block of foreign character codes maps onto a random collection of Unicode character codes (the 16 refers to the fact that each Unicode character code must use no more than 16 bits),
+\par {\pntext\pard\plain\fs20 4.\tab}{\b keyed table (16-16)} - this is where a sparse collection of foreign character codes map onto a random col
+lection of Unicode character codes (the 16 refers to the fact that each foreign character code and each Unicode character code must use no more than 16 bits).
+\par \pard \qj\widctlpar 
+\par Lines in format A contains the following fields, each separated by white-space:
+\par 
+\par {\pntext\pard\plain\f1\fs20 \'b7\tab}\pard \qj\fi-283\li283\widctlpar{\*\pn \pnlvlblt\pnf1\pnstart1\pnindent283\pnhang{\pntxtb \'b7}}include-priority (not currently used) - a decimal number
+\par {\pntext\pard\plain\f1\fs20 \'b7\tab}search-priority (not currently used) - a decimal number
+\par {\pntext\pard\plain\f1\fs20 \'b7\tab}first input character code in the range - a hexadecimal number prefixed with {\b\f11 0x}
+\par {\pntext\pard\plain\f1\fs20 \'b7\tab}last input character code in the range - a hexadecimal number prefixed with {\b\f11 0x}
+\par {\pntext\pard\plain\f1\fs20 \'b7\tab}algorithm - one of {\b\f11 Direct}{\f11 |}{\b\f11 Offset}{\f11 |}{\b\f11 IndexedTable16}{\f11 |}{\b\f11 KeyedTable1616}
+\par {\pntext\pard\plain\f1\fs20 \'b7\tab}parameters - (not applicable to any of the current choice of algorithms) - set this to {\b\f11 \{\}}
+\par \pard \qj\widctlpar 
+\par \pard \qj\fi720\widctlpar Format B is two hexadecimal numbers prefixed with {\b\f11 0x}
+, separated by white-space. The first of these is a foreign character code which has multiple equivalents in Unicode (according to the data in the source file), and the second is the code of the preferred Unicode character to which the foreign character s
+hould be converted.
+\par \pard\plain \s3\qj\sb240\sa60\keepn\widctlpar \f5 The format of the Unicode-to-foreign data
+\par \pard\plain \qj\fi720\widctlpar \f4\fs20 As will be seen, this section is very similar to the foreign-to-Unicode data. It begins and ends with the following two lines, respectively:
+\par \pard \qj\widctlpar 
+\par {\b\f11 StartUnicodeToForeignData}
+\par {\b\f11 EndUnicodeToForeignData}
+\par 
+\par In between these two lines are one or more of lines in {\b format C} (defined below). These may be optionally followed by one or more of lines in {\b format D} (defined below), in which case the lines in format C and format D are separated by the line:
+
+\par 
+\par {\b\f11 ConflictResolution}
+\par 
+\par \pard \qj\fi720\widctlpar Format C is very similar to format A with one exception, which is an additional field to specify the size of the output character code in bytes (as this is a {\i foreign}
+ character code). Each line in format C indicates the conversion algorithm to be used for a particular range of Unicode character codes. Lines in format C contains the following fields, each separated by white-space:
+\par \pard \qj\widctlpar 
+\par {\pntext\pard\plain\f1\fs20 \'b7\tab}\pard \qj\fi-283\li283\widctlpar{\*\pn \pnlvlblt\pnf1\pnstart1\pnindent283\pnhang{\pntxtb \'b7}}include-priority (not currently used) - a decimal number
+\par {\pntext\pard\plain\f1\fs20 \'b7\tab}search-priority (not currently used) - a decimal number
+\par {\pntext\pard\plain\f1\fs20 \'b7\tab}first input character code in the range - a hexadecimal number prefixed with {\b\f11 0x}
+\par {\pntext\pard\plain\f1\fs20 \'b7\tab}last input character code in the range - a hexadecimal number prefixed with {\b\f11 0x}
+\par {\pntext\pard\plain\f1\fs20 \'b7\tab}algorithm - one of {\b\f11 Direct}{\f11 |}{\b\f11 Offset}{\f11 |}{\b\f11 IndexedTable16}{\f11 |}{\b\f11 KeyedTable1616}
+\par {\pntext\pard\plain\f1\fs20 \'b7\tab}size of the output character code in bytes (this was not in format A) - a decimal number
+\par {\pntext\pard\plain\f1\fs20 \'b7\tab}parameters - (not applicable to any of the current choice of algorithms) - set this to {\b\f11 \{\}}
+\par \pard \qj\widctlpar 
+\par \pard \qj\fi720\widctlpar Format D is exact analogous to Format B (described above). Like Format B, it consists of two hexadecimal numbers prefixed with {\b\f11 0x}
+, separated by white-space. However, the first of these is a Unicode character code which has multiple equivalents in the foreign character set (according to the data in the source file), and the second is the code of the preferred foreign character to wh
+ich the Unicode character should be converted.
+\par \pard\plain \s3\sb240\sa60\keepn\widctlpar \f5 Generating multiple {\f11 SCnvConversionData} data structures
+\par \pard\plain \qj\fi720\widctlpar \f4\fs20 It is sometimes desirable for further objects to be generated which provide a view of a {\i subset} of the main {\f11 SCnvConversionData} object. This is poss
+ible by inserting an extra couple of lines of the following form in both the foreign-to-Unicode data and the Unicode-to-foreign data in the control file:
+\par \pard \qj\widctlpar 
+\par {\b\f11 StartAdditionalSubsetTable}{\f11  }{\i\f11 <name-of-SCnvConversionData-object>}
+\par {\b\f11 EndAdditionalSubsetTable}{\f11  }{\i\f11 <name-of-SCnvConversionData-object>}
+\par 
+\par These lines should be placed around the block of lines to be included in the named {\f11 SCnvConversionData} object. Note that only one pair of these lines can occur in each of the foreign-to-Unicode data and the Unicode-to-foreign data, a
+nd if a pair occurs in one, it must occur in the other. Accessing one of these {\f11 SCnvConversionData} objects from handwritten C++ files is done by putting a line of the following form at the top of the relevant C++ file.
+\par 
+\par {\b\f11 GLREF_D const SCnvConversionData}{\f11  }{\i\f11 <name-of-SCnvConversionData-object>}{\b\f11 ;}
+\par 
+\par The named object can then be used as required.
+\par \pard \qj\fi720\widctlpar Using this technique means that two (or more) foreign character sets - where one is a subset of the other(s) - can share the same conversion data. This conversion data would n
+eed to be in a shared-library DLL which the two (or more) plug-in DLLs would both link to. 
+\par \pard\plain \s3\qj\sb240\sa60\keepn\widctlpar \f5 Choosing an appropriate algorithm for a range of character codes
+\par \pard\plain \qj\fi720\widctlpar \f4\fs20 
+Of the four algorithms listed above, the keyed table is the most general and can be used for any foreign character set. However, it is the algorithm requiring the most storage space, as well as the slowest (a binary search is required), therefore it is be
+st avoided if possible. The indexed table also requires storage space (although less than the keyed 
+table), but is much faster as essentially only a pointer dereference is required. The direct and offset algorithms are the fastest and require negligible storage. It is thus necessary to choose appropriate algorithms to minimize storage and to maximize sp
+eed of conversion.
+\par CHARCONV provides another tool in the form of a Perl script to analyse the source file and thus help choose the best algorithms for conversion. To run it, type the following command from the \\charconv\\data directory:
+\par \pard \qj\widctlpar 
+\par {\b\f11 perl -w ANALYSE.PL }{\i\f11 <source-file> <output-file> <column>}
+\par 
+\par The output file is essentially a rearrangement of the source file sorted according to the {\i\f11 <column>} parameter, which is passed {\b\f11 1} to sort on the first \ldblquote column\rdblquote 
+ of the source file (i.e. to sort each line according to their foreign character codes) and {\b\f11 2} to sort on the second \ldblquote column\rdblquote 
+ (i.e. to sort each line according to their Unicode character codes). The output file also shows the blocks of characters that are contiguous in the specified column. Under each block is a comme
+nt indicating the relationship of the other column to the specified column. This is either \ldblquote random\rdblquote  or \ldblquote offset\rdblquote  (with the offset specified). If the output file states that a block has an offset of zero, the {\i 
+direct} algorithm can be used for that range of characters. If a block has an offset of non-zero, the {\i offset} algorithm can be used for that range of characters. If the output file states that a block has a random mapping{\cs16\super \chftn 
+{\footnote \pard\plain \s15\qj\widctlpar \f4\fs20 {\cs16\super \chftn } A careful check should be made if the analysing tool designates a block as \ldblquote random\rdblquote 
+. It may be that this block could actually be broken up into two or more other blocks, some of which may only require the direct or offset algorithm.}}, the {\i indexed table}
+ algorithm can be used for that range of characters. Where the blocks are too small to warrant an algorithm to themselves (as a general guide, blocks of 5 lines or less are probably too small), the {\i keyed table} algorithm needs to be used.
+\par \pard \qj\fi720\widctlpar Ranges of characters in the control file are permitted to overlap. This is useful as it means that a keye
+d table whose range is the entire range of the foreign character set (or the Unicode character set) can be used at the end of the in the foreign-to-Unicode data (or Unicode-to-foreign data, respectively) to \ldblquote catch\rdblquote 
+ all the characters that were not \ldblquote caught\rdblquote  by the preceding ranges, which will have used better algorithms.
+\par }

@@ -1,0 +1,8 @@
+EXPORTS
+	ReplacementForUnconvertibleUnicodeCharacters__6CnvGbk @ 1 NONAME R3UNUSED ; CnvGbk::ReplacementForUnconvertibleUnicodeCharacters(void)
+	ConvertFromUnicode__6CnvGbkQ225CCnvCharacterSetConverter11TEndiannessRC6TDesC8R5TDes8RC7TDesC16RQ225CCnvCharacterSetConverter24TArrayOfAscendingIndices @ 2 NONAME ; CnvGbk::ConvertFromUnicode(CCnvCharacterSetConverter::TEndianness, TDesC8 const &, TDes8 &, TDesC16 const &, CCnvCharacterSetConverter::TArrayOfAscendingIndices &)
+	ConvertFromUnicode__6CnvGbkQ225CCnvCharacterSetConverter11TEndiannessRC6TDesC8R5TDes8RC7TDesC16RQ225CCnvCharacterSetConverter24TArrayOfAscendingIndicesRUiUi @ 3 NONAME ; CnvGbk::ConvertFromUnicode(CCnvCharacterSetConverter::TEndianness, TDesC8 const &, TDes8 &, TDesC16 const &, CCnvCharacterSetConverter::TArrayOfAscendingIndices &, unsigned int &, unsigned int)
+	ConvertToUnicode__6CnvGbkQ225CCnvCharacterSetConverter11TEndiannessR6TDes16RC6TDesC8RiT4 @ 4 NONAME ; CnvGbk::ConvertToUnicode(CCnvCharacterSetConverter::TEndianness, TDes16 &, TDesC8 const &, int &, int &)
+	ConvertToUnicode__6CnvGbkQ225CCnvCharacterSetConverter11TEndiannessR6TDes16RC6TDesC8RiT4RUiUi @ 5 NONAME ; CnvGbk::ConvertToUnicode(CCnvCharacterSetConverter::TEndianness, TDes16 &, TDesC8 const &, int &, int &, unsigned int &, unsigned int)
+	IsCharGBBased__6CnvGbkRiRC6TDesC8 @ 6 NONAME R3UNUSED ; CnvGbk::IsCharGBBased(int &, TDesC8 const &)
+

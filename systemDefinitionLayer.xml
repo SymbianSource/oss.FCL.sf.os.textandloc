@@ -1,0 +1,7 @@
+<layer name="textandloc">
+  <module name="group_textandloc">
+    <component name="group_textandloc">
+      <unit unitID="textandloc" mrp="" bldFile="&layer_real_source_path;\group" name="textandloc" />
+    </component>
+  </module>
+</layer>

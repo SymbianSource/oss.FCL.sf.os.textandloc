@@ -1,0 +1,7 @@
+EXPORTS
+	CountOfPictographPagesFromUnicode__Fv @ 1 NONAME R3UNUSED ; CountOfPictographPagesFromUnicode(void)
+	CountOfPictographPagesToUnicode__Fv @ 2 NONAME R3UNUSED ; CountOfPictographPagesToUnicode(void)
+	SetCharacterSetsForPictograph__FRt6RArray1ZQ212CnvUtilities13SCharacterSet @ 3 NONAME R3UNUSED ; SetCharacterSetsForPictograph(RArray<CnvUtilities::SCharacterSet> &)
+	SetMethodsForPictograph__FRt6RArray1ZQ212CnvUtilities7SMethod16TOriginalCharset @ 4 NONAME R3UNUSED ; SetMethodsForPictograph(RArray<CnvUtilities::SMethod> &, TOriginalCharset)
+	SetStatesForPictograph__FRt6RArray1ZQ212CnvUtilities6SState @ 5 NONAME R3UNUSED ; SetStatesForPictograph(RArray<CnvUtilities::SState> &)
+
