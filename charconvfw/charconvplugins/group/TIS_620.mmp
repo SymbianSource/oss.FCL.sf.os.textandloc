@@ -17,7 +17,7 @@
 */
 
 
-TARGET               TIS_620.DLL
+TARGET               TIS_620.dll
 TARGETTYPE           PLUGIN
 CAPABILITY           All -Tcb
 
@@ -27,7 +27,7 @@ VENDORID		0x70000001
 SOURCEPATH			../src/plugins
 SOURCE               TIS_620.cpp
 SOURCEPATH		/epoc32/build/generatedcpp/charconv
-SOURCE               G_TIS_620.cpp
+SOURCE               g_TIS_620.cpp
 
 OS_LAYER_SYSTEMINCLUDE_SYMBIAN
 USERINCLUDE		../inc
@@ -37,12 +37,12 @@ LIBRARY              charconv.lib
 LIBRARY              ecom.lib
 
 SOURCEPATH		../resource
-Start resource       TIS_620.RSS
+Start resource       TIS_620.rss
 Targetpath           /resource/charconv
 End
 
 start resource       10207403.rss
-target               TIS_620.RSC
+target               tis_620.rsc
 
 end
 

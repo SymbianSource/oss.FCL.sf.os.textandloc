@@ -24,7 +24,7 @@ NAME SJID
 
 //  INCLUDES
 #include "ShiftJisDirectmap.RLS"
-#include <UIKON.RH>
+#include <uikon.rh>
 
 //  RESOURCE DEFINITIONS 
 // -----------------------------------------------------------------------------

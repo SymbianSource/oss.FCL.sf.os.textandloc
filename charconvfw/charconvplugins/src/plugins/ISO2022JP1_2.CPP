@@ -203,7 +203,11 @@ void CISO2022JP1ConverterImpl::ConstructL()
 
 const TImplementationProxy ImplementationTable[] = 
 	{
-		IMPLEMENTATION_PROXY_ENTRY(0x100066A3,	CISO2022JP1ConverterImpl::NewL)
+#ifdef S60_TEST
+    IMPLEMENTATION_PROXY_ENTRY(0x01000009,  CISO2022JP1ConverterImpl::NewL)
+#else
+	IMPLEMENTATION_PROXY_ENTRY(0x100066A3,	CISO2022JP1ConverterImpl::NewL)
+#endif	
 	};
 
 EXPORT_C const TImplementationProxy* ImplementationGroupProxy(TInt& aTableCount)

@@ -20,7 +20,7 @@
 
 
 
-#include "Ecom/RegistryInfo.rh"
+#include "ecom/registryinfo.rh"
 /////////////////////////////////////////////////////////////////////////////////
 //ShiftJisDirectmap
 RESOURCE REGISTRY_INFO ShiftJisDirectmapInfo

@@ -638,7 +638,7 @@ panic occurs.
 		{
 		TText16 high = TChar::GetHighSurrogate(aChar);
 		TText16 low = TChar::GetLowSurrogate(aChar);
-		RDebug::Print(_L("CRichText::InsertL(), %X expand to %X %X."), aChar, high, low);
+		RDebug::Print(_L("CRichText::InsertL(), %X expand to %X %X."), TUint(aChar), high, low);
 		
 		TBuf<2> content;
 		content.Append(high);

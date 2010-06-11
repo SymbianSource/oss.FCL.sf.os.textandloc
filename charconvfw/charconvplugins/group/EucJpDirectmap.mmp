@@ -57,7 +57,7 @@ Targetpath           /resource/charconv
 End
 
 start resource       10207353.rss
-target               EucJpDirectmap.RSC
+target               eucjpdirectmap.rsc
 end
 
 SMPSAFE

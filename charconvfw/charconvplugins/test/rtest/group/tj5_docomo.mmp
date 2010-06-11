@@ -39,3 +39,4 @@ LIBRARY			charconv.lib
 epocstacksize	20000
 
 SMPSAFE
+//RTEST

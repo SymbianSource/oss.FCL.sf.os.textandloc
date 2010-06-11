@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 2008-2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -46,6 +46,13 @@ ECOM_PLUGIN(tis1620.dll, tis1620.rsc)
 // test version of J5 and shiftjis plugins using kddiau version of shiftjis
 ECOM_PLUGIN(test_j5_kddiau.dll, 01000002.rsc)
 ECOM_PLUGIN(shiftjis_kddiau_test.dll, 01000000.rsc)
+
+// test version of xS60 eucjp_packed, also need dependent dll
+//ECOM_PLUGIN(eucjp_packed_2_test.dll, 01000004.rsc)
+// test version of xS60 iso2022jp, also need dependent dll
+//ECOM_PLUGIN(iso2022jp_2_test.dll, 01000006.rsc)
+// test version of xS60 iso2022jp1, also need dependent dll
+//ECOM_PLUGIN(iso2022jp1_2_test.dll, 01000008.rsc)
 
 data=EPOCROOT##epoc32\data\z\test\data\swedish.txt		test\Data\swedish.txt
 data=EPOCROOT##epoc32\data\z\test\data\finnish.txt		test\Data\finnish.txt
@@ -234,7 +241,9 @@ file=ABI_DIR\BUILD_DIR\tportugueselockingsingle.exe		TEST\tportugueselockingsing
 file=ABI_DIR\BUILD_DIR\tspanishgsmsingle.exe		TEST\tspanishgsmsingle.exe
 file=ABI_DIR\BUILD_DIR\teucjpdirectmap.exe		TEST\teucjpdirectmap.exe
 file=ABI_DIR\BUILD_DIR\tshiftjisdirectmap.exe		TEST\tshiftjisdirectmap.exe
-file=ABI_DIR\BUILD_DIR\teucjp_packed_2.exe		TEST\teucjp_packed_2.exe
+//file=ABI_DIR\BUILD_DIR\teucjp_packed_2.exe		TEST\teucjp_packed_2.exe
+//file=ABI_DIR\BUILD_DIR\tiso2022jp_2.exe		TEST\tiso2022jp_2.exe
+//file=ABI_DIR\BUILD_DIR\tiso2022jp1_2.exe		TEST\tiso2022jp1_2.exe
 
 file=ABI_DIR\BUILD_DIR\tiscii.exe		TEST\tiscii.exe
 file=ABI_DIR\BUILD_DIR\tKOI8R.exe		TEST\tKOI8R.exe

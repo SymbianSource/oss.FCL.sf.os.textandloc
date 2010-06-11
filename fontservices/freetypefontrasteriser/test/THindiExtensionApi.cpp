@@ -520,7 +520,7 @@ TAny* CTestTrueTypeTable::TestGetTable(TExpectedResult aExpected,
 #ifdef _DEBUG
 	// If it was EAvailableNew, it should have failed allocating memory
 	TEST ( aExpected != EAvailableNew
-		|| (error == KErrNoMemory && table == 0) );
+		|| (error == KErrNone && table != 0) );
 #else
 	//Shouldn't have any problem allocating memory in release mode as 
 	//__UHEAP_FAILNEXT is only for debug mode

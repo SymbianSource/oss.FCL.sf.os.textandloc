@@ -1126,7 +1126,7 @@ Must be valid, or a panic occurs.
 		{
 		TText16 high = TChar::GetHighSurrogate(aChar);
 		TText16 low = TChar::GetLowSurrogate(aChar);
-		RDebug::Print(_L("CPlainText::InsertL(%d), %X expand to %X %X."), aInsertPos, aChar, high, low);
+		RDebug::Print(_L("CPlainText::InsertL(%d), %X expand to %X %X."), aInsertPos, TUint(aChar), high, low);
 	
 		TBuf<2> content;
 		contentLength = 2;

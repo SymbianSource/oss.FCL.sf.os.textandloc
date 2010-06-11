@@ -37,3 +37,4 @@ LIBRARY			shiftjis_kddiau_shared.lib
 epocstacksize	20000
 
 SMPSAFE
+//RTEST

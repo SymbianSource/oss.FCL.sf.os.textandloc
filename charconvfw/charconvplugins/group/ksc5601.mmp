@@ -39,12 +39,12 @@ LIBRARY              cp949table.lib
 
 SOURCEPATH		../resource
 
-Start resource       ksc5601.RSS
+Start resource       ksc5601.rss
 Targetpath           /resource/charconv
 End
 
 start resource       200113CE.rss
-target               ksc5601.RSC
+target               ksc5601.rsc
 end
 
 SMPSAFE

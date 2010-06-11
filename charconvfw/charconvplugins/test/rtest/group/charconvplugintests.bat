@@ -44,7 +44,9 @@ tportugueselockingsingle
 tspanishgsmsingle
 teucjpdirectmap
 tshiftjisdirectmap
-teucjp_packed_2
+//teucjp_packed_2
+//tiso2022jp_2
+//tiso2022jp1_2
 tiscii
 tKOI8R
 tKOI8U

@@ -463,7 +463,7 @@ TInt RTmTextCache::GetDisplayedText(TInt aStart, TInt aEnd,
 		if (CFont::CharactersJoin(
 			aDirectionality == ELeftToRight? prevChar : c,
 			aDirectionality == ELeftToRight? c : prevChar)
-			&& format.iFontSpec == prevFormat.iFontSpec)
+			&& format == prevFormat)
 			// Characters join at the beginning.
 			*output = KZeroWidthJoiner;
 		}
@@ -530,7 +530,7 @@ TInt RTmTextCache::GetDisplayedText(TInt aStart, TInt aEnd,
 			if (CFont::CharactersJoin(
 				aDirectionality == ELeftToRight? *prev : nextChar,
 				aDirectionality == ELeftToRight? nextChar : *prev)
-				&& format.iFontSpec == nextFormat.iFontSpec)
+				&& format == nextFormat)
 				// Characters join at the end.
 				*output = KZeroWidthJoiner;
 			}

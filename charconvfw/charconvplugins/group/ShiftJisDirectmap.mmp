@@ -37,7 +37,7 @@ USERINCLUDE		../inc
 USERINCLUDE		../src/inc
 USERINCLUDE		../src/shared
 
-source               ShiftJisDirectmap.CPP
+source               ShiftJisDirectmap.cpp
 
 LIBRARY              euser.lib
 LIBRARY              charconv.lib
@@ -55,7 +55,7 @@ Targetpath           /resource/charconv
 End
 
 start resource       10207354.rss
-target               ShiftJisDirectmap.RSC
+target               shiftjisdirectmap.rsc
 end
 
 SMPSAFE

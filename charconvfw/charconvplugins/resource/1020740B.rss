@@ -20,7 +20,7 @@
 
 
 
-#include "Ecom/RegistryInfo.rh"
+#include "ecom/registryinfo.rh"
 
 RESOURCE REGISTRY_INFO Windows1257Info
     {

@@ -20,7 +20,7 @@
 NAME    KSC5
 
 //  INCLUDES
-#include <UIKON.RH>
+#include <uikon.rh>
 
 RESOURCE RSS_SIGNATURE {}
 

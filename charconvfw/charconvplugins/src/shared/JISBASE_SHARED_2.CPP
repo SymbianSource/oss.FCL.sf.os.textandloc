@@ -313,6 +313,7 @@ EXPORT_C TInt CnvJisBase::ConvertToUnicode(CCnvCharacterSetConverter::TEndiannes
 				const TInt returnValue=(*appendConvertToUnicode)(aDefaultEndiannessOfForeignCharacters, aUnicode, runToConvert, aState, numberOfUnconvertibleCharacters, indexOfFirstByteOfFirstUnconvertibleCharacter, arrayOfStates, outputConversionFlags, inputConversionFlags);
 				if (returnValue<0)
 					{
+                    states.Close();
 					return returnValue; // this is an error-code
 					}
 				if (numberOfUnconvertibleCharacters>0)
