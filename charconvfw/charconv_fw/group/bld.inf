@@ -34,11 +34,13 @@ PRJ_EXPORTS
 	../inc/charconv.h						SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(charconv.h)
 	../inc/charactersetconverter.h			SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(charactersetconverter.h)
 
+#if 0 // bug 2842
 	../documentation/charconv_exe.ipr		/epoc32/engdoc/tools/charconv_exe.ipr
 	../documentation/charconv_perltools.ipr	/epoc32/engdoc/tools/charconv_perltools.ipr
 	../documentation/cnvapi.rtf				/epoc32/engdoc/charconv/cnvapi.rtf
 	../documentation/autodetect.rtf			/epoc32/engdoc/charconv/autodetect.rtf
 	../documentation/snmtool.rtf			/epoc32/engdoc/charconv/snmtool.rtf
+#endif
 
 	../tools/snmtool.bat					/epoc32/tools/snmtool.bat
 	../tools/snmtool.pl						/epoc32/tools/snmtool.pl

@@ -51,8 +51,10 @@ PRJ_EXPORTS
 	../inc/SHIFTJIS_2.H								/epoc32/include/shiftjis_2.h
 #endif
 
+#if 0 // bug 2842
 	../documentation/charconv_plugins_perltools.ipr	/epoc32/engdoc/tools/charconv_plugins_perltools.ipr
 	../documentation/cnvtool.rtf					/epoc32/engdoc/charconv/cnvtool.rtf
+#endif 
 
 	../tools/cnvtool.bat							/epoc32/tools/cnvtool.bat
 	../tools/charconv.bat							/epoc32/tools/charconv.bat
