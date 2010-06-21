@@ -374,8 +374,8 @@ EXPORTS
 	_ZTI14CPicturePhrase @ 373 NONAME ABSENT ; #<TI>#
 	_ZTI14CRichTextIndex @ 374 NONAME ; #<TI>#
 	_ZTI15CInlineEditData @ 375 NONAME ABSENT ; #<TI>#
-	_ZTI17CRichTextStoreMapI12CParaAttribsE @ 376 NONAME ; #<TI>#
-	_ZTI17CRichTextStoreMapI15CParagraphStyleE @ 377 NONAME ; #<TI>#
+	_ZTI17CRichTextStoreMapI12CParaAttribsE @ 376 NONAME ABSENT ; #<TI>#
+	_ZTI17CRichTextStoreMapI15CParagraphStyleE @ 377 NONAME ABSENT ; #<TI>#
 	_ZTI19CPlainTextConverter @ 378 NONAME ABSENT ; #<TI>#
 	_ZTI25CEditableTextOptionalData @ 379 NONAME ABSENT ; #<TI>#
 	_ZTV11CParserData @ 380 NONAME ABSENT ; #<VT>#
@@ -385,8 +385,8 @@ EXPORTS
 	_ZTV14CPicturePhrase @ 384 NONAME ABSENT ; #<VT>#
 	_ZTV14CRichTextIndex @ 385 NONAME ; #<VT>#
 	_ZTV15CInlineEditData @ 386 NONAME ABSENT ; #<VT>#
-	_ZTV17CRichTextStoreMapI12CParaAttribsE @ 387 NONAME ; #<VT>#
-	_ZTV17CRichTextStoreMapI15CParagraphStyleE @ 388 NONAME ; #<VT>#
+	_ZTV17CRichTextStoreMapI12CParaAttribsE @ 387 NONAME ABSENT ; #<VT>#
+	_ZTV17CRichTextStoreMapI15CParagraphStyleE @ 388 NONAME ABSENT ; #<VT>#
 	_ZTV19CPlainTextConverter @ 389 NONAME ABSENT ; #<VT>#
 	_ZTV25CEditableTextOptionalData @ 390 NONAME ABSENT ; #<VT>#
 	_ZN9CRichText17ExtendedInterfaceERPv4TUid @ 391 NONAME
