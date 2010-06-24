@@ -20,6 +20,10 @@
 #ifndef OPENFONTLINKEDTYPEFACESPECIFICATION_H_
 #define OPENFONTLINKEDTYPEFACESPECIFICATION_H_
 
+class COpenFontLinkedTypefaceElementSpec;
+class CLinkedTypefaceGroup;
+class TLinkedTypefaceSpecificationArgs;
+
 /**
 This class contains the specification of a linked typeface passed from font store to a rasterizer. It is made up of groups and typefaces.
 A group (CLinkedTypefaceGroup) contains a number of attributes that can apply to similar typefaces

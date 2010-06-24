@@ -18,6 +18,13 @@
 
 #include "TXTSTD.H"
 #include "ParseLst.h"
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "ParseLstTraces.h"
+#endif
+
+
+
 //++ sort out definitive hash includes
 
 
@@ -31,6 +38,7 @@ CParserList::CParserItem::CParserItem(MParser* aParser, const TUint aTagIndex)
 // Panic the process with UikParse as the category.
 void CParserList::Panic(TParserListPanic aPanic) const
 	{
+	OstTraceExt2( TRACE_FATAL, DUP1_CPARSERLIST_PANIC, "CParserList::Panic;this=%x;aPanic=%x", (unsigned int)this, ( TUint )&( aPanic ) );
 	_LIT(panicStr, "ParseLst");
 	User::Panic(panicStr, aPanic);
 	}
@@ -59,7 +67,15 @@ void CParserList::ActivateAParserL(MParser* aParser, const TBool aDefaultParser)
 	// uint (I'm using the top 3 bits as flags) this allows 268435456 parsers
 	// to be installed. (Assuming we deinstall almost as many, as we went
 	// along, to avoid OOM.) At 50 per sec that's 20 years continuous action!
+	if (iHighestIndex >= EMaxParserIndex)
+	    {
+	    OstTrace0( TRACE_DUMP, CPARSERLIST_ACTIVATEAPARSERL, "EParserIndexRollover" );
+	    }
 	__ASSERT_DEBUG((iHighestIndex < EMaxParserIndex), Panic(EParserIndexRollover));
+	if (!aParser)
+	    {
+	    OstTrace0( TRACE_DUMP, DUP1_CPARSERLIST_ACTIVATEAPARSERL, "EParserNullPtr" );
+	    }
 	__ASSERT_DEBUG(aParser, Panic(EParserNullPtr));
 	TUint parserIndex = iHighestIndex + 1;
 	// Adjust flags to describe parser
@@ -112,7 +128,15 @@ void CParserList::ActivateParserL(MParser* aParser)
 // an EText left with a local ptr to it.
 void CParserList::DeactivateParser(MParser* aParser)
 	{
+	if (!iNumberInList)
+	    {
+	    OstTrace0( TRACE_DUMP, CPARSERLIST_DEACTIVATEPARSER, "EParserNoneActive" );
+	    }
 	__ASSERT_DEBUG(iNumberInList, Panic(EParserNoneActive));
+	if (!aParser)
+	    {
+	    OstTrace0( TRACE_DUMP, DUP1_CPARSERLIST_DEACTIVATEPARSER, "EParserNullPtr" );
+	    }
 	__ASSERT_DEBUG(aParser, Panic(EParserNullPtr));
 	// Run thru list till find entry we need
 	TInt count;
@@ -125,6 +149,10 @@ void CParserList::DeactivateParser(MParser* aParser)
 			break;
 			}
 		}
+	if (count >= iNumberInList)
+	    {
+	    OstTrace0( TRACE_DUMP, DUP2_CPARSERLIST_DEACTIVATEPARSER, "EParserInstanceNotActive" );
+	     }
 	__ASSERT_DEBUG((count < iNumberInList), Panic(EParserInstanceNotActive));
 	iNumberInList--;
 	}
@@ -274,6 +302,10 @@ TBool CParserList::ParseThisText(CRichText& aTextObj,TInt aStartScan,TInt aScanL
 				TInt result = parser->ParseThisText(aTextObj, allowBack, localStartScan, localScanLength, localStartTag, localTagLength);
 				if (!result)
 					break;
+				if (!allowBack && (localStartTag < localStartScan))
+				    {
+				    OstTrace0( TRACE_DUMP, CPARSERLIST_PARSETHISTEXT, "EParserIgnoringAllowFlag" );
+				    }
 				__ASSERT_DEBUG(allowBack || (localStartTag >= localStartScan), Panic(EParserIgnoringAllowFlag));
 				TInt startNewTag = localStartTag;
 				TInt lengthNewTag = localTagLength;
@@ -424,6 +456,10 @@ TUint CParserList::TagForThisParser(const MParser *const aParser) const
 			break;
 			}
 		}
+	if (!tagIndex)
+	    {
+	    OstTrace0( TRACE_DUMP, CPARSERLIST_TAGFORTHISPARSER, "EParserNoSuchTag" );
+	    }
 	__ASSERT_DEBUG(tagIndex, Panic(EParserNoSuchTag));
 	return tagIndex;
 	}

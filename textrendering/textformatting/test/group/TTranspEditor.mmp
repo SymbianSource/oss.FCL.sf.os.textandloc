@@ -25,6 +25,9 @@ CAPABILITY              None
 UID                     0x100039CE 0x13579ACE
 
 APP_LAYER_SYSTEMINCLUDE_SYMBIAN
+SYSTEMINCLUDE /epoc32/include/techview
+SYSTEMINCLUDE /epoc32/include/platform/app/techview
+
 USERINCLUDE             ../../inc
 userinclude				../data
 

@@ -23,7 +23,7 @@
 
 PRJ_PLATFORMS
 
-	DEFAULT WINC TOOLS
+	DEFAULT WINC TOOLS TOOLS2
 
 PRJ_EXPORTS
 
@@ -50,7 +50,7 @@ PRJ_EXPORTS
 
 PRJ_MMPFILES
 
-#if defined(TOOLS)
+#if defined(TOOLS) || defined(TOOLS2)
 
 	convtool.mmp
 

@@ -21,12 +21,15 @@ capability All -TCB
 
 targettype	EXE
 
+UID 0x100039CE 0xE0008383
+VENDORID 0x70000001
+
 exportunfrozen
 
 MW_LAYER_SYSTEMINCLUDE_SYMBIAN
 userinclude ../../tagma
 userinclude ../../inc
-userinclude ../src
+userinclude ../src ../traces
 
 sourcepath ../src
 source TTagmaImp.cpp TGraphicsContext.cpp
@@ -42,7 +45,5 @@ source TmChunk.cpp TmLine.cpp TmFormatContext.cpp
 library euser.lib cone.lib gdi.lib fbscli.lib etext.lib fntstr.lib
 library estor.lib ws32.lib tagma.lib
 library linebreak.lib
-
-VENDORID 0x70000001
 
 SMPSAFE

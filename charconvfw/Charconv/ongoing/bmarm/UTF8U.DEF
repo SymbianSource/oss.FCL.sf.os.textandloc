@@ -1,8 +1,0 @@
-EXPORTS
-	ConvertUCS4toUTF16__FPPUlPCUlPPUsPCUs @ 1 NONAME ; ConvertUCS4toUTF16(unsigned long **, unsigned long const *, unsigned short **, unsigned short const *)
-	ConvertUCS4toUTF8__FPPUlPCUlPPUcPCUc @ 2 NONAME ; ConvertUCS4toUTF8(unsigned long **, unsigned long const *, unsigned char **, unsigned char const *)
-	ConvertUTF16toUCS4__FPPUsPUsPPUlPCUl @ 3 NONAME ; ConvertUTF16toUCS4(unsigned short **, unsigned short *, unsigned long **, unsigned long const *)
-	ConvertUTF16toUTF8__FPPUsPCUsPPUcPCUc @ 4 NONAME ; ConvertUTF16toUTF8(unsigned short **, unsigned short const *, unsigned char **, unsigned char const *)
-	ConvertUTF8toUCS4__FPPUcPUcPPUlPCUl @ 5 NONAME ; ConvertUTF8toUCS4(unsigned char **, unsigned char *, unsigned long **, unsigned long const *)
-	ConvertUTF8toUTF16__FPPUcPUcPPUsPCUs @ 6 NONAME ; ConvertUTF8toUTF16(unsigned char **, unsigned char *, unsigned short **, unsigned short const *)
-

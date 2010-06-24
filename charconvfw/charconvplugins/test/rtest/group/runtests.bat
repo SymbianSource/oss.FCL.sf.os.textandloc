@@ -43,6 +43,11 @@ tportuguesegsmsingle.exe
 tportugueselocking.exe
 tportugueselockingsingle.exe
 tspanishgsmsingle.exe
+teucjpdirectmap.exe
+tshiftjisdirectmap.exe
+//teucjp_packed_2.exe
+//tiso2022jp_2.exe
+//tiso2022jp1_2.exe
 tiscii.exe
 tKOI8R.exe
 tKOI8U.exe

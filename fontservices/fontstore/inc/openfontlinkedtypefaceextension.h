@@ -20,6 +20,8 @@
 #ifndef OPENFONTLINKEDTYPEFACEEXTENSION_H
 #define OPENFONTLINKEDTYPEFACEEXTENSION_H
 
+class COpenFontLinkedTypefaceSpecification;
+
 /**
 Interface for handling, creating and modifying linked typefaces.
 

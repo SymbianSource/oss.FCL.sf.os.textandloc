@@ -420,7 +420,8 @@ LOCAL_C void DoFindAndModifyBuffer(TDes8& aModifyBuffer,const TDesC8& aSearchBuf
 
 LOCAL_C void FindAndModifyBuffer(TDes8& aModifyBuffer)
 {
-	RArray<TPtrC8> searchBuffer;
+	TInt ret = KErrNone;
+    RArray<TPtrC8> searchBuffer;
 	RArray<TPtrC8> replaceBuffer;
 	
 	//If the passed buffer contains the replacement buffer,
@@ -428,61 +429,62 @@ LOCAL_C void FindAndModifyBuffer(TDes8& aModifyBuffer)
 	//buffer rather it should get converted to replacement for
 	//unconvertible character.
 	
-	searchBuffer.Append(KReplacementForExplicitHalant().Right(1));
-	searchBuffer.Append(KReplacementForSoftHalant().Right(1));
-	searchBuffer.Append(KReplacementForOm().Right(1));
-	searchBuffer.Append(KReplacementForAvagraha().Right(1));
+	ret |= searchBuffer.Append(KReplacementForExplicitHalant().Right(1));
+	ret |= searchBuffer.Append(KReplacementForSoftHalant().Right(1));
+	ret |= searchBuffer.Append(KReplacementForOm().Right(1));
+	ret |= searchBuffer.Append(KReplacementForAvagraha().Right(1));
 	
-	searchBuffer.Append(KReplacementForVocalicRr().Right(1));
-	searchBuffer.Append(KReplacementForVocalicLl().Right(1));
-	searchBuffer.Append(KReplacementForVocalicLSign().Right(1));
-	searchBuffer.Append(KReplacementForVocalicLlSign().Right(1));
-	searchBuffer.Append(KReplacementForVocalicL().Right(1));
-	searchBuffer.Append(KReplacementForVocalicRrSign().Right(1));
+	ret |= searchBuffer.Append(KReplacementForVocalicRr().Right(1));
+	ret |= searchBuffer.Append(KReplacementForVocalicLl().Right(1));
+	ret |= searchBuffer.Append(KReplacementForVocalicLSign().Right(1));
+	ret |= searchBuffer.Append(KReplacementForVocalicLlSign().Right(1));
+	ret |= searchBuffer.Append(KReplacementForVocalicL().Right(1));
+	ret |= searchBuffer.Append(KReplacementForVocalicRrSign().Right(1));
 	
 	//All normal search buffers
-	searchBuffer.Append(KExplicitHalant().Mid(0));
-	searchBuffer.Append(KSoftHalant().Mid(0));
-	searchBuffer.Append(KOm().Mid(0));
-	searchBuffer.Append(KAvagraha().Mid(0));
+	ret |= searchBuffer.Append(KExplicitHalant().Mid(0));
+	ret |= searchBuffer.Append(KSoftHalant().Mid(0));
+	ret |= searchBuffer.Append(KOm().Mid(0));
+	ret |= searchBuffer.Append(KAvagraha().Mid(0));
 	
-	searchBuffer.Append(KVocalicRr().Mid(0));
-	searchBuffer.Append(KVocalicLl().Mid(0));
-	searchBuffer.Append(KVocalicLSign().Mid(0));
-	searchBuffer.Append(KVocalicLlSign().Mid(0));
-	searchBuffer.Append(KVocalicL().Mid(0));
-	searchBuffer.Append(KVocalicRrSign().Mid(0));
+	ret |= searchBuffer.Append(KVocalicRr().Mid(0));
+	ret |= searchBuffer.Append(KVocalicLl().Mid(0));
+	ret |= searchBuffer.Append(KVocalicLSign().Mid(0));
+	ret |= searchBuffer.Append(KVocalicLlSign().Mid(0));
+	ret |= searchBuffer.Append(KVocalicL().Mid(0));
+	ret |= searchBuffer.Append(KVocalicRrSign().Mid(0));
 	
 	//The replacement buffer for the odd cases to restrict the 
 	//replacement buffers not to get converted to the corresponding 
 	//unicode buffer
 	
-	replaceBuffer.Append(KIsciiUnconvertibleCharacter().Mid(0));
-	replaceBuffer.Append(KIsciiUnconvertibleCharacter().Mid(0));
-	replaceBuffer.Append(KIsciiUnconvertibleCharacter().Mid(0));
-	replaceBuffer.Append(KIsciiUnconvertibleCharacter().Mid(0));
+	ret |= replaceBuffer.Append(KIsciiUnconvertibleCharacter().Mid(0));
+	ret |= replaceBuffer.Append(KIsciiUnconvertibleCharacter().Mid(0));
+	ret |= replaceBuffer.Append(KIsciiUnconvertibleCharacter().Mid(0));
+	ret |= replaceBuffer.Append(KIsciiUnconvertibleCharacter().Mid(0));
 	
-	replaceBuffer.Append(KIsciiUnconvertibleCharacter().Mid(0));
-	replaceBuffer.Append(KIsciiUnconvertibleCharacter().Mid(0));
-	replaceBuffer.Append(KIsciiUnconvertibleCharacter().Mid(0));
-	replaceBuffer.Append(KIsciiUnconvertibleCharacter().Mid(0));
-	replaceBuffer.Append(KIsciiUnconvertibleCharacter().Mid(0));
-	replaceBuffer.Append(KIsciiUnconvertibleCharacter().Mid(0));
+	ret |= replaceBuffer.Append(KIsciiUnconvertibleCharacter().Mid(0));
+	ret |= replaceBuffer.Append(KIsciiUnconvertibleCharacter().Mid(0));
+	ret |= replaceBuffer.Append(KIsciiUnconvertibleCharacter().Mid(0));
+	ret |= replaceBuffer.Append(KIsciiUnconvertibleCharacter().Mid(0));
+	ret |= replaceBuffer.Append(KIsciiUnconvertibleCharacter().Mid(0));
+	ret |= replaceBuffer.Append(KIsciiUnconvertibleCharacter().Mid(0));
 	
 	//All normal replace buffers		
-	replaceBuffer.Append(KReplacementForExplicitHalant().Mid(0));
-	replaceBuffer.Append(KReplacementForSoftHalant().Mid(0));
-	replaceBuffer.Append(KReplacementForOm().Mid(0));
-	replaceBuffer.Append(KReplacementForAvagraha().Mid(0));
+	ret |= replaceBuffer.Append(KReplacementForExplicitHalant().Mid(0));
+	ret |= replaceBuffer.Append(KReplacementForSoftHalant().Mid(0));
+	ret |= replaceBuffer.Append(KReplacementForOm().Mid(0));
+	ret |= replaceBuffer.Append(KReplacementForAvagraha().Mid(0));
 	
 	
-	replaceBuffer.Append(KReplacementForVocalicRr().Mid(0));
-	replaceBuffer.Append(KReplacementForVocalicLl().Mid(0));
-	replaceBuffer.Append(KReplacementForVocalicLSign().Mid(0));
-	replaceBuffer.Append(KReplacementForVocalicLlSign().Mid(0));
-	replaceBuffer.Append(KReplacementForVocalicL().Mid(0));
-	replaceBuffer.Append(KReplacementForVocalicRrSign().Mid(0));
+	ret |= replaceBuffer.Append(KReplacementForVocalicRr().Mid(0));
+	ret |= replaceBuffer.Append(KReplacementForVocalicLl().Mid(0));
+	ret |= replaceBuffer.Append(KReplacementForVocalicLSign().Mid(0));
+	ret |= replaceBuffer.Append(KReplacementForVocalicLlSign().Mid(0));
+	ret |= replaceBuffer.Append(KReplacementForVocalicL().Mid(0));
+	ret |= replaceBuffer.Append(KReplacementForVocalicRrSign().Mid(0));
 	
+	__ASSERT_DEBUG(!ret, User::Panic(_L("RArray append failure"), ret));
 			
 	for(TInt counter=0;counter<searchBuffer.Count();counter++)
 	{
@@ -552,32 +554,35 @@ LOCAL_C void DoNormalizeReturnValue(TUint& aReturnValue,const TDesC8& aBuffer,RA
 
 LOCAL_C void NormalizeReturnValue(TUint& aReturnValue,const TDesC8& aBuffer)
 {
-	RArray<TPtrC8> searchBuffer;
+	TInt ret = KErrNone;
+    RArray<TPtrC8> searchBuffer;
 	RArray<TPtrC8> replaceBuffer;
 	
-	searchBuffer.Append(KExplicitHalant().Mid(0));
-	searchBuffer.Append(KSoftHalant().Mid(0));
-	searchBuffer.Append(KOm().Mid(0));
-	searchBuffer.Append(KAvagraha().Mid(0));
+	ret |= searchBuffer.Append(KExplicitHalant().Mid(0));
+	ret |= searchBuffer.Append(KSoftHalant().Mid(0));
+	ret |= searchBuffer.Append(KOm().Mid(0));
+	ret |= searchBuffer.Append(KAvagraha().Mid(0));
 	
-	searchBuffer.Append(KVocalicRr().Mid(0));
-	searchBuffer.Append(KVocalicLl().Mid(0));
-	searchBuffer.Append(KVocalicLSign().Mid(0));
-	searchBuffer.Append(KVocalicLlSign().Mid(0));
-	searchBuffer.Append(KVocalicL().Mid(0));
-	searchBuffer.Append(KVocalicRrSign().Mid(0));
+	ret |= searchBuffer.Append(KVocalicRr().Mid(0));
+	ret |= searchBuffer.Append(KVocalicLl().Mid(0));
+	ret |= searchBuffer.Append(KVocalicLSign().Mid(0));
+	ret |= searchBuffer.Append(KVocalicLlSign().Mid(0));
+	ret |= searchBuffer.Append(KVocalicL().Mid(0));
+	ret |= searchBuffer.Append(KVocalicRrSign().Mid(0));
 	
-	replaceBuffer.Append(KReplacementForExplicitHalant().Mid(0));
-	replaceBuffer.Append(KReplacementForSoftHalant().Mid(0));
-	replaceBuffer.Append(KReplacementForOm().Mid(0));
-	replaceBuffer.Append(KReplacementForAvagraha().Mid(0));
+	ret |= replaceBuffer.Append(KReplacementForExplicitHalant().Mid(0));
+	ret |= replaceBuffer.Append(KReplacementForSoftHalant().Mid(0));
+	ret |= replaceBuffer.Append(KReplacementForOm().Mid(0));
+	ret |= replaceBuffer.Append(KReplacementForAvagraha().Mid(0));
 	
-	replaceBuffer.Append(KReplacementForVocalicRr().Mid(0));
-	replaceBuffer.Append(KReplacementForVocalicLl().Mid(0));
-	replaceBuffer.Append(KReplacementForVocalicLSign().Mid(0));
-	replaceBuffer.Append(KReplacementForVocalicLlSign().Mid(0));
-	replaceBuffer.Append(KReplacementForVocalicL().Mid(0));
-	replaceBuffer.Append(KReplacementForVocalicRrSign().Mid(0));
+	ret |= replaceBuffer.Append(KReplacementForVocalicRr().Mid(0));
+	ret |= replaceBuffer.Append(KReplacementForVocalicLl().Mid(0));
+	ret |= replaceBuffer.Append(KReplacementForVocalicLSign().Mid(0));
+	ret |= replaceBuffer.Append(KReplacementForVocalicLlSign().Mid(0));
+	ret |= replaceBuffer.Append(KReplacementForVocalicL().Mid(0));
+	ret |= replaceBuffer.Append(KReplacementForVocalicRrSign().Mid(0));
+	
+	__ASSERT_DEBUG(!ret, User::Panic(_L("RArray append failure"), ret));
 	
 	DoNormalizeReturnValue(aReturnValue,aBuffer,searchBuffer,replaceBuffer);
 	searchBuffer.Reset();
@@ -683,10 +688,14 @@ LOCAL_C TBool IsTruncatedDoubleByteIsciiSequence(const TDesC8& anIsciiBuffer)
 		return EFalse;
 	if(anIsciiBuffer[anIsciiBuffer.Length()-1] == 0xEF)
 	return ETrue;
-	searchBuffer.Append(KSoftHalant().Mid(0));
-	searchBuffer.Append(KOm().Mid(0));
-	searchBuffer.Append(KAvagraha().Mid(0));
-	searchBuffer.Append(KExplicitHalant().Mid(0));
+	
+	TInt appendret = KErrNone;
+	appendret |= searchBuffer.Append(KSoftHalant().Mid(0));
+	appendret |= searchBuffer.Append(KOm().Mid(0));
+	appendret |= searchBuffer.Append(KAvagraha().Mid(0));
+	appendret |= searchBuffer.Append(KExplicitHalant().Mid(0));
+	__ASSERT_DEBUG(!appendret, User::Panic(_L("RArray append failure"), appendret));
+	
 	TBool ret = EFalse;
 	TBool isNotTruncated =EFalse;
 	
@@ -1195,15 +1204,18 @@ LOCAL_C void FindAndModifyBuffer(TDes8& aModifyBuffer)
 	RArray<TPtrC8> searchBuffer;
 	RArray<TPtrC8> replaceBuffer;
 	
-	searchBuffer.Append(KExplicitHalant().Mid(0));
-	searchBuffer.Append(KSoftHalant().Mid(0));
-	searchBuffer.Append(KOm().Mid(0));
-	searchBuffer.Append(KAvagraha().Mid(0));
+	TInt ret = KErrNone;
+	ret |= searchBuffer.Append(KExplicitHalant().Mid(0));
+	ret |= searchBuffer.Append(KSoftHalant().Mid(0));
+	ret |= searchBuffer.Append(KOm().Mid(0));
+	ret |= searchBuffer.Append(KAvagraha().Mid(0));
 	
-	replaceBuffer.Append(KReplacementForExplicitHalant().Mid(0));
-	replaceBuffer.Append(KReplacementForSoftHalant().Mid(0));
-	replaceBuffer.Append(KReplacementForOm().Mid(0));
-	replaceBuffer.Append(KReplacementForAvagraha().Mid(0));
+	ret |= replaceBuffer.Append(KReplacementForExplicitHalant().Mid(0));
+	ret |= replaceBuffer.Append(KReplacementForSoftHalant().Mid(0));
+	ret |= replaceBuffer.Append(KReplacementForOm().Mid(0));
+	ret |= replaceBuffer.Append(KReplacementForAvagraha().Mid(0));
+	
+	__ASSERT_DEBUG(!ret, User::Panic(_L("RArray append failure"), ret));
 	
 	for(TInt counter=0;counter<searchBuffer.Count();counter++)
 	{
@@ -1275,16 +1287,19 @@ LOCAL_C void NormalizeReturnValue(TUint& aReturnValue,const TDesC8& aBuffer)
 {
 	RArray<TPtrC8> searchBuffer;
 	RArray<TPtrC8> replaceBuffer;
+	TInt ret =KErrNone;
+	ret |= searchBuffer.Append(KExplicitHalant().Mid(0));
+	ret |= searchBuffer.Append(KSoftHalant().Mid(0));
+	ret |= searchBuffer.Append(KOm().Mid(0));
+	ret |= searchBuffer.Append(KAvagraha().Mid(0));
 	
-	searchBuffer.Append(KExplicitHalant().Mid(0));
-	searchBuffer.Append(KSoftHalant().Mid(0));
-	searchBuffer.Append(KOm().Mid(0));
-	searchBuffer.Append(KAvagraha().Mid(0));
+	ret |= replaceBuffer.Append(KReplacementForExplicitHalant().Mid(0));
+	ret |= replaceBuffer.Append(KReplacementForSoftHalant().Mid(0));
+	ret |= replaceBuffer.Append(KReplacementForOm().Mid(0));
+	ret |= replaceBuffer.Append(KReplacementForAvagraha().Mid(0));
 	
-	replaceBuffer.Append(KReplacementForExplicitHalant().Mid(0));
-	replaceBuffer.Append(KReplacementForSoftHalant().Mid(0));
-	replaceBuffer.Append(KReplacementForOm().Mid(0));
-	replaceBuffer.Append(KReplacementForAvagraha().Mid(0));
+	__ASSERT_DEBUG(!ret, User::Panic(_L("RArray append failure"), ret));
+	
 	DoNormalizeReturnValue(aReturnValue,aBuffer,searchBuffer,replaceBuffer);
 	searchBuffer.Reset();
 	replaceBuffer.Reset();
@@ -1389,10 +1404,14 @@ LOCAL_C TBool IsTruncatedDoubleByteIsciiSequence(const TDesC8& anIsciiBuffer)
 		return EFalse;
 	if(anIsciiBuffer[anIsciiBuffer.Length()-1] == 0xEF)
 	return ETrue;
-	searchBuffer.Append(KSoftHalant().Mid(0));
-	searchBuffer.Append(KOm().Mid(0));
-	searchBuffer.Append(KAvagraha().Mid(0));
-	searchBuffer.Append(KExplicitHalant().Mid(0));
+	
+	TInt appendret = KErrNone;
+	appendret |= searchBuffer.Append(KSoftHalant().Mid(0));
+	appendret |= searchBuffer.Append(KOm().Mid(0));
+	appendret |= searchBuffer.Append(KAvagraha().Mid(0));
+	appendret |= searchBuffer.Append(KExplicitHalant().Mid(0));
+	__ASSERT_DEBUG(!ret, User::Panic(_L("RArray append failure"), ret));
+	
 	TBool ret = EFalse;
 	TBool isNotTruncated =EFalse;
 	

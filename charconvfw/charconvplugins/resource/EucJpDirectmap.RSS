@@ -24,7 +24,7 @@ NAME EJPD
 
 //  INCLUDES
 #include "EucJpDirectmap.RLS"
-#include <UIKON.RH>
+#include <uikon.rh>
 
 //  RESOURCE DEFINITIONS 
 // -----------------------------------------------------------------------------

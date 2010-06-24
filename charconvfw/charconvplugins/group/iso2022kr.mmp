@@ -38,12 +38,12 @@ LIBRARY              cp949table.lib
 
 SOURCEPATH		../resource
 
-Start resource       iso2022kr.RSS
+Start resource       iso2022kr.rss
 Targetpath           /resource/charconv
 End
 
 start resource       20010102.rss
-target               iso2022kr.RSC
+target               iso2022kr.rsc
 end
 
 SMPSAFE

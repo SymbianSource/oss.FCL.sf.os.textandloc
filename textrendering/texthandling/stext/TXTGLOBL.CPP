@@ -24,6 +24,11 @@
 #include "TXTGLOBL.H"
 
 #include "TXTSTD.H"
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "TXTGLOBLTraces.h"
+#endif
+
 
 /**
 @internalAll
@@ -56,7 +61,15 @@ ESegmentedStorage.
 Default is EDefaultTextGranularity bytes (=256). 
 @return Pointer to the global text object. */
 	{
+	if (aGlobalParaLayer==NULL)
+	    {
+	    OstTrace0( TRACE_FATAL, CGLOBALTEXT_NEWL, "ENullFormatLayerHandle" );
+	    }
 	__ASSERT_ALWAYS(aGlobalParaLayer!=NULL,Panic(ENullFormatLayerHandle));
+	if (aGlobalCharLayer==NULL)
+	    {
+	    OstTrace0( TRACE_FATAL, DUP1_CGLOBALTEXT_NEWL, "ENullFormatLayerHandle" );
+	    }
 	__ASSERT_ALWAYS(aGlobalCharLayer!=NULL,Panic(ENullFormatLayerHandle));
 
 	CGlobalText* self=new(ELeave) CGlobalText(aGlobalParaLayer,aGlobalCharLayer);
@@ -74,7 +87,15 @@ EXPORT_C CGlobalText* CGlobalText::NewL(const CStreamStore& aStore,TStreamId aSt
 restored from the specified read-stream.  The global text object *uses* (does 
 not own) the supplied global format layers.*/
 	{
+	if (aGlobalParaLayer==NULL)
+	    {
+	    OstTrace0( TRACE_FATAL, DUP2_CGLOBALTEXT_NEWL, "ENullFormatLayerHandle" );
+	    }
 	__ASSERT_ALWAYS(aGlobalParaLayer!=NULL,Panic(ENullFormatLayerHandle));
+	if (aGlobalCharLayer==NULL)
+	    {
+	    OstTrace0( TRACE_FATAL, DUP3_CGLOBALTEXT_NEWL, "ENullFormatLayerHandle" );
+	    }
 	__ASSERT_ALWAYS(aGlobalCharLayer!=NULL,Panic(ENullFormatLayerHandle));
 
 	CGlobalText* self=new(ELeave) CGlobalText(aGlobalParaLayer,aGlobalCharLayer);
@@ -235,6 +256,10 @@ formatting. The start position must be valid, or a panic occurs.
 formatting. 
 @param aStartPos The start position for the view. */
 	{
+	if (aStartPos<0 || aStartPos>DocumentLength())
+	    {
+	    OstTrace0( TRACE_FATAL, CGLOBALTEXT_GETCHARS, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aStartPos>=0 && aStartPos<=DocumentLength(),Panic(ECharPosBeyondDocument));
 
 	aView.Set(Read(aStartPos));

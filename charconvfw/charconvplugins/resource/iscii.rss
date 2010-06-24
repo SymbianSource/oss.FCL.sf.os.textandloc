@@ -24,7 +24,7 @@ NAME ISCI
 
 //  INCLUDES
 #include "iscii.rls"
-#include <UIKON.RH>
+#include <uikon.rh>
 
 RESOURCE RSS_SIGNATURE {}
 

@@ -36,12 +36,12 @@ LIBRARY			ecom.lib
 LIBRARY			CP949table.lib
 
 SOURCEPATH		../resource
-Start resource	win949.RSS
+Start resource	win949.rss
 Targetpath		/resource/charconv
 End
 
 start resource	20010100.rss
-target			win949.RSC
+target			win949.rsc
 
 end
 

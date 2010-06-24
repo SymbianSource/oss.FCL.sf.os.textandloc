@@ -19,7 +19,7 @@
       <component id="fontstore" name="Font Store" purpose="mandatory">
         <unit bldFile="fontservices/fontstore/group" mrp="fontservices/fontstore/group/graphics_fntstore.mrp"/>
       </component>
-     <component id="textrendering" name="Text Rendering" purpose="mandatory">
+     <component id="textbase" name="Text Base" purpose="mandatory">
      	<!-- placeholder for text code from GDI -->
      </component>      
       <component id="freetypefontrasteriser" name="FreeType Font Rasteriser" purpose="optional" class="plugin">
@@ -41,37 +41,18 @@
       </component>
     </collection>
     <collection id="textandlocutils" name="Text and Localisation Utils" level="util">
-      <component id="localizer" filter="s60" name="Directory Localizer">
-        <!-- pending move to classicui/uiutils -->
-        <unit bldFile="charconvfw/localizer/group"/>
+      <component id="numbergrouping" name="Number Grouping" purpose="mandatory">
+        <unit bldFile="textandlocutils/numbergrouping/group" mrp="textandlocutils/numbergrouping/group/tls_numbergrouping.mrp"/>
       </component>
-      <component id="findutil" filter="s60" name="Find Utility">
-        <!-- pending move to classicui/uiutils -->
-        <unit bldFile="charconvfw/findutil/group"/>
+      <component id="jplangutil" name="Japanese Language Utilities" purpose="mandatory">
+        <unit bldFile="textandlocutils/jplangutil/group" mrp="textandlocutils/jplangutil/group/tls_jplangutil.mrp"/>
       </component>
-      <component id="numbergrouping" filter="s60" name="Number Grouping">
-        <unit bldFile="charconvfw/numbergrouping/group"/>
+      <component id="sortutil" name="Sorting Utility" purpose="mandatory">
+        <unit bldFile="textandlocutils/sortutil/group" mrp="textandlocutils/sortutil/group/tls_sortutil.mrp"/>
       </component>
-      <component id="gamerecognizer" filter="s60" name="Game Recognizer" class="plugin">
-        <!-- pending move to appsupport -->
-        <unit bldFile="charconvfw/gamerecognizer/group"/>
+      <component id="inlinetext" name="Inline Text" purpose="mandatory">
+        <unit bldFile="textandlocutils/inlinetext/group" mrp="textandlocutils/inlinetext/group/tls_inlinetext.mrp"/>
       </component>
-      <component id="jplangutil" filter="s60" name="Japanese Language Utilities">
-        <unit bldFile="charconvfw/jplangutil/group"/>
-      </component>
-      <component id="sortutil" filter="s60" name="Sorting Utility">
-        <unit bldFile="charconvfw/sortutil/group"/>
-      </component>
-      <component id="aknjapanesereading" filter="s60" name="Avkon Japanese Reading">
-        <!-- pending move to classicui/uiutils -->
-        <unit bldFile="charconvfw/aknjapanesereading/group"/>
-      </component>
-      <component id="inlinetext" filter="s60" name="Inline Text">
-        <unit bldFile="charconvfw/inlinetext/group"/>
-      </component>
-     <component id="nearestlangutil" name="Nearest Language Util" introduced="^2" purpose="mandatory">
-     	<!-- placeholder for split from bafl -->
-     </component>
       <component id="numberformatting" name="Number Formatting" introduced="7.0s" purpose="optional">
         <unit bldFile="textrendering/numberformatting/group" mrp="textrendering/numberformatting/group/app-framework_numberconversion.mrp"/>
       </component>

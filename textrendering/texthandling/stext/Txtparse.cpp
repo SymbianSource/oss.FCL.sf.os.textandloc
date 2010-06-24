@@ -19,6 +19,11 @@
 #include "TXTRICH.H"
 #include "TXTSTD.H"
 #include "ParseLst.h"
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "TxtparseTraces.h"
+#endif
+
 
 
 // Install and activate a particular parser, app provides instance
@@ -38,6 +43,10 @@ EXPORT_C void CRichText::ActivateParserL(MParser* aParser)
 EXPORT_C void CRichText::DeactivateParser(MParser* aParser)
 	{
 	CParserList* activeParserList = (CParserList*)Dll::Tls();
+	if (!activeParserList)
+	    {
+	    OstTrace0( TRACE_DUMP, CRICHTEXT_DEACTIVATEPARSER, "EParserListNotInitialized" );
+	    }
 	__ASSERT_DEBUG(activeParserList, Panic(EParserListNotInitialized));
 	activeParserList->DeactivateParser(aParser);
 	if ((activeParserList->iRefCount == 0) && (activeParserList->iNumberInList == 0))
@@ -80,6 +89,10 @@ EXPORT_C void CRichText::DeactivateParserDefaults()
 // Create ParserLst instance and retain ownership of it but pass address to EText TLS
 void CRichText::CreateParserETextTLSL()
 	{
+	if (Dll::Tls() != NULL)
+	    {
+	    OstTrace0( TRACE_DUMP, CRICHTEXT_CREATEPARSERETEXTTLSL, "EParserListAlreadyExists" );
+	    }
 	__ASSERT_DEBUG(Dll::Tls() == NULL, Panic(EParserListAlreadyExists));
 	CParserList* activeParserList = new (ELeave) CParserList;
 	CleanupStack::PushL(activeParserList);
@@ -107,6 +120,10 @@ is called by the rich text object each time the object's text content is edited
 	
 EXPORT_C TBool CRichText::ParseText(TInt& aStartOfTags, TInt& aLength, TBool aForceScanAllText)
 	{
+	if (!iIndex.IsPtr())
+	    {
+	    OstTrace0( TRACE_DUMP, CRICHTEXT_PARSETEXT, "EParserListTextIndexNotInitialized" );
+	    }
 	__ASSERT_ALWAYS(iIndex.IsPtr(),Panic(EParserListTextIndexNotInitialized));
 	TBool foundSomething = EFalse;
 	if (iParserData->iActiveParserList && iParserData->iEditObserver)
@@ -133,7 +150,15 @@ TBool CRichText::DoCursorOverTag(TInt aPos, MParser*& aParser, TInt& aTagStart, 
 	TBool success = EFalse;
 	TBuf<1> buf;
 
+	if (!iParserData->iActiveParserList)
+	    {
+	    OstTrace0( TRACE_DUMP, CRICHTEXT_DOCURSOROVERTAG, "EParserListNotInitialized" );
+	    }
 	__ASSERT_DEBUG(iParserData->iActiveParserList, Panic(EParserListNotInitialized));
+	if (!iParserData->iEditObserver)
+	    {
+	    OstTrace0( TRACE_DUMP, DUP1_CRICHTEXT_DOCURSOROVERTAG, "EParserListNotActive" );
+	    }
 	__ASSERT_DEBUG(iParserData->iEditObserver, Panic(EParserListNotActive));
 	GetExtendedCharFormat(format, varies, aPos, 1);
 	Extract(buf, aPos, 1);

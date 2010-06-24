@@ -105,6 +105,7 @@ TInt CISO2022JP1ConverterImpl::ConvertFromUnicode(
 		const TDesC16& aUnicode, 
 		CCnvCharacterSetConverter::TArrayOfAscendingIndices& aIndicesOfUnconvertibleCharacters)
 	{
+    TInt ret = KErrNone;
     RArray<CnvUtilities::SCharacterSet> characterSets;
     if ( FeatureManager::FeatureSupported(KFeatureIdJapanesePicto) )
         {        
@@ -112,19 +113,19 @@ TInt CISO2022JP1ConverterImpl::ConvertFromUnicode(
         characterSet.iConversionData=&CnvJisRoman::ConversionData();
         characterSet.iConvertFromIntermediateBufferInPlace=ConvertFromJisRomanToJisInPlace;
         characterSet.iEscapeSequence=&KLit8EscapeSequenceForJisRoman;
-        characterSets.Append(characterSet);
+        ret |= characterSets.Append(characterSet);
         characterSet.iConversionData=&CCnvCharacterSetConverter::AsciiConversionData();
         characterSet.iConvertFromIntermediateBufferInPlace=ConvertFromAsciiToJisInPlace;
         characterSet.iEscapeSequence=&KLit8EscapeSequenceForAscii;
-        characterSets.Append(characterSet);
+        ret |= characterSets.Append(characterSet);
         characterSet.iConversionData=&CnvJisX0208::ConversionData();
         characterSet.iConvertFromIntermediateBufferInPlace=ConvertFromJisX0208ToJisInPlace;
         characterSet.iEscapeSequence=&KLit8EscapeSequenceForJisX0208_1983;
-        characterSets.Append(characterSet);
+        ret |= characterSets.Append(characterSet);
         characterSet.iConversionData=&CnvJisX0212::ConversionData();
         characterSet.iConvertFromIntermediateBufferInPlace=ConvertFromJisX0212ToJisInPlace;
         characterSet.iEscapeSequence=&KLit8EscapeSequenceForJisX0212_1990;
-        characterSets.Append(characterSet);
+        ret |= characterSets.Append(characterSet);
 
         SetCharacterSetsForPictograph(characterSets);
         }
@@ -134,20 +135,21 @@ TInt CISO2022JP1ConverterImpl::ConvertFromUnicode(
 	    characterSet.iConversionData=&CnvJisRoman::ConversionData();
 	    characterSet.iConvertFromIntermediateBufferInPlace=ConvertFromJisRomanToJisInPlace;
 	    characterSet.iEscapeSequence=&KLit8EscapeSequenceForJisRoman;
-        characterSets.Append(characterSet);
+	    ret |= characterSets.Append(characterSet);
     	characterSet.iConversionData=&CCnvCharacterSetConverter::AsciiConversionData();
     	characterSet.iConvertFromIntermediateBufferInPlace=ConvertFromAsciiToJisInPlace;
     	characterSet.iEscapeSequence=&KLit8EscapeSequenceForAscii;
-        characterSets.Append(characterSet);
+    	ret |= characterSets.Append(characterSet);
     	characterSet.iConversionData=&CnvJisX0208::ConversionData();
     	characterSet.iConvertFromIntermediateBufferInPlace=ConvertFromJisX0208ToJisInPlace;
     	characterSet.iEscapeSequence=&KLit8EscapeSequenceForJisX0208_1983;
-        characterSets.Append(characterSet);
+    	ret |= characterSets.Append(characterSet);
     	characterSet.iConversionData=&CnvJisX0212::ConversionData();
     	characterSet.iConvertFromIntermediateBufferInPlace=ConvertFromJisX0212ToJisInPlace;
     	characterSet.iEscapeSequence=&KLit8EscapeSequenceForJisX0212_1990;
-        characterSets.Append(characterSet);
+    	ret |= characterSets.Append(characterSet);
         }
+    __ASSERT_DEBUG(!ret, User::Panic(_L("RArray append failure"), ret));
 	TUint notUsed;
 	TUint inputConversionFlags=CCnvCharacterSetConverter::EInputConversionFlagMustEndInDefaultCharacterSet;
     TInt unconvert = CnvUtilities::ConvertFromUnicode(aDefaultEndiannessOfForeignCharacters, aReplacementForUnconvertibleUnicodeCharacters, aForeign, aUnicode, aIndicesOfUnconvertibleCharacters, 
@@ -203,7 +205,11 @@ void CISO2022JP1ConverterImpl::ConstructL()
 
 const TImplementationProxy ImplementationTable[] = 
 	{
-		IMPLEMENTATION_PROXY_ENTRY(0x100066A3,	CISO2022JP1ConverterImpl::NewL)
+#ifdef S60_TEST
+    IMPLEMENTATION_PROXY_ENTRY(0x01000009,  CISO2022JP1ConverterImpl::NewL)
+#else
+	IMPLEMENTATION_PROXY_ENTRY(0x100066A3,	CISO2022JP1ConverterImpl::NewL)
+#endif	
 	};
 
 EXPORT_C const TImplementationProxy* ImplementationGroupProxy(TInt& aTableCount)

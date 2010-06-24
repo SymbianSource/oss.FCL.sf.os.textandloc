@@ -29,6 +29,11 @@
 #include "FRMTLAY_INTERNAL.H"
 #endif
 
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "LAYEMUTraces.h"
+#endif
+
 const TInt KMaxExtraLines = 10; // maximum number of lines to format after the current and following lines
 								// before using background formatting
 // during page down/up, the number of lines that should remain visible after
@@ -47,32 +52,6 @@ const TInt KMaxProportionOfScreenToScroll = 1000;
  the KNumberOfLinesToKeepVisibleDuringScroll constant.*/
 const TInt KMinProportionOfScreenToScroll = 600;
 
-/**
-Tests for a high surrogate.
-@param a UTF16 value.
-@return ETrue if argument is a high surrogate.
-@internalComponent
-*/
-inline TBool IsHighSurrogate(TText a) { return 0xD800 == (a & 0xFC00); }
-/**
-Tests for a low surrogate.
-@param a UTF16 value.
-@return ETrue if argument is a high surrogate.
-@internalComponent
-*/
-inline TBool IsLowSurrogate(TText a) { return 0xDC00 == (a & 0xFC00); }
-/**
-Adds a high surrogate to a low surrogate to create a supplementary character.
-@param aHigh UTF16 high surrogate.
-@param aLow UTF16 low surrogate.
-@return Supplementary character represented by the pair <aHigh, aLow>.
-@pre aHigh is a high surrogate and aLow is a low surrogate.
-@internalComponent
-*/
-inline TChar PairSurrogates(TText aHigh, TText aLow)
-	{
-	return ((aHigh - 0xd7f7) << 10) + aLow;
-	}
 
 /**
 Constructs an iterator over the text referenced by aSource.
@@ -130,11 +109,11 @@ Gets the specified character, uniting surrogate pairs if appropriate.
 TChar CTextLayout::TUtf32SourceCache::GetUtf32(TInt aIndex)
 	{
 	TText code = GetUtf16(aIndex);
-	if (IsHighSurrogate(code) && iSource->DocumentLength() < aIndex + 1)
+	if (TChar::IsHighSurrogate(code) && iSource->DocumentLength() < aIndex + 1)
 		{
 		TText code2 = GetUtf16(aIndex + 1);
-		if (IsLowSurrogate(code2))
-			return PairSurrogates(code, code2);
+		if (TChar::IsLowSurrogate(code2))
+			return TChar::JoinSurrogate(code, code2);
 		}
 	return code;
 	}
@@ -236,7 +215,11 @@ void CTextLayout::EndRedraw()
 	{
 	if(!iReadyToRedraw)
 		return;
-
+	
+	if (iBeginRedrawCount <= 0)
+	    {
+	    OstTrace0( TRACE_DUMP, CTEXTLAYOUT_ENDREDRAW, "CTextLayout::EndRedraw" );
+	    }
 	__ASSERT_ALWAYS(iBeginRedrawCount > 0, Panic(EInvalidRedraw));
 
 	if (0 == --iBeginRedrawCount)
@@ -256,6 +239,10 @@ void CTextLayout::EndRedraw()
 
 void CTextLayout::SetExternalDraw(const TRect& aRect)
 	{
+	if (0 != iBeginRedrawCount)
+	    {
+	    OstTrace0( TRACE_FATAL, DUP1_CTEXTLAYOUT_SETEXTERNALDRAW, "EInvalidRedraw" );
+	    }
 	__ASSERT_ALWAYS(0 == iBeginRedrawCount, Panic(EInvalidRedraw));
 	iBeginRedrawCount++;
 	iRedrawRect = aRect;
@@ -263,6 +250,10 @@ void CTextLayout::SetExternalDraw(const TRect& aRect)
 
 void CTextLayout::ResetExternalDraw()
 	{
+	if (1 != iBeginRedrawCount)
+	    {
+	    OstTrace0( TRACE_FATAL, CTEXTLAYOUT_RESETEXTERNALDRAW, "EInvalidRedraw" );
+	    }
 	__ASSERT_ALWAYS(1 == iBeginRedrawCount, Panic(EInvalidRedraw));
 
 	iBeginRedrawCount--;
@@ -441,6 +432,10 @@ EXPORT_C void CTextLayout::SetFormatMode(CLayoutData::TFormatMode aFormatMode,TI
 	{
 	if (aFormatMode == CLayoutData::EFWysiwygMode || aFormatMode == CLayoutData::EFPrintPreviewMode)
 		{
+		if (aFormatDevice == NULL)
+		    {
+		    OstTrace0( TRACE_FATAL, CTEXTLAYOUT_SETFORMATMODE, "EFormatDeviceNotSet" );
+		    }
 		__ASSERT_ALWAYS(aFormatDevice != NULL,Panic(EFormatDeviceNotSet));
 		iSource->iFormatDevice = aFormatDevice;
 		}
@@ -803,6 +798,10 @@ one.
 @return The document position of the first character on the line. */
 EXPORT_C TInt CTextLayout::FirstCharOnLine(TInt aLineNo) const
 	{
+	if (aLineNo <= 0)
+	    {
+	    OstTrace0( TRACE_DUMP, CTEXTLAYOUT_FIRSTCHARONLINE, "EInvalidLineNumber" );
+	    }
 	__ASSERT_DEBUG(aLineNo > 0,Panic(EInvalidLineNumber));
 	if (iText->StartChar() == iText->EndChar())
 		return EFNoCurrentFormat;
@@ -1061,8 +1060,8 @@ EXPORT_C TInt CTextLayout::XyPosToDocPosL(TPoint &aXyPos,TUint) const
 				{
 				TUint highSurrogate = text[0];
 				TUint lowSurrogate = text[1];
-				if ( IsHighSurrogate( highSurrogate ) &&
-				     IsLowSurrogate( lowSurrogate ) )
+				if ( TChar::IsHighSurrogate( highSurrogate ) &&
+				        TChar::IsLowSurrogate( lowSurrogate ) )
 					--r;
 				}
 			}
@@ -1176,7 +1175,15 @@ EXPORT_C TRect CTextLayout::GetLineRectL(TInt aDocPos1,TInt aDocPos2) const
 	if (iText->LayoutHeight() == 0)
 		return TRect(0,0,0,0);
 
+	if (!PosIsFormatted(aDocPos1))
+	    {
+	    OstTrace0( TRACE_FATAL, CTEXTLAYOUT_GETLINERECTL, "ECharacterNotFormatted" );
+	    }
 	__ASSERT_ALWAYS(PosIsFormatted(aDocPos1),Panic(ECharacterNotFormatted));
+	if (!PosIsFormatted(aDocPos2))
+	    {
+	    OstTrace0( TRACE_DUMP, DUP1_CTEXTLAYOUT_GETLINERECTL, "ECharacterNotFormatted" );
+	    }
 	__ASSERT_DEBUG(PosIsFormatted(aDocPos2),Panic(ECharacterNotFormatted));
 
 	TTmDocPosSpec docSpec(aDocPos1, TTmDocPosSpec::ELeading);
@@ -1190,6 +1197,10 @@ EXPORT_C TRect CTextLayout::GetLineRectL(TInt aDocPos1,TInt aDocPos2) const
 	// Getthe Line rectangle
 	GetLineRect(point.iY,rect);
 	
+	if (rect.iTl.iY > point.iY || rect.iBr.iY < point.iY)
+	    {
+	    OstTrace0( TRACE_DUMP, DUP2_CTEXTLAYOUT_GETLINERECTL, "EPixelNotInFormattedLine" );
+	    }
 	__ASSERT_DEBUG(rect.iTl.iY <= point.iY && rect.iBr.iY >= point.iY,Panic(EPixelNotInFormattedLine));
 	
 	//	Finding the leading edge of aDocPos2
@@ -1601,6 +1612,10 @@ increase the formatting range to the very first character entered in the documen
 */
 EXPORT_C void CTextLayout::ExtendFormattingToCoverPosL(TInt aDocPos)
 	{
+	if (0 > aDocPos || aDocPos > DocumentLength())
+	    {
+	    OstTrace0( TRACE_DUMP, CTEXTLAYOUT_EXTENDFORMATTINGTOCOVERPOSL, "EInvalidDocPos" );
+	    }
 	__ASSERT_DEBUG(0 <= aDocPos && aDocPos <= DocumentLength(),
 			Panic(EInvalidDocPos));
 	TTmFormatParam param;
@@ -1625,6 +1640,10 @@ EXPORT_C void CTextLayout::ExtendFormattingToCoverPosL(TInt aDocPos)
 		{
 		iText->ExtendFormattingDownwardsL(param);
 		}
+	if ((aDocPos < iText->StartChar()) || (aDocPos > iText->EndChar()))
+	    {
+	    OstTrace0( TRACE_DUMP, DUP1_CTEXTLAYOUT_EXTENDFORMATTINGTOCOVERPOSL, "ECharacterNotFormatted" );
+	    }
 	__ASSERT_DEBUG((aDocPos >= iText->StartChar()) && (aDocPos <= iText->EndChar()),
 			Panic(ECharacterNotFormatted));
 	}
@@ -1651,8 +1670,20 @@ EXPORT_C void CTextLayout::FormatCharRangeL(TInt aStartDocPos,TInt aEndDocPos)
 
 void CTextLayout::FormatCharRangeL(TInt aStartDocPos,TInt aEndDocPos,TInt aPixelOffset)
 	{
+	if (aStartDocPos < 0 && aStartDocPos > DocumentLength())
+	    {
+	    OstTrace0( TRACE_DUMP, CTEXTLAYOUT_FORMATCHARRANGEL, "EInvalidDocPos" );
+	    }
 	__ASSERT_DEBUG(aStartDocPos >= 0 && aStartDocPos <= DocumentLength(),Panic(EInvalidDocPos));
+	if (aEndDocPos < 0 || aEndDocPos > DocumentLength())
+	    {
+	    OstTrace0( TRACE_DUMP, DUP1_CTEXTLAYOUT_FORMATCHARRANGEL, "EInvalidDocPos" );
+	    }
 	__ASSERT_DEBUG(aEndDocPos >= 0 && aEndDocPos <= DocumentLength(),Panic(EInvalidDocPos));
+	if (aStartDocPos > aEndDocPos)
+	    {
+	    OstTrace0( TRACE_DUMP, DUP2_CTEXTLAYOUT_FORMATCHARRANGEL, "ENoCharRangeToFormat" );
+	    }
 	__ASSERT_DEBUG(aStartDocPos <= aEndDocPos,Panic(ENoCharRangeToFormat));
 
 	TTmFormatParam param;
@@ -1703,8 +1734,16 @@ EXPORT_C TBool CTextLayout::FormatNextLineL(TInt& aBottomPixel)
 			TTmLineInfo info;
 			TTmDocPos pos(iUnformattedStart, ETrue);
 			TBool isFormatted = iText->DocPosToLine(pos,info);
+			if (!isFormatted)
+			    {
+			    OstTrace0( TRACE_DUMP, CTEXTLAYOUT_FORMATNEXTLINEL, "EPosNotFormatted" );
+			    }
 			__ASSERT_DEBUG(isFormatted, Panic(EPosNotFormatted));
 			isFormatted = iText->ParNumberToLine(info.iParNumber,KMaxTInt,info);
+			if (!isFormatted)
+			    {
+			    OstTrace0( TRACE_DUMP, DUP1_CTEXTLAYOUT_FORMATNEXTLINEL, "EPosNotFormatted" );
+			    }
 			__ASSERT_DEBUG(isFormatted, Panic(EPosNotFormatted));
 			aBottomPixel = info.iOuterRect.iBr.iY - iBandTop;
 			}
@@ -1892,7 +1931,10 @@ EXPORT_C TInt CTextLayout::ScrollLinesL(TInt& aLines,TAllowDisallow aScrollBlank
 				if (iText->YPosToLine(iBandTop,info))
 					top_line_number = info.iLineNumber;
 				else
+				    {
+					OstTrace0( TRACE_DUMP, DUP1_CTEXTLAYOUT_SCROLLLINESL, "EPosNotFormatted" );
 					User::Leave(EPosNotFormatted);
+					}
 				partial_line = iBandTop > info.iOuterRect.iTl.iY;
 				}
 
@@ -1922,7 +1964,10 @@ EXPORT_C TInt CTextLayout::ScrollLinesL(TInt& aLines,TAllowDisallow aScrollBlank
 		if (lines_scrolled)
 			{
 			if (!iText->LineNumberToLine(desired_top_line_number,info))
-				User::Leave(EPosNotFormatted);
+			    {
+			    OstTrace0( TRACE_DUMP, CTEXTLAYOUT_SCROLLLINESL, "EPosNotFormatted" );
+			    User::Leave(EPosNotFormatted);
+			    }
 			// if the line to be scrolled to is taller than the screen, we want
 			// to make sure that the baseline is not scrolled off the screen.
 			if (visible_height < info.iBaseline - info.iOuterRect.iTl.iY)
@@ -1939,7 +1984,10 @@ EXPORT_C TInt CTextLayout::ScrollLinesL(TInt& aLines,TAllowDisallow aScrollBlank
 			// If we are restricting scroll to the tops of lines, then lines at
 			// bottom are irrelevant, so all we do is lose the top line.
 			if (!iText->YPosToLine(iBandTop, info))
-				User::Leave(EPosNotFormatted);
+			    {
+			    OstTrace0( TRACE_DUMP, DUP2_CTEXTLAYOUT_SCROLLLINESL, "EPosNotFormatted" );
+			    User::Leave(EPosNotFormatted);
+			    }
 			return ScrollL(-info.iOuterRect.Height(), aScrollBlankSpace);
 			}
 
@@ -1962,7 +2010,10 @@ EXPORT_C TInt CTextLayout::ScrollLinesL(TInt& aLines,TAllowDisallow aScrollBlank
 			if (iText->YPosToLine(band_bottom - 1,info))
 				bottom_line_number = info.iLineNumber;
 			else
-				User::Leave(EPosNotFormatted);
+			    {
+			    OstTrace0( TRACE_DUMP, DUP3_CTEXTLAYOUT_SCROLLLINESL, "EPosNotFormatted" );
+			    User::Leave(EPosNotFormatted);
+			    }
 			partial_line = band_bottom < info.iOuterRect.iBr.iY;
 
 			// Find the line number of the desired last visible line.
@@ -1988,7 +2039,10 @@ EXPORT_C TInt CTextLayout::ScrollLinesL(TInt& aLines,TAllowDisallow aScrollBlank
 		if (lines_scrolled)
 			{
 			if (!iText->LineNumberToLine(desired_bottom_line_number,info))
-				User::Leave(EPosNotFormatted);
+			    {
+			    OstTrace0( TRACE_DUMP, DUP4_CTEXTLAYOUT_SCROLLLINESL, "EPosNotFormattedL" );
+			    User::Leave(EPosNotFormatted);
+			    }
 			return ScrollL(band_bottom - info.iOuterRect.iBr.iY,aScrollBlankSpace);
 			}
 		else
@@ -2184,8 +2238,16 @@ EXPORT_C void CTextLayout::PageDownL(TInt& aYCursorPos,TInt& aPixelsScrolled)
 		visible_height - 1
 		: SuggestCursorPos(aYCursorPos);
 
+	if (-visible_height > aPixelsScrolled)
+	    {
+	    OstTrace0( TRACE_DUMP, CTEXTLAYOUT_PAGEDOWNL, "EPageScrollError" );
+	    }
 	__ASSERT_DEBUG(-visible_height <= aPixelsScrolled,
 		Panic(EPageScrollError));
+	if (0 > aYCursorPos || aYCursorPos > visible_height)
+	    {
+	    OstTrace0( TRACE_DUMP, DUP1_CTEXTLAYOUT_PAGEDOWNL, "EPageScrollError" );
+	    }
 	__ASSERT_DEBUG(0 <= aYCursorPos && aYCursorPos <= visible_height,
 		Panic(EPageScrollError));
 	}
@@ -2218,9 +2280,25 @@ need to be reformatted. */
 EXPORT_C TBool CTextLayout::HandleCharEditL(TUint aType,TInt& aCursorPos,TInt& aGood,TInt& aFormatBottom,
 											TInt& aFormatTop,TInt& aScroll,TBool aFormatFromStartOfPar)
 	{
+	if (iSource->iFormatMode == CLayoutData::EFPrintPreviewMode)
+	    {
+	    OstTrace0( TRACE_FATAL, DUP2_CTEXTLAYOUT_HANDLECHAREDITL, "EPrintPreviewModeError" );
+	    }
 	__ASSERT_ALWAYS(iSource->iFormatMode != CLayoutData::EFPrintPreviewMode,Panic(EPrintPreviewModeError));
+	if (aType > EFRightDelete)
+	    {
+	    OstTrace0( TRACE_FATAL, CTEXTLAYOUT_HANDLECHAREDITL, "EBadCharacterEditType" );
+	    }
 	__ASSERT_ALWAYS(aType <= EFRightDelete,Panic(EBadCharacterEditType));
+	if (!(!aFormatFromStartOfPar || aType == EFRightDelete || aType == EFLeftDelete))
+	    {
+	    OstTrace0( TRACE_FATAL, DUP1_CTEXTLAYOUT_HANDLECHAREDITL, "EBadCharacterEditType" );
+	    }
 	__ASSERT_ALWAYS(!aFormatFromStartOfPar || aType == EFRightDelete || aType == EFLeftDelete,Panic(EBadCharacterEditType));
+	if (aCursorPos < iText->StartChar() || aCursorPos >= iText->EndChar())
+	    {
+	    OstTrace0( TRACE_FATAL, DUP3_CTEXTLAYOUT_HANDLECHAREDITL, "ECharacterNotFormatted" );
+	    }
 	__ASSERT_ALWAYS(aCursorPos >= iText->StartChar() && aCursorPos < iText->EndChar(),Panic(ECharacterNotFormatted));
 
 	// Mark the entire paragraph invalid if background formatting is taking place.
@@ -2236,17 +2314,75 @@ EXPORT_C TBool CTextLayout::HandleCharEditL(TUint aType,TInt& aCursorPos,TInt& a
 		{
 		case EFCharacterInsert:
 		case EFParagraphDelimiter:
+			{
 			reformat_param.iStartChar = aCursorPos++;
 			reformat_param.iNewLength = 1;
+
+			// surrogate support
+			TPtrC textForSurrogate;
+			TTmCharFormat formatForSurrogate;
+		
+			iSource->GetText(aCursorPos-1, textForSurrogate, formatForSurrogate);
+			if ( textForSurrogate.Length() > 1 )
+				{
+				TUint highSurrogate = textForSurrogate[0];
+				TUint lowSurrogate = textForSurrogate[1];
+				if ( TChar::IsHighSurrogate( highSurrogate ) && TChar::IsLowSurrogate( lowSurrogate ) )
+					{
+					// if we are inserting a surrogate pair, do not break the pair
+					aCursorPos++;
+					reformat_param.iNewLength++;
+					}
+				}
 			break;
+			}
 		case EFLeftDelete:
+			{
 			reformat_param.iStartChar = --aCursorPos;
 			reformat_param.iOldLength = 1;
+
+			// surrogate support
+			TPtrC textForSurrogate;
+			TTmCharFormat formatForSurrogate;
+		
+			if (aCursorPos >= 1)
+				{
+				iSource->GetText(aCursorPos-1, textForSurrogate, formatForSurrogate);
+				if ( textForSurrogate.Length() > 1 )
+					{
+					TUint highSurrogate = textForSurrogate[0];
+					TUint lowSurrogate = textForSurrogate[1];
+					if ( TChar::IsHighSurrogate( highSurrogate ) && TChar::IsLowSurrogate( lowSurrogate ) )
+						{
+						// if we are deleting a surrogate pair, do not break the pair
+						reformat_param.iStartChar = --aCursorPos;
+						reformat_param.iOldLength++;
+						}
+					}
+				}
 			break;
+			}
 		case EFRightDelete:
+			{
 			reformat_param.iStartChar = aCursorPos;
 			reformat_param.iOldLength = 1;
+
+			// surrogate support
+			TPtrC textForSurrogate;
+			TTmCharFormat formatForSurrogate;
+		
+			iSource->GetText(aCursorPos, textForSurrogate, formatForSurrogate);
+			if ( textForSurrogate.Length() > 1 )
+				{
+				TUint highSurrogate = textForSurrogate[0];
+				TUint lowSurrogate = textForSurrogate[1];
+				if ( TChar::IsHighSurrogate( highSurrogate ) && TChar::IsLowSurrogate( lowSurrogate ) )
+					{
+					reformat_param.iOldLength++;
+					}
+				}
 			break;
+			}
 		default: break;
 		}
 
@@ -2326,6 +2462,10 @@ lines. */
 EXPORT_C void CTextLayout::HandleBlockChangeL(TCursorSelection aSelection,TInt aOldLength,
 											  TViewRectChanges& aChanges,TBool aFormatFromStartOfPar)
 	{
+	if (iSource->iFormatMode == CLayoutData::EFPrintPreviewMode)
+	    {
+	    OstTrace0( TRACE_FATAL, CTEXTLAYOUT_HANDLEBLOCKCHANGEL, "EPrintPreviewModeError" );
+	    }
 	__ASSERT_ALWAYS(iSource->iFormatMode != CLayoutData::EFPrintPreviewMode,Panic(EPrintPreviewModeError));
 
 	// Do nothing if the selection is outside the formatted range.
@@ -2452,6 +2592,11 @@ EXPORT_C void CTextLayout::AdjustVerticalAlignment(CParaFormat::TAlignment aVert
 	{
 	int excess = BandHeight() - FormattedHeightInPixels();
 	int space_before = 0;
+	
+	if (IsFormattingBand())
+	    {
+	    OstTrace0( TRACE_FATAL, CTEXTLAYOUT_ADJUSTVERTICALALIGNMENT, "EMustFormatAllText" );
+	    }
 	__ASSERT_ALWAYS(!IsFormattingBand(),Panic(EMustFormatAllText));
 	TTmLineInfo info;
 
@@ -2692,6 +2837,10 @@ EXPORT_C void CTextLayout::DrawBorders(const MGraphicsDeviceMap* aGd,CGraphicsCo
 // Repeat draw, for double border.
 		if (aBorder.iBorder[border].iLineStyle==TParaBorder::EDouble)	 // Now have only got solid border, drawn as rect.
 			{
+			if (drawAsLine)
+			    {
+			    OstTrace0( TRACE_DUMP, CTEXTLAYOUT_DRAWBORDERS, "EDrawingBorderError" );
+			    }
 			__ASSERT_DEBUG(!drawAsLine,Panic(EDrawingBorderError));
 			(*ptrStartWidth)-=directionOut*widthInPixels[border];
 			(*ptrEndWidth)-=directionOut*widthInPixels[border];
@@ -4074,12 +4223,20 @@ TInt CTextLayout::ScrollL(TInt aDy,TAllowDisallow aScrollBlankSpace,
 
 TInt CTextLayout::ScrollDocPosIntoViewL(const TTmDocPos& aDocPos)
 	{
+	if (aDocPos.iPos > iText->Source()->DocumentLength())
+	    {
+	    OstTrace0( TRACE_DUMP, CTEXTLAYOUT_SCROLLDOCPOSINTOVIEWL, "EInvalidDocPos" );
+	    }
 	__ASSERT_DEBUG(aDocPos.iPos <= iText->Source()->DocumentLength(),
 		Panic(EInvalidDocPos));
 	TTmLineInfo info;
 	ExtendFormattingToCoverPosL(aDocPos.iPos);
 	if (!iText->DocPosToLine(aDocPos,info))
 		{
+		if (iText->Source()->DocumentLength() != 0)
+		    {
+		    OstTrace0( TRACE_DUMP, DUP1_CTEXTLAYOUT_SCROLLDOCPOSINTOVIEWL, "ECharacterNotFormatted" );
+		    }
 		__ASSERT_DEBUG(iText->Source()->DocumentLength() == 0,
 			Panic(ECharacterNotFormatted));
 		return ScrollL(iBandTop, EFDisallowScrollingBlankSpace);
