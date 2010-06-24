@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2003-2009 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 2003-2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -98,7 +98,7 @@ CBDFHarness* CBDFHarness::NewL(const TDesC &aTitle, const TDesC &aHeading)
 
 void CBDFHarness::ConstructL()
 	{
-	RFbsSession::Connect();
+	User::LeaveIfError(RFbsSession::Connect());
 	iFbs = RFbsSession::GetSession();
 	if (iFbs == NULL)
 		User::Leave(KErrGeneral);
@@ -128,7 +128,7 @@ CBDFHarness::~CBDFHarness()
 	}
 
 
-void CBDFHarness::MakeBDFFont()
+void CBDFHarness::MakeBDFFontL()
 	{
 	TOpenFontFaceAttrib attrib;
 	iStandardFont->GetFaceAttrib(attrib);
@@ -140,7 +140,7 @@ void CBDFHarness::MakeBDFFont()
 
 	// Open file session
 	RFs file_session;
-	file_session.Connect();
+	User::LeaveIfError(file_session.Connect());
 	file_session.MkDir(_L("\\BDFfonts\\"));
 	// Open file
 	RFile file;

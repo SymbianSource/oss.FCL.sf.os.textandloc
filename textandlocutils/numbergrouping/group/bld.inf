@@ -56,7 +56,7 @@ NumberGrouping.mmp
 
 PRJ_TESTEXPORTS
 ../test/group/tnumbergrouping.iby		CORE_MW_LAYER_IBY_EXPORT_PATH(tnumbergrouping.iby)
-../test/group/101F8775.txt \epoc32\RELEASE\WINSCW\UDEB\Z\private\10202be9\101F8775.txt
+../test/group/101F8775.txt /epoc32/RELEASE/WINSCW/UDEB/Z/private/10202be9/101F8775.txt
 
 PRJ_TESTMMPFILES
 ../test/group/tnumbergrouping.mmp

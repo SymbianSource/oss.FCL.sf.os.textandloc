@@ -31,3 +31,4 @@ SOURCE			T_CP1257.CPP
 LIBRARY			euser.lib 
 
 SMPSAFE
+//RTEST

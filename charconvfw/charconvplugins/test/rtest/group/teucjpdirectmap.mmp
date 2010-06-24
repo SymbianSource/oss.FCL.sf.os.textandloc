@@ -33,3 +33,4 @@ LIBRARY			efsrv.lib
 LIBRARY			charconv.lib
 
 SMPSAFE
+//RTEST
