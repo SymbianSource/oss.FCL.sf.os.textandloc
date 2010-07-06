@@ -21,14 +21,15 @@
 
 target          t_fmt1.exe
 targettype      EXE
+UID 0x100039CE 0xE0008383
+VENDORID 0x70000001
 
 userinclude	../ttext
 userinclude	../stext
-userinclude   ../inc 	// your public include directory should be here
+userinclude   ../inc ../traces	// your public include directory should be here
 OS_LAYER_SYSTEMINCLUDE_SYMBIAN
 
 
-SOURCEPATH	../group
 
 SOURCEPATH	../ttext		// source files
 source t_fmt1.cpp 
@@ -44,7 +45,5 @@ source TXTRTMAP.CPP
 source TXTSTYLE.CPP
 
 library euser.lib estor.lib gdi.lib
-
-VENDORID 0x70000001
 
 SMPSAFE

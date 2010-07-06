@@ -284,6 +284,7 @@ TInt CISO2022JPConverterImpl::ConvertFromUnicode(
         const TDesC16& aUnicode, 
         CCnvCharacterSetConverter::TArrayOfAscendingIndices& aIndicesOfUnconvertibleCharacters)
     {
+    TInt ret = KErrNone;
     RArray<CnvUtilities::SCharacterSet> characterSets;
     if ( FeatureManager::FeatureSupported(KFeatureIdJapanesePicto) )
         {        
@@ -291,19 +292,19 @@ TInt CISO2022JPConverterImpl::ConvertFromUnicode(
         characterSet.iConversionData=&CnvJisRoman::ConversionData();
         characterSet.iConvertFromIntermediateBufferInPlace=ConvertFromJisRomanToJisInPlace;
         characterSet.iEscapeSequence=&KLit8EscapeSequenceForJisRoman;
-        characterSets.Append(characterSet);
+        ret |= characterSets.Append(characterSet);
         characterSet.iConversionData=&CCnvCharacterSetConverter::AsciiConversionData();
         characterSet.iConvertFromIntermediateBufferInPlace=ConvertFromAsciiToJisInPlace;
         characterSet.iEscapeSequence=&KLit8EscapeSequenceForAscii;
-        characterSets.Append(characterSet);
+        ret |= characterSets.Append(characterSet);
         characterSet.iConversionData=&CnvJisX0208::ConversionData();
         characterSet.iConvertFromIntermediateBufferInPlace=ConvertFromJisX0208ToJisInPlace;
         characterSet.iEscapeSequence=&KLit8EscapeSequenceForJisX0208_1983;
-        characterSets.Append(characterSet);
+        ret |= characterSets.Append(characterSet);
         characterSet.iEscapeSequence=&KLit8EscapeSequenceForJisX0208_1983;
         characterSet.iConversionData=&CnvJisBase::HalfWidthKatakana7ConversionData();
         characterSet.iConvertFromIntermediateBufferInPlace=ConvertFromHalfKatakanaToFullKatakana;
-        characterSets.Append(characterSet);
+        ret |= characterSets.Append(characterSet);
 
         SetCharacterSetsForPictograph(characterSets);
         }
@@ -313,20 +314,21 @@ TInt CISO2022JPConverterImpl::ConvertFromUnicode(
         characterSet.iConversionData=&CCnvCharacterSetConverter::AsciiConversionData();
         characterSet.iConvertFromIntermediateBufferInPlace=ConvertFromAsciiToJisInPlace;
         characterSet.iEscapeSequence=&KLit8EscapeSequenceForAscii;
-        characterSets.Append(characterSet);
+        ret |= characterSets.Append(characterSet);
         characterSet.iConversionData=&CnvJisRoman::ConversionData();
         characterSet.iConvertFromIntermediateBufferInPlace=ConvertFromJisRomanToJisInPlace;
         characterSet.iEscapeSequence=&KLit8EscapeSequenceForJisRoman;
-        characterSets.Append(characterSet);
+        ret |= characterSets.Append(characterSet);
         characterSet.iConversionData=&CnvJisX0208::ConversionData();
         characterSet.iConvertFromIntermediateBufferInPlace=ConvertFromJisX0208ToJisInPlace;
         characterSet.iEscapeSequence=&KLit8EscapeSequenceForJisX0208_1983;
-        characterSets.Append(characterSet);
+        ret |= characterSets.Append(characterSet);
         characterSet.iEscapeSequence=&KLit8EscapeSequenceForJisX0208_1983;
         characterSet.iConversionData=&CnvJisBase::HalfWidthKatakana7ConversionData();
         characterSet.iConvertFromIntermediateBufferInPlace=ConvertFromHalfKatakanaToFullKatakana;
-        characterSets.Append(characterSet);
+        ret |= characterSets.Append(characterSet);
         }
+    __ASSERT_DEBUG(!ret, User::Panic(_L("RArray append failure"), ret));
     TUint notUsed;
 //S60 30    TUint inputConversionFlags=CCnvCharacterSetConverter::EInputConversionFlagMustEndInDefaultCharacterSet;
     TUint inputConversionFlags=CCnvCharacterSetConverter::EInputConversionFlagMustEndInDefaultCharacterSet |

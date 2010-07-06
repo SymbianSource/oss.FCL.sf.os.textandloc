@@ -44,8 +44,8 @@ PRJ_MMPFILES
 
 
 PRJ_TESTEXPORTS
-../test/group/tjplangutil.iby		CORE_MW_LAYER_IBY_EXPORT_PATH(tjplangutil.iby)
+../test/group/tJPLangUtil.iby		CORE_MW_LAYER_IBY_EXPORT_PATH(tjplangutil.iby)
 
 PRJ_TESTMMPFILES
-../test/group/tjplangutil.mmp
+../test/group/tJPLangUtil.mmp
 	

@@ -37,7 +37,7 @@ const TText KNumberGroupingSpace(' ');
 
 const TInt KMinimumLengthToGroup = 1; // No grouping occurs if fewer than this in unformatted buffer
 
-#include <NumberGrouping.rsg>
+#include <numbergrouping.rsg>
 
 
 GLDEF_C void Panic(TNumberGroupingPanic aPanic)

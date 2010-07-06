@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 1995-2009 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 1995-2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -19,15 +19,21 @@
 #include <graphics/openfontrasterizer.h>
 #include <graphics/openfontconstants.h>
 
-CTIsolatedFontStore::CTIsolatedFontStore()
+CTIsolatedFontStore::CTIsolatedFontStore():iIsHeapOwner(ETrue)
 	{
 	}
+
+CTIsolatedFontStore::CTIsolatedFontStore(RHeap* aHeap):iIsHeapOwner(EFalse),iHeap(aHeap)
+    {
+    }
 
 CTIsolatedFontStore::~CTIsolatedFontStore()
 	{
 	delete iFs;
-	if (iHeap)
-		iHeap->Close();
+	if (iIsHeapOwner && iHeap)
+	    {
+	    iHeap->Close();
+	    }
 	REComSession::FinalClose();
 	}
 
@@ -46,9 +52,27 @@ CTIsolatedFontStore* CTIsolatedFontStore::NewL()
 	return self;
 	}
 
+CTIsolatedFontStore* CTIsolatedFontStore::NewLC(RHeap * aHeap)
+    {
+    CTIsolatedFontStore* self = new (ELeave)CTIsolatedFontStore(aHeap);
+    CleanupStack::PushL(self);
+    self->ConstructL();
+    return self;
+    }
+
+CTIsolatedFontStore* CTIsolatedFontStore::NewL(RHeap * aHeap)
+    {
+    CTIsolatedFontStore* self=CTIsolatedFontStore::NewLC(aHeap);
+    CleanupStack::Pop(); // self;
+    return self;
+    }
+
 void CTIsolatedFontStore::ConstructL()
 	{
-	iHeap = UserHeap::ChunkHeap(NULL,0x10000,0x10000);
+    if(iIsHeapOwner)
+        {
+        iHeap = UserHeap::ChunkHeap(NULL,0x10000,0x10000);
+        }	
 	iFs = CFontStore::NewL(iHeap);
 	}
 

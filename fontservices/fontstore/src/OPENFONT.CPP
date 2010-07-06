@@ -27,6 +27,12 @@
 #include <graphics/openfontrasterizer.h>
 #include <graphics/gdi/glyphsample.h>
 
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "OPENFONTTraces.h"
+#endif
+
+
 const TInt KSessionCacheEntries = 512;
 const TInt KDefaultSlantFactor = 20480;
 const TInt KOneIn16Dot16FixedPointFormat = 65536;
@@ -1634,8 +1640,16 @@ const TUint32 KTop16Of32Bits = 0xffff0000;
 
 EXPORT_C void TOpenFontMetrics::SetBaselineCorrection(TInt aBaselineCorrection)
 	{
-	__ASSERT_DEBUG(aBaselineCorrection<(1<<(KBitsForUnderline-1)), Panic(EFntOverFlow));
-	__ASSERT_DEBUG(aBaselineCorrection>(0-(1<<(KBitsForUnderline-1))), Panic(EFntOverFlow));
+	if (aBaselineCorrection >= (1<<(KBitsForUnderline-1)))
+	    {
+	    OstTrace1( TRACE_FATAL, TOPENFONTMETRICS_SETBASELINECORRECTION, "aBaselineCorrection=%d, Panic(EFntOverFlow)", aBaselineCorrection );
+	    __ASSERT_DEBUG(0, Panic(EFntOverFlow));
+	    }
+	if (aBaselineCorrection <= (0-(1<<(KBitsForUnderline-1))))
+	    {
+	    OstTrace1( TRACE_FATAL, DUP1_TOPENFONTMETRICS_SETBASELINECORRECTION, "aBaselineCorrection=%d, Panic(EFntOverFlow)", aBaselineCorrection );
+	    __ASSERT_DEBUG(0, Panic(EFntOverFlow));
+	    }
 	
 	TUint16 value = iBaselineCorrection;
 	value &=~KMaskUnderline; //zero all the underline position bits
@@ -2279,7 +2293,11 @@ TBool TOpenFontSpec::ApplyRatio(TInt& aValue, TInt aNumerator, TInt aDenominator
 	TInt64 value(aValue);
 	value = (value * aNumerator) / aDenominator;
 	aValue = I64LOW(value);
-	__ASSERT_DEBUG(I64HIGH(value) == 0, Panic(EFntOverFlow));
+	if (I64HIGH(value) != 0)
+	    {
+	    OstTrace1( TRACE_FATAL, TOPENFONTSPEC_APPLYRATIO, "value=%ld, Panic(EFntOverFlow)", value );
+	    __ASSERT_DEBUG(0, Panic(EFntOverFlow));
+	    }
 	return I64HIGH(value) != 0;
 	}
 

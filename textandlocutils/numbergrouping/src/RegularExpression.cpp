@@ -79,7 +79,8 @@ void CRegularExpression::GenerateStateTablesL(RPointerArray<TDesC>* aPatterns)
 																	// rest of the method _so_ much easier to read
 		
 		CStateMachine* StateMachine = CStateMachine::NewLC(KNumOfRecognisedChars, desPattern.Length());
-		iStateMachines.Append(StateMachine);
+		User::LeaveIfError(iStateMachines.Append(StateMachine));
+		CleanupStack::Pop(); // now the ownership transfers to iStateMachines
 
 		// parse the desPattern
 
@@ -264,8 +265,6 @@ void CRegularExpression::GenerateStateTablesL(RPointerArray<TDesC>* aPatterns)
 
 		if(parseState != EAny)
 			User::Panic(bufParsingError, KErrSyntaxError);
-					
-		CleanupStack::Pop(); // iStateMachine[nPatternCount]
 	}
 }
 

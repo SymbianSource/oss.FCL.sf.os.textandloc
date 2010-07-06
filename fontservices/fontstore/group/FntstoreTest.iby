@@ -49,6 +49,7 @@ data=DATAZ_\fntstoretest\fntstoretest_t_setdefaulttypefacename.script	\fntstoret
 data=DATAZ_\fntstoretest\fntstoretest_T_LinkedFontUpdateInitial.script	\fntstoretest\fntstoretest_T_LinkedFontUpdateInitial.script
 data=DATAZ_\fntstoretest\fntstoretest_T_LinkedFontUpdateStage1.script	\fntstoretest\fntstoretest_T_LinkedFontUpdateStage1.script
 data=DATAZ_\fntstoretest\fntstoretest_T_LinkedFontUpdateStage2.script	\fntstoretest\fntstoretest_T_LinkedFontUpdateStage2.script
+data=DATAZ_\fntstoretest\fntstoretest_T_Cache.script			\fntstoretest\fntstoretest_T_Cache.script
 data=DATAZ_\fntstoretest\fntstoretest_T_FontSessionCache.script			\fntstoretest\fntstoretest_T_FontSessionCache.script
 
 // FntStore test code - TFntStoreServer.exe needs to be copied into \sys\bin\ and set as data so it will be copied to the c: drive and we can change the capabilities of the .exe

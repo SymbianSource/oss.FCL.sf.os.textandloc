@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2006-2009 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 2006-2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -21,17 +21,7 @@
  @internalComponent - Internal Symbian test code
 */
 
-#include <e32base.h>
-#include <e32cons.h>
-#include <e32test.h>
-#include <e32std.h>
-#include <e32debug.h>
 #include "FNTSTORE.H"
-#include "FNTBODY.H"
-#include "FNTSTD.H"
-#include <fbs.h>
-#include <bitstd.h>
-#include <bitdev.h>
 #include <e32math.h>
 
 _LIT(KOpenFont, "DejaVu Sans Condensed");
@@ -42,119 +32,53 @@ _LIT(KOpenFont, "DejaVu Sans Condensed");
 #endif
 
 const TInt KTimeOut = 1000 * 1000;
-//make sure that the font is large enough to ensure that the session
-//cache is used.
-const TInt KTextHight = 220;
+
+
+_LIT(KTCacheDeletionProcess,"T_fontsessioncacheproc");
 
 /* it is expected that the main in this file will be called to test multiple 
-process output at the same time a process is being deleted (font and bitmap server
-disconnection.  There are  normally two instances of this process.  Two virtually
-identical processes are required to ensure that the session ID is the same.
-
-The first is with aThirdProcess set. This sets output to run in a loop until
-the timeout is completed.  These values  are input via program arguments.
-
-If aThirdProcess is false then only one font creation, draw text,
-font deletion cycle is completed. The test code will then repeatedly run
-this process with aThirdProcess set to false.
+process cache searching which is in the shared heap.
 */
 
-
-class TRunProc: public CBase
+class CRunProc: public CBase
     {
 public:
-    static TRunProc* NewL();
     void RunTestL();
-    ~TRunProc();
+    CRunProc();
+    ~CRunProc();
+    
+    inline void setFont(CFont*);
+    inline void setHandle(TInt);
 private:
-    TRunProc(){};
-    void ConstructL();
-    void DrawText();
     void CreateFontL();
 
 private:
-    RFbsSession* iFbs;
-    CFbsBitGc* iGc;
-    CFbsScreenDevice* iDev;
-    CFbsFont   *iFbsFont;
+    CBitmapFont* iFont;
+    TInt iSessionHandle;
     };
 
-TRunProc::~TRunProc()
+CRunProc::CRunProc()
     {
-    delete iGc;
-    delete iDev;
-    iFbs->Disconnect();
-    }
-
-void TRunProc::ConstructL()
-    {
-    TInt err = RFbsSession::Connect();
-    User::LeaveIfError(err);
-    iFbs = RFbsSession::GetSession();
-    User::LeaveIfNull(iFbs);
     
-    const TInt KDisplayMode = 3;
-    TDisplayMode mode[KDisplayMode];
-    mode[0] = EColor16MA;
-    mode[1] = EColor16MU;
-    mode[2] = EColor64K;
-
-    TInt count;
-    for (count = 0; count < KDisplayMode; count++)
-        {
-        TRAP(err, iDev = CFbsScreenDevice::NewL(KNullDesC, mode[count]));
-        if (err != KErrNotSupported)
-            {
-            break;
-            }
-        }
-
-    User::LeaveIfNull(iDev);
-
-    if(err == KErrNone)
-        {
-        iDev->ChangeScreenDevice(NULL);
-        iDev->SetAutoUpdate(ETrue);
-        iDev->CreateContext(iGc);
-        }
-    User::LeaveIfNull(iGc);
     }
 
-TRunProc* TRunProc::NewL()
+CRunProc::~CRunProc()
     {
-    TRunProc *ptr = new (ELeave) TRunProc;
-    CleanupStack::PushL(ptr);
-    ptr->ConstructL();
-    CleanupStack::Pop();
-    return ptr;
+    
     }
 
-void TRunProc::CreateFontL()
+inline void CRunProc::setFont(CFont* aFont)
     {
-    TOpenFontSpec openFontSpec;
-    openFontSpec.SetName(KOpenFont);
-    openFontSpec.SetHeight(KTextHight);
-    openFontSpec.SetItalic(EFalse);
-    openFontSpec.SetBold(EFalse);
-
-    TTypeface Typeface;
-    Typeface.iName = KOpenFont;
-    TFontSpec fs;
-    fs.iTypeface = Typeface;
-
-    fs.iHeight = KTextHight;
-    CFbsFont* font = NULL;
-    TInt err = iDev->GetNearestFontToDesignHeightInPixels(font, fs);
-
-    User::LeaveIfNull(font);
-
-    // Use the font
-    iFbsFont = font;
-    iGc->UseFont(font);
-    iGc->Clear();
+    iFont = static_cast<CBitmapFont*>(aFont);
     }
 
-void TRunProc::RunTestL()
+inline void CRunProc::setHandle(TInt aSessionHandle)
+    {
+    iSessionHandle = aSessionHandle;
+    }
+
+
+void CRunProc::RunTestL()
     {
     TTime theTime;
     theTime.UniversalTime();
@@ -168,56 +92,57 @@ void TRunProc::RunTestL()
     TTimeIntervalMicroSeconds32 timeout(KTimeOut);
     timer.After(timerStatus, timeout);
 
-    CreateFontL();
-    RDebug::Print(_L("DrawText()random=%d"), random);
-    DrawText();
-
     TText ch;
-    const TUint8 *bitmap;
+    const TUint8 *bitmap = NULL;
     TSize bitmapsize;
-    TOpenFontCharMetrics Metrics;
+    TOpenFontCharMetrics Metrics;    
     do
         {
-        for (ch = 'A'; ch <= 'Z'; ch++)
+        TInt hitcount = 0;
+        for (ch = 'A'; ch <= 'z'; ch++)
             {
-            iFbsFont->GetCharacterData((TInt) ch, Metrics, bitmap,bitmapsize);
+            if(iFont->GetCharacterData(iSessionHandle, (TInt)ch, Metrics,bitmap))
+                {
+                //RDebug::Print(_L("%c hit bitmap[0]=%x"),ch,bitmap[0]);
+                TUint8 testbyte = bitmap[0];
+                testbyte += testbyte;
+                __ASSERT_ALWAYS((testbyte & 0x01) == 0, User::Panic(KTCacheDeletionProcess, KErrGeneral));
+                hitcount++;
+                }
+            else 
+                {
+                //RDebug::Print(_L("%c missed"),ch);
+                }
             }
+        __ASSERT_ALWAYS(hitcount > 0, User::Panic(KTCacheDeletionProcess, KErrNotFound));
         }
     while (timerStatus == KRequestPending);
 
     timer.Cancel();
-    iGc->DiscardFont();
     timer.Close();
     }
-    
-
-void TRunProc::DrawText()
-    {
-    TText ch[2];
-    ch[1] = '\0';
-    for (ch[0] = 'A';ch[0] <= 'Z';ch[0]++)
-        {
-        TBufC<2> buf(ch);
-        iGc->DrawText(buf,TPoint(10,100));
-        }
-    for (ch[0] = 'a';ch[0] <= 'z';ch[0]++)
-        {
-        TBufC<2> buf(ch);
-        iGc->DrawText(buf,TPoint(10,100));
-        }
-    }
-    
-  
 
 void MainL()
     {
-    TRunProc* test = TRunProc::NewL();
+    RChunk gChunk;
+    User::LeaveIfError(gChunk.Open(1));
+    CleanupClosePushL(gChunk);
+    
+    TInt offset;
+    User::LeaveIfError(User::GetTIntParameter(2,offset));
+    TInt SessionHandle;
+    User::LeaveIfError(User::GetTIntParameter(3,SessionHandle));
+    
+    CRunProc *test = new (ELeave) CRunProc;
+    
+    test->setFont(reinterpret_cast<CFont*>(offset + reinterpret_cast<TInt>(gChunk.Base())));
+    test->setHandle(SessionHandle);
     CleanupStack::PushL(test);
 
     RDebug::Print(_L("T_fontsessioncacheproc MainL()"));
     test->RunTestL();
-
-    CleanupStack::PopAndDestroy();
+    
+    CleanupStack::PopAndDestroy(2);
     }
 
 // Cleanup stack harness
@@ -225,8 +150,7 @@ GLDEF_C TInt E32Main()
     {
     __UHEAP_MARK;
     CTrapCleanup* cleanupStack = CTrapCleanup::New();
-    TRAPD(error, MainL());
-    _LIT(KTCacheDeletionProcess,"T_fontsessioncacheproc");
+    TRAPD(error, MainL());    
     __ASSERT_ALWAYS(!error, User::Panic(KTCacheDeletionProcess, error));
     delete cleanupStack;
     __UHEAP_MARKEND;

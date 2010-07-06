@@ -22,6 +22,11 @@
 #include "InlineText.h"
 #include "frmUtils.h"
 
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "TmLineTraces.h"
+#endif
+
 inline TBool IsSurrogate(TText a) { return 0xD800 == (a & 0xF800); }
 inline TBool IsHighSurrogate(TText a) { return 0xD800 == (a & 0xFC00); }
 inline TBool IsLowSurrogate(TText a) { return 0xDC00 == (a & 0xFC00); }
@@ -606,6 +611,10 @@ TBool CTmLine::AppendChunkL(CTmFormatContext& aContext,TInt& aStartChar,TInt& aS
 		if (chunk.iOverlappingChars > 0 && ! chunkInfo.iAtLineEnd && ! chunkInfo.iAtParEnd)
 			{
 			aStartChar -= chunk.iOverlappingChars;
+			if (aStartChar < 0)
+			    {
+			    OstTrace0( TRACE_DUMP, CTMLINE_APPENDCHUNKL, "EInvariant" );
+			    }
 			__ASSERT_DEBUG(aStartChar >= 0, TmPanic(EInvariant));
 			}
 
@@ -989,12 +998,20 @@ void CTmLine::WriteCodeL(CTmFormatContext& aContext)
 void CTmLine::WriteInlineTextL(CTmFormatContext& aContext, CTmCode& aCode, TInt aPos, TInt aInlineWidth, TBool aLeadingEdge, TInt aInlineFormat)
 	{
 	MTmInlineTextSource* inlineTextApi = (MTmInlineTextSource*)aContext.iSource.GetExtendedInterface(KInlineTextApiExtensionUid);
+	if (inlineTextApi==0)
+	    {
+	    OstTrace0( TRACE_DUMP, CTMLINE_WRITEINLINETEXTL, "EInvariant" );
+	    }
 	__ASSERT_DEBUG(inlineTextApi!=0,TmPanic(EInvariant));
 
 	TTmDocPos startDocPos(aPos, aLeadingEdge);
 	TPtrC inlineText = inlineTextApi->GetInlineText(startDocPos);
 	TUint8 op2 = TTmInterpreter::EOpInlineText;
 	TInt inlineLength = inlineText.Length();
+	if (inlineLength > TTmInterpreter::EMaxInlineChars)
+	    {
+	    OstTrace0( TRACE_DUMP, DUP1_CTMLINE_WRITEINLINETEXTL, "EInvariant" );
+	    }
 	__ASSERT_DEBUG(inlineLength <= TTmInterpreter::EMaxInlineChars,TmPanic(EInvariant));
 	if (inlineLength > 1)
 		op2 |= TTmInterpreter::EModCount;

@@ -139,8 +139,11 @@ TInt CStateMachine::MapIndex(TChar aChar, RArray<TInt>& aIndices)
 	{
 		TInt nIndex = static_cast<TInt>(aChar.GetNumericValue());
 		
-		aIndices.Append(nIndex);
-		aIndices.Append(KCharacterDot);
+		TInt ret = KErrNone;
+		ret |= aIndices.Append(nIndex);
+		ret |= aIndices.Append(KCharacterDot);
+		__ASSERT_DEBUG(!ret, User::Panic(_L("RArray append failure"), ret));
+		if (KErrNone != ret) return ret;
 
 		return nIndex;
 	}

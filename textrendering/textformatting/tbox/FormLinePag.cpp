@@ -19,6 +19,11 @@
 #include "FRMPAGE.H"
 #include "FRMCONST.H"
 
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "FormLinePagTraces.h"
+#endif
+
 #ifdef SYMBIAN_ENABLE_SPLIT_HEADERS
 #include "FRMCONST_INTERNAL.H"
 #include "FRMCONST_PARTNER.H"
@@ -93,6 +98,10 @@ void TLinePaginator::InsertPageBreakL()
 	iHeightRem=iPageHeight;
 	iKeepWithPrev=EFalse;
 	TInt deltaDocPos=iDocPos-iPrevPageBreak; 
+	if (deltaDocPos<=0)
+	    {
+	    OstTrace0( TRACE_DUMP, TLINEPAGINATOR_INSERTPAGEBREAKL, "EFInvalidNumberCharsOnPage" );
+	    }
 	__ASSERT_DEBUG(deltaDocPos>0,FormPanic(EFInvalidNumberCharsOnPage));
 	iPageList->AppendL(deltaDocPos);
 	iPrevPageBreak=iDocPos;

@@ -24,6 +24,11 @@
 #include "TXTFRMAT.H"
 #include "TXTSTD.H"
 
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "TXTSTYLETraces.h"
+#endif
+
 #ifdef SYMBIAN_ENABLE_SPLIT_HEADERS
 #include "TXTFMLYR_INTERNAL.H"
 #include "TXTSTYLE_INTERNAL.H"
@@ -164,6 +169,11 @@ DLLEXPORT_C void CStyleList::__DbgTestInvariant()const
 			{
 			TInt index=IndexByPtr(info.iStyleForNextPara);
 			// ASSERT: The style-to-follow is present in the list.
+			if (!((info.iStyleForNextPara==NULL) ||
+	                ((info.iStyleForNextPara) && (index!=KErrNotFound && index>=0 && index<styleCount))))
+			    {
+			    OstTrace0( TRACE_DUMP, CSTYLELIST_DBGTESTINVARIANT, "Invariant" );
+			    }
 			__ASSERT_DEBUG(
 				(info.iStyleForNextPara==NULL) ||
 				((info.iStyleForNextPara) && (index!=KErrNotFound && index>=0 && index<styleCount)),User::Invariant());
@@ -248,7 +258,15 @@ position zero. Must be within the bounds of the array, or a panic occurs.
 @return A const reference to the style at position aIndex in the array. 
 @return A non-const reference to the style at position aIndex in the array. */
 	{
+	if (!iList)
+	    {
+	    OstTrace0( TRACE_FATAL, CSTYLELIST_AT, "EStyleIntegrityError" );
+	    }
 	__ASSERT_ALWAYS(iList,Panic(EStyleIntegrityError));
+	if (aIndex<0 || aIndex>=iList->Count())
+	    {
+	    OstTrace0( TRACE_DUMP, DUP3_CSTYLELIST_AT, "EStyleIndexOutOfRange" );
+	    }
 	__ASSERT_DEBUG(aIndex>=0 && aIndex<iList->Count(),Panic(EStyleIndexOutOfRange));
 	
 	return (*iList)[aIndex];
@@ -257,7 +275,15 @@ position zero. Must be within the bounds of the array, or a panic occurs.
 
 EXPORT_C RParagraphStyleInfo& CStyleList::At(TInt aIndex)
 	{
+	if (!iList)
+	    {
+	    OstTrace0( TRACE_FATAL, DUP2_CSTYLELIST_AT, "EStyleIntegrityError" );
+	    }
 	__ASSERT_ALWAYS(iList,Panic(EStyleIntegrityError));
+	if (aIndex<0 || aIndex>=iList->Count())
+	    {
+	    OstTrace0( TRACE_DUMP, DUP1_CSTYLELIST_AT, "EStyleIndexOutOfRange" );
+	    }
 	__ASSERT_DEBUG(aIndex>=0 && aIndex<iList->Count(),Panic(EStyleIndexOutOfRange));
 
 	return (*iList)[aIndex];
@@ -333,6 +359,10 @@ links.
 		TInt offset=(set.iStyleForNextPara!=NULL)
 			? IndexByPtr(style)
 			: -1;
+			if (!(offset==-1 || (offset>=0 && offset<Count())))
+			    {
+			    OstTrace0( TRACE_DUMP, CSTYLELIST_EXTERNALIZEL, "EStyleIntegrityError" );
+			    }
 		__ASSERT_DEBUG(offset==-1 || (offset>=0 && offset<Count()),Panic(EStyleIntegrityError));
 		aStream.WriteInt8L(offset);
 		}
@@ -426,6 +456,10 @@ to NULL. */
 		if (cur_style.iStyle == aStyle)
 			{
 			// Assert that the style must occur only once in the style list.
+			if (index != -1)
+			    {
+			    OstTrace0( TRACE_DUMP, CSTYLELIST_REMOVE, "EStyleIntegrityError" );
+			    }
 			__ASSERT_DEBUG(index == -1,Panic(EStyleIntegrityError));
 			index = i;
 			}
@@ -459,6 +493,10 @@ following paragraph.
 @return KErrNone if successful, or KErrNotFound if the first style contained 
 in the argument (aStyleSet.iStyle) is not in the style list. */
 	{
+	if (IndexByPtr(aStyleSet.iStyleForNextPara) == KErrNotFound)
+	    {
+	    OstTrace0( TRACE_FATAL, CSTYLELIST_SETSTYLETOFOLLOW, "EStyleIntegrityError" );
+	    }
 	__ASSERT_ALWAYS( IndexByPtr(aStyleSet.iStyleForNextPara) != KErrNotFound, Panic(EStyleIntegrityError) );
 	__TEST_INVARIANT;
 	

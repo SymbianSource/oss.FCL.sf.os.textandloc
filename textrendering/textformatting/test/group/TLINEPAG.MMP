@@ -25,7 +25,10 @@ targetpath	/test/app-framework/form
 
 targettype	exe
 
-userinclude   ../../inc 	// your public include directory should be here
+UID 0x100039CE 0xE0008383
+VENDORID 0x70000001
+
+userinclude   ../../inc	../traces // your public include directory should be here
 OS_LAYER_SYSTEMINCLUDE_SYMBIAN
 
 sourcepath	../src
@@ -35,8 +38,5 @@ sourcepath ../../tbox
 source FormLinePag.cpp
 
 library  euser.lib efsrv.lib gdi.lib ws32.lib bafl.lib cone.lib
-
-
-VENDORID 0x70000001
 
 SMPSAFE

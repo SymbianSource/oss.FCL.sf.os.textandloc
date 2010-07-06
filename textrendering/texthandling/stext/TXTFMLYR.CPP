@@ -23,6 +23,11 @@
 #include <txtfmstm.h>
 #include "TXTSTD.H"
 
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "TXTFMLYRTraces.h"
+#endif
+
 #ifdef SYMBIAN_ENABLE_SPLIT_HEADERS
 #include "TXTFMLYR_INTERNAL.H"
 #endif
@@ -148,8 +153,16 @@ number of layers in the chain, otherwise a panic occurs.
 @param aExcludeCount The number of layers to be excluded. By default, zero. */
 	{
 // ASSERT: aExcludeCount is positive.
+	if (aExcludeCount<0)
+	    {
+	    OstTrace0( TRACE_FATAL, CFORMATLAYER_EXTERNALIZECHAINL, "ECannotStoreFormatLayerChain" );
+	    }
 	__ASSERT_ALWAYS(aExcludeCount>=0,Panic(ECannotStoreFormatLayerChain));
 // ASSERT: The number of layers to be excluded is less than the total no. of layers.
+	if (aExcludeCount>=ChainCount())
+	    {
+	    OstTrace0( TRACE_FATAL, DUP1_CFORMATLAYER_EXTERNALIZECHAINL, "ECannotStoreFormatLayerChain" );
+	    }
 	__ASSERT_ALWAYS(aExcludeCount<ChainCount(),Panic(ECannotStoreFormatLayerChain));
 	TInt aCount=ChainCount()-aExcludeCount;
 	aStream.WriteInt8L(aCount);  // Store the chain length.
@@ -166,6 +179,10 @@ layers as we unwind back to the top of the chain.*/
 	if (aDescendantCount)
 		{
 // ASSERT: The format layer chain is consistent.
+		if (iBasedOn==NULL)
+		    {
+		    OstTrace0( TRACE_DUMP, CFORMATLAYER_EXTERNALIZELAYERSRECURSEL, "ECorruptFormatLayerChain" );
+		    }
 		__ASSERT_ALWAYS(iBasedOn!=NULL,Panic(ECorruptFormatLayerChain));
 		iBasedOn->ExternalizeLayersRecurseL(aStream,--aDescendantCount);
 		}
@@ -360,6 +377,10 @@ Must not be NULL or a panic occurs.
 EAllAttributes, all attributes are written; if EFixedAttributes, tabs, 
 bullets and borders are not written. */
 	{
+	if (aParaFormat==NULL)
+	    {
+	    OstTrace0( TRACE_FATAL, CPARAFORMATLAYER_SENSEEFFECTIVEL, "ENullFormatPointer" );
+	    }
 	__ASSERT_ALWAYS(aParaFormat!=NULL,Panic(ENullFormatPointer));
 	aParaFormat->Reset();
 	TParaFormatMask mask;
@@ -390,6 +411,10 @@ to the function, all attributes in the mask should be unset.
 EAllAttributes, all attributes are written; if EFixedAttributes, tabs, bullets 
 and borders are not written. */
 	{
+	if (aParaFormat==NULL)
+	    {
+	    OstTrace0( TRACE_FATAL, CPARAFORMATLAYER_SENSEL, "ENullFormatPointer" );
+	    }
 	__ASSERT_ALWAYS(aParaFormat!=NULL,Panic(ENullFormatPointer));
 
 	iStore.SenseParaFormatL(*aParaFormat,aMask,aMode);

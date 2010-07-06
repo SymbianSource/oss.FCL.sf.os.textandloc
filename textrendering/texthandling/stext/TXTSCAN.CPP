@@ -18,6 +18,11 @@
 
 #include "TXTETEXT.H"
 #include "TXTSTD.H"
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "TXTSCANTraces.h"
+#endif
+
 
 
 EXPORT_C TInt CPlainText::CharPosOfParagraph(TInt& aLength,TInt aParaOffset)const
@@ -61,6 +66,10 @@ The first paragraph is numbered zero. */
 	{
 	__TEST_INVARIANT;
 
+	if (aPos<0 || aPos>DocumentLength())
+	    {
+	    OstTrace0( TRACE_FATAL, CPLAINTEXT_PARAGRAPHNUMBERFORPOS, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos>=0 && aPos<=DocumentLength(),Panic(ECharPosBeyondDocument));
 	TUint scanMask=(EScanBackwards|EScanStayIfBoundary|EScanToUnitStart);
 	ScanParas(aPos,scanMask);
@@ -93,6 +102,10 @@ as word delimiters, EFalse if not. */
 	{
 	__TEST_INVARIANT;
 
+	if (aCurrentPos<0 || aCurrentPos>DocumentLength())
+	    {
+	    OstTrace0( TRACE_FATAL, CPLAINTEXT_GETWORDINFO, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aCurrentPos>=0 && aCurrentPos<=DocumentLength(),Panic(ECharPosBeyondDocument));
 	aStartPos=aLength=aCurrentPos;
 	// First find the start of the word.
@@ -112,6 +125,10 @@ as word delimiters, EFalse if not. */
 		scanMask|=EScanPunctuationIsDelimiter;
 	ScanWords(aLength,scanMask);
 	aLength-=aStartPos;
+	if (aLength+aStartPos>(DocumentLength()+1))
+	    {
+	    OstTrace0( TRACE_DUMP, DUP2_CPLAINTEXT_GETWORDINFO, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_DEBUG(aLength+aStartPos<=(DocumentLength()+1),Panic(ECharPosBeyondDocument));
 
 	__TEST_INVARIANT;
@@ -128,6 +145,10 @@ which it is located.
 paragraph. */
 	{
 	__TEST_INVARIANT;
+	if (aPos<0 || aPos>DocumentLength())
+	    {
+	    OstTrace0( TRACE_FATAL, CPLAINTEXT_TOPARAGRAPHSTART, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos>=0 && aPos<=DocumentLength(),Panic(ECharPosBeyondDocument));
 
 	int skipped = 0;
@@ -213,6 +234,10 @@ panic occurs. On return, contains the new document position.
 CPlainText::EScanBackwards. 
 @return The number of characters skipped to reach the new document position. */
 	{
+	if (aPos<0 || aPos>DocumentLength())
+	    {
+	    OstTrace0( TRACE_FATAL, CPLAINTEXT_SCANWORDS, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos>=0 && aPos<=DocumentLength(),Panic(ECharPosBeyondDocument));
 	SScanData scanData;
 	InitScanControl(aPos,aScanMask,EUnitIsWord,scanData);
@@ -236,6 +261,10 @@ On return, contains the new document position.
 CPlainText::EScanBackwards. 
 @return The number of characters skipped to reach the new document position. */
 	{
+	if (aPos<0 || aPos>DocumentLength())
+	    {
+	    OstTrace0( TRACE_FATAL, CPLAINTEXT_SCANPARAS, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos>=0 && aPos<=DocumentLength(),Panic(ECharPosBeyondDocument));
 	SScanData scanData;
 	InitScanControl(aPos,aScanMask,EUnitIsParagraph,scanData);

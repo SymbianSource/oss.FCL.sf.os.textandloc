@@ -18,10 +18,12 @@
 
 target		tetextdefect.exe
 targettype		EXE
+UID 0x100039CE 0xE0008383
+VENDORID 0x70000001
 
 userinclude		../ttext
 userinclude		../stext
-userinclude		../inc
+userinclude		../inc ../traces
 MW_LAYER_SYSTEMINCLUDE_SYMBIAN
 
 SOURCEPATH		../ttext	
@@ -31,6 +33,5 @@ source		TXTPLAIN.CPP
 source		TxtWriter.cpp
 
 library		euser.lib estor.lib efsrv.lib charconv.lib gdi.lib etext.lib tins.lib
-VENDORID		0x70000001
 
 SMPSAFE
