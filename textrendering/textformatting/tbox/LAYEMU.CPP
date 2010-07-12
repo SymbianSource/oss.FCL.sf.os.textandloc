@@ -1547,7 +1547,7 @@ void CTextLayout::FormatBandL(TInt aStartDocPos,TInt aEndDocPos)
 	
 	if(IsFormattingBand() && (iText->EndChar() <= aEndDocPos && iText->EndChar() < iSource->DocumentLength()))
 		{
-		param.iEndChar = aEndDocPos;
+		param.iEndChar = Min(aEndDocPos+1,iSource->DocumentLength());
 		iText->ExtendFormattingDownwardsL(param);
 		}
 	else

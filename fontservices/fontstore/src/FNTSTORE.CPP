@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 1995-2009 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 1995-2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -80,7 +80,7 @@ that any size is okay, because a UI will probably try to create a listbox contai
 
 Array stored in Twips as that is the only form of the value currently used.
 @internalComponent
-*/ 
+*/
 #define POINTSIZE_IN_TWIPS(p)	((p) * 20)
 const TInt gOpenFontSizeInTwipsArray[] =
 	{
@@ -207,7 +207,7 @@ LOCAL_C TInt PointerToOffset(const TAny* aAny, TUint8* aHeapBase)
     {
     if (aAny && aHeapBase)
         {
-        return (TInt)aAny - (TInt)aHeapBase;
+        return reinterpret_cast<TInt>(aAny) - reinterpret_cast<TInt>(aHeapBase);
         }
     return 0;
     }
@@ -219,14 +219,15 @@ PointerToOffset()) back to a pointer relative to the passed heap base.
 @return A pointer relative to the passed heap base.
 @see PointerToOffset()
  */
-LOCAL_C TAny* OffsetToPointer(const TInt aOffset, TUint8* aHeapBase)
+LOCAL_C TAny* OffsetToPointer(TInt aOffset, TUint8* aHeapBase)
     {
     if (aOffset && aHeapBase)
         {
-        return (TAny*)(aOffset + (TInt)aHeapBase);
+        return reinterpret_cast<TAny*>(aOffset + reinterpret_cast<TInt>(aHeapBase));
         }
     return NULL;
     }
+
 
 // CTypefaceSupportInfo
 CTypefaceSupportInfo::CTypefaceSupportInfo()
@@ -548,11 +549,11 @@ CBitmapFont::CBitmapFont(
 	{
     // Set iOpenFont to be the offset of aOpenFont from the address of CBitmapFont.
     // In order to be able to identify iOpenFont as an offset instead of a pointer,
-    // bitwise or the offset with 1.  Pointers will always be byte aligned (and therefore even).
+    // bitwise or the offset with 1.  Pointers will always be word aligned (and therefore even).
     if (aOpenFont)
         {
+        __ASSERT_DEBUG(!(reinterpret_cast<TInt>(aOpenFont) & 1), Panic(EFntPointerNotByteAligned));
         iOpenFont = reinterpret_cast<COpenFont*>((reinterpret_cast<TInt>(aOpenFont) - reinterpret_cast<TInt>(this)) | 1);
-        __ASSERT_DEBUG((reinterpret_cast<TInt>(iOpenFont) & 1),Panic(EFntPointerNotByteAligned));
         }
     else
         {
@@ -2247,27 +2248,7 @@ void CFontStore::ConstructL()
 
 	TMachineInfoV1Buf machineInfoBuffer;
 	User::LeaveIfError(UserHal::MachineInfo(machineInfoBuffer));
-	
-	//Create Handles which may be used by Fntstore
-	iHandleArray = new(ELeave) RArray<RHandleBase>();
 
-	RSemaphore SessionCacheSem;
-	TInt ret = SessionCacheSem.CreateGlobal(KSessionCacheSemaphoreName,KSessionCacheSemaphoreCount);
-	if(ret == KErrAlreadyExists)
-	    {
-	    User::LeaveIfError(SessionCacheSem.OpenGlobal(KSessionCacheSemaphoreName));
-	    }
-	else
-	    {
-	    User::LeaveIfError(ret);	    
-	    }
-	ret = iHandleArray->Append(SessionCacheSem);
-	if(ret != KErrNone)
-	    {
-	    SessionCacheSem.Close();
-	    User::Leave(ret);
-	    }
-	
 	const TSize twipSize = machineInfoBuffer().iPhysicalScreenSize;
 	const TSize pixelSize = machineInfoBuffer().iDisplaySizeInPixels;
 
@@ -2316,15 +2297,6 @@ EXPORT_C CFontStore::~CFontStore()
 		iOpenFontSessionCacheList->Delete(iHeap);
 		iHeap->Free(iOpenFontSessionCacheList);
 		}
-    if (iHandleArray)
-        {
-        for (TInt i = 0; i < iHandleArray->Count(); i++)
-            {
-            (*iHandleArray)[i].Close();
-            }
-        iHandleArray->Close();
-        delete iHandleArray;
-        }
 	iFs.Close();
 	
     delete iFontTableCache;

@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 1995-2009 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 1995-2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -38,19 +38,6 @@ WARNING: Constant for internal use ONLY.  Compatibility is not guaranteed in fut
 @released
  */
 const TInt KMaxLinkedTypefaceGroups = 12;
-
-/** Defines the maximun number of threads that may tranverse the COpenFontSessionCacheList (read-only)
- @publishedAll
- @released
- */ 
-const TInt KSessionCacheSemaphoreCount = 12;
-
-/** Defines the name of the semaphore which is used to exclude threads that may tranverse 
- * the COpenFontSessionCacheList (read-only) with FBserv.
- @publishedAll
- @released
- */
-_LIT(KSessionCacheSemaphoreName,"FBSSessionCacheSemaphore");
 
 class CLinkedTypefaceSpecification;
 class TLinkedTypefaceSpecificationArgs;
@@ -446,7 +433,7 @@ private:
 	TInt iOpenFontShaperCacheMemUsage;
 	TInt iNumberOfShaperCaches;
 	RPointerArray<CTypefaceSupportInfo> iOpenFontTypefaceSupportList;
-	RArray<RHandleBase> *iHandleArray;
+	TAny* iUnused;
 	TAny* iUnused2;
 	TUint32 iUniqueFontIdCount;
 	};

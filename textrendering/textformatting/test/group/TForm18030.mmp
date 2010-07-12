@@ -28,8 +28,6 @@ SOURCE        TForm18030_AppUi.cpp
 SOURCE        TForm18030_AppView.cpp
 USERINCLUDE   ../src/TForm18030
 APP_LAYER_SYSTEMINCLUDE_SYMBIAN
-SYSTEMINCLUDE /epoc32/include/techview
-SYSTEMINCLUDE /epoc32/include/platform/app/techview
 
 START RESOURCE	TForm18030.rss
 HEADER
