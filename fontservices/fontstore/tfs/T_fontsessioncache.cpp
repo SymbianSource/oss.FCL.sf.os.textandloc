@@ -92,7 +92,7 @@ inline TInt CTFontSessionCache::Base()
 
 void CTFontSessionCache::ConstructL()
     {
-    User::LeaveIfError(iChunk.CreateGlobal(KNullDesC,500,500));
+    User::LeaveIfError(iChunk.CreateGlobal(KNullDesC,0x10000,0x10000));
     iSharedHeap = UserHeap::ChunkHeap(iChunk,0x10000,0x1000,0x10000,0,EFalse,0);
     if(iSharedHeap == NULL)
         {

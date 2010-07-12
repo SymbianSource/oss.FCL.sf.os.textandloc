@@ -20,8 +20,8 @@
         <unit bldFile="fontservices/fontstore/group" mrp="fontservices/fontstore/group/graphics_fntstore.mrp"/>
       </component>
      <component id="textbase" name="Text Base" purpose="mandatory">
-     	<!-- placeholder for text code from GDI -->
-     </component>      
+		<unit bldFile="fontservices/textbase/group" mrp="fontservices/textbase/group/textbase.mrp"/>
+     </component>
       <component id="freetypefontrasteriser" name="FreeType Font Rasteriser" purpose="optional" class="plugin">
         <unit bldFile="fontservices/freetypefontrasteriser/group" mrp="fontservices/freetypefontrasteriser/group/graphics_freetype.mrp"/>
       </component>
