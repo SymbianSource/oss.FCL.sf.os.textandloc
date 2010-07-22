@@ -20,6 +20,11 @@
 #include "InlineText.h"
 #include "frmUtils.h"
 
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "TmChunkTraces.h"
+#endif
+
 
 TTmChunk::TTmChunk():
 	iDocPos(0),
@@ -496,6 +501,10 @@ void TTmChunk::SetL(CTmFormatContext& aContext, TInt aStartChar,
 			measure - (iInitialInlineWidth + iFinalInlineWidth), &text_metrics);
 		// Check WidthL (probably MeasureText inside it) doesn't come back
 		// with a value larger than the max we specified - shouldn't happen
+		if (text_metrics.iChars > iTextLength)
+		    {
+		    OstTrace0( TRACE_DUMP, TTMCHUNK_SETL, "EInvariant" );
+		    }
 		__ASSERT_DEBUG(text_metrics.iChars <= iTextLength, TmPanic(EInvariant));
 		if (text_metrics.iChars < iTextLength)
 			{

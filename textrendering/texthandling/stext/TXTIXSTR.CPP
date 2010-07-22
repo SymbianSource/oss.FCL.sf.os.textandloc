@@ -27,6 +27,11 @@
 #include "TXTINDEX.H"
 #include "TXTSTD.H"
 
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "TXTIXSTRTraces.h"
+#endif
+
 #ifdef SYMBIAN_ENABLE_SPLIT_HEADERS
 #include "TXTFMLYR_INTERNAL.H"
 #endif
@@ -142,6 +147,10 @@ void CRichTextIndex::StorePicturesL(CStreamStore& aStore,CStoreMap& aMap,TInt aP
 			{
 			RPhraseAttribsEntry& phrase=*current.iPhrase;
 			TPictureHeader* hdr=phrase.PictureHeaderPtr();
+			if (!hdr)
+			    {
+			    OstTrace0( TRACE_DUMP, CRICHTEXTINDEX_STOREPICTURESL, "ERichTextStorePictureIntegrityError" );
+			    }
 			__ASSERT_DEBUG(hdr,Panic(ERichTextStorePictureIntegrityError));
 			TBool pictureInMemory=(hdr->iPicture.IsPtr() && hdr->iPicture.AsPtr());
 			if (pictureInMemory)
@@ -194,12 +203,20 @@ void CRichTextIndex::DetachFromStoreL(CPicture::TDetach aDegree,TInt aPos,TInt a
 			if (phrase.IsPicturePhrase())
 				{
 				TPictureHeader* hdr=phrase.PictureHeaderPtr();
+				if (!hdr)
+				    {
+				    OstTrace0( TRACE_DUMP, CRICHTEXTINDEX_DETACHFROMSTOREL, "ERichTextStorePictureIntegrityError" );
+				    }
 				__ASSERT_DEBUG(hdr,Panic(ERichTextStorePictureIntegrityError));
 				//
 				if (hdr->iPicture.IsId())
 					{
 					TRAPD(r,
 					phrase.PictureHandleL(iText.PictureFactory(),iText.StoreResolver(),iPos.iDocPos,MLayDoc::EForceLoadTrue));  // swizzles
+					if (r!=KErrNone && !hdr->iPicture.IsId())
+					    {
+					    OstTrace0( TRACE_DUMP, DUP1_CRICHTEXTINDEX_DETACHFROMSTOREL, "ERichTextStorePictureIntegrityError" );    
+					    }
 					__ASSERT_DEBUG(r==KErrNone || hdr->iPicture.IsId(),Panic(ERichTextStorePictureIntegrityError));
 					if (r==KErrNotSupported)  // we don't recognise the picture type
 						{
@@ -207,10 +224,16 @@ void CRichTextIndex::DetachFromStoreL(CPicture::TDetach aDegree,TInt aPos,TInt a
 						currentPos+=CurrentPhraseLength()-offsetIntoUnit;
 						continue;
 						}
+					
+					OstTrace1( TRACE_FATAL, DUP3_CRICHTEXTINDEX_DETACHFROMSTOREL, "Leave code=%d", r );
 					User::LeaveIfError(r);
 					}
 				//
 				// recurse the call to detach the picture from the store
+				if (!hdr->iPicture.IsPtr())
+				    {
+				    OstTrace0( TRACE_DUMP, DUP2_CRICHTEXTINDEX_DETACHFROMSTOREL, "ERichTextStorePictureIntegrityError" );
+				    }
 				__ASSERT_DEBUG(hdr->iPicture.IsPtr(),Panic(ERichTextStorePictureIntegrityError));
 				hdr->iPicture->DetachFromStoreL(aDegree);
 				}
@@ -257,6 +280,10 @@ void CRichTextIndex::InternalizeL(RReadStream& aStream,const CParaFormatLayer* a
 // on the specified global format layers. 
 //
 	{
+	if (iParaIx->Count()!=1 || (*iParaIx)[0].iLength!=1)
+	    {
+	    OstTrace0( TRACE_FATAL, CRICHTEXTINDEX_INTERNALIZEL, "ERtIndexInternalizeCalledOnNonEmptySource" );
+	    }
 	__ASSERT_ALWAYS(iParaIx->Count()==1 && (*iParaIx)[0].iLength==1,Panic(ERtIndexInternalizeCalledOnNonEmptySource));
 	TRtPasteContext context(NULL,aGlobalParaLayer,aGlobalCharLayer,aStyleList);
 	InternalizeRtiHeaderL(aStream,context);
@@ -295,6 +322,10 @@ void CRichTextIndex::GenerateAllPhraseLinksL()
 			}
 		else
 			{
+			if (phraseCount<=1)
+			    {
+			    OstTrace0( TRACE_DUMP, CRICHTEXTINDEX_GENERATEALLPHRASELINKSL, "EDebug" );
+			    }
 			 __ASSERT_DEBUG(phraseCount>1,Panic(EDebug));
 
 			// If the phrase count is too great the CParaAttribs object is corrupt.
@@ -395,7 +426,15 @@ void CRichTextIndex::ExternalizeReferencedStylesL(RWriteStream& aStream,const TL
 //
 	{
 	CStyleList* list = iText.StyleList();
+	if (!list)
+	    {
+	    OstTrace0( TRACE_DUMP, CRICHTEXTINDEX_EXTERNALIZEREFERENCEDSTYLESL, "EStyleClipboardIntegrityError" );
+	    }
 	__ASSERT_DEBUG(list,Panic(EStyleClipboardIntegrityError));
+	if (aStart.iParaElement > aEnd.iParaElement)
+	    {
+	    OstTrace0( TRACE_DUMP, DUP1_CRICHTEXTINDEX_EXTERNALIZEREFERENCEDSTYLESL, "EStyleClipboardIntegrityError" );
+	    }
 	__ASSERT_DEBUG(aStart.iParaElement <= aEnd.iParaElement,Panic(EStyleClipboardIntegrityError));
 
 	TUint8 numStyles = 0;
@@ -516,6 +555,10 @@ TInt CRichTextIndex::MarkStyleRegister(TDes8& aBuf,TInt aStartPara,TInt aEndPara
 		TInt index=iText.StyleList()->IndexByPtr(STATIC_CAST(const CParaFormatLayer*,para->iParaFormat->SenseBase()));
 		if (index!=KErrNotFound)
 			{
+			if (index>=aBuf.Length())
+			    {
+			    OstTrace0( TRACE_DUMP, CRICHTEXTINDEX_MARKSTYLEREGISTER, "EStyleClipboardIntegrityError" );
+			    }
 			__ASSERT_DEBUG(index<aBuf.Length(),Panic(EStyleClipboardIntegrityError));
 			if (aBuf[index]!=KRegisterItemPresent)
 				{
@@ -534,6 +577,10 @@ void CRichTextIndex::ExternalizeItemsPresentInRegisterL(RWriteStream& aStream,TI
 // register, aBuf.
 //
 	{
+	if (aSharedCount>(TInt)KMaxTUint8)
+	    {
+	    OstTrace0( TRACE_DUMP, CRICHTEXTINDEX_EXTERNALIZEITEMSPRESENTINREGISTERL, "ESharedParaCountStreamOverflow" );
+	    }
 	__ASSERT_DEBUG(aSharedCount<=(TInt)KMaxTUint8,Panic(ESharedParaCountStreamOverflow));
 	aStream.WriteUint8L(aSharedCount);
 	CParaAttribs* currentSharedPara=NULL;
@@ -557,6 +604,10 @@ void CRichTextIndex::ExternalizeItemsPresentInStyleRegisterL(RWriteStream& aStre
 // Externalize each object from the paragraph style list that has a corresponding mark in the register aBuf.
 //
 	{
+	if (aRefStyleCount > (TInt)KMaxTUint8)
+	    {
+	    OstTrace0( TRACE_DUMP, CRICHTEXTINDEX_EXTERNALIZEITEMSPRESENTINSTYLEREGISTERL, "EStyleClipboardIntegrityError" );
+	    }
 	__ASSERT_DEBUG(aRefStyleCount <= (TInt)KMaxTUint8,Panic(EStyleClipboardIntegrityError));
 	aStream.WriteUint8L(aRefStyleCount);
 	TInt count=aBuf.Length();
@@ -628,6 +679,10 @@ RPhraseAttribsEntry* CRichTextIndex::ExternalizeParaIxL(RWriteStream& aStream,
 			phraseCount=(aEnd.iPhraseElement-aStart.iPhraseElement)+1;  // copied text contained within 1 para
 		else
 			phraseCount=(aEnd.iPhraseElement-aEnd.iParaBasePhraseElement)+1;
+		if (phraseCount>lastParaAttribs->iPhraseCount)
+		    {
+		    OstTrace0( TRACE_DUMP, CRICHTEXTINDEX_EXTERNALIZEPARAIXL, "ERtExternalizeParaIx" );
+		    }
 		__ASSERT_DEBUG(phraseCount<=lastParaAttribs->iPhraseCount,Panic(ERtExternalizeParaIx));
 		aStream.WriteInt32L(phraseCount);
 		if (refNo>0)
@@ -923,6 +978,10 @@ CParaAttribs* CRichTextIndex::SharedParaAttribs(TUint8 aOrdinal)
 	TInt match=1;
 	while ((currentSharedPara=iterator++)!=NULL && aOrdinal!=match)
 		match++;
+	if (currentSharedPara==NULL)
+	    {
+	    OstTrace0( TRACE_FATAL, CRICHTEXTINDEX_SHAREDPARAATTRIBS, "EEndOfSharedParaListEncountered" );
+	    }
 	__ASSERT_ALWAYS(currentSharedPara!=NULL,Panic(EEndOfSharedParaListEncountered));
 	return currentSharedPara;
 	}
@@ -1310,7 +1369,11 @@ TInt CRichTextIndex::PasteParaIxL(RReadStream& aStream,TRtPasteContext& aContext
 		characterCount+=para.iLength;
 		}
 	CleanupStack::Pop();  // firstParaVirtualPhrase
-// ASSERT: At this point we have pasted all paras that were in the stream.	
+// ASSERT: At this point we have pasted all paras that were in the stream.
+	if (aContext.iParasPasted!=aCompleteParaCount)
+	    {
+	    OstTrace0( TRACE_DUMP, CRICHTEXTINDEX_PASTEPARAIXL, "EPasteParaIxError" );
+	    }
 	__ASSERT_DEBUG(aContext.iParasPasted==aCompleteParaCount,Panic(EPasteParaIxError));
 	return characterCount;
 	}
@@ -1334,6 +1397,10 @@ TParaAttribsEntry CRichTextIndex::DoPasteFirstIntoParaL(RReadStream& aStream,con
 		CleanupStack::Pop(2);  // layer & specificParaAttribs
 		//
 		para.iParaAttribs=specificParaAttribs;
+		if (para.iParaAttribs==NULL)
+		    {
+		    OstTrace0( TRACE_FATAL, CRICHTEXTINDEX_DOPASTEFIRSTINTOPARAL, "ESharedFormatsMapIntegrityError" );
+		    }
 		__ASSERT_ALWAYS(para.iParaAttribs!=NULL,Panic(ESharedFormatsMapIntegrityError));
 		}
 	else
@@ -1359,6 +1426,10 @@ TParaAttribsEntry CRichTextIndex::DoPasteIntoParaL(RReadStream& aStream,const CP
 	if (refNo>0)
 		{// Link to para attribs in shared list & up its reference count
 		para.iParaAttribs=aMap.Item(refNo);
+		if (para.iParaAttribs==NULL)
+		    {
+		    OstTrace0( TRACE_FATAL, CRICHTEXTINDEX_DOPASTEINTOPARAL, "ESharedFormatsMapIntegrityError" );
+		    }
 		__ASSERT_ALWAYS(para.iParaAttribs!=NULL,Panic(ESharedFormatsMapIntegrityError));
 		para.iParaAttribs->iRefCount++;
 		}
@@ -1391,6 +1462,10 @@ void CRichTextIndex::PastePhraseIxL(RReadStream& aStream,TRtPasteContext& aConte
 //
 	{
 // ASSERT: Having pasted the paraIx, the para containig pastePos has had the containing phrase split at that point.
+	if (aContext.iPastePos.iPhraseElementOffset!=0)
+	    {
+	    OstTrace0( TRACE_FATAL, CRICHTEXTINDEX_PASTEPHRASEIXL, "EPastePhraseIxErr" );
+	    }
 	__ASSERT_ALWAYS(aContext.iPastePos.iPhraseElementOffset==0,Panic(EPastePhraseIxErr));
 
 	TInt offset=0;
@@ -1422,6 +1497,10 @@ void CRichTextIndex::DoPastePhraseL(RReadStream& aStream,const TRtPasteContext& 
 	TBool isPicture=(TBool)aStream.ReadUint8L();
 	TInt phraseLength=aStream.ReadInt32L();
 
+	if (!(isPicture && phraseLength==1 || !isPicture))
+	    {
+	    OstTrace0( TRACE_FATAL, CRICHTEXTINDEX_DOPASTEPHRASEL, "KErrCorrupt" );
+	    }
 	__ASSERT_ALWAYS(isPicture && phraseLength==1 || !isPicture,User::Leave(KErrCorrupt));
 	
 	CCharFormatLayer* charLayer=CCharFormatLayer::NewL(aStream);
@@ -1464,7 +1543,10 @@ void CRichTextIndex::DoPastePhraseL(RReadStream& aStream,const TRtPasteContext& 
 					picPhrase->iCharFormat=NULL;
 					CleanupStack::PopAndDestroy(picPhrase);
 					if (r!=KErrNotSupported)
-						User::Leave(r);
+					    {
+						OstTrace1( TRACE_FATAL, DUP2_CRICHTEXTINDEX_DOPASTEPHRASEL, "Leave code=%d", r );
+					    User::Leave(r);
+					    }
 				}
 			}
 		}
@@ -1489,6 +1571,7 @@ void CRichTextIndex::RbPasteSharedFormatsL(TInt aRet)
 //
 	{
 	NormalizeSharedList();
+	OstTrace1( TRACE_FATAL, CRICHTEXTINDEX_RBPASTESHAREDFORMATSL, "Leave code=%d", aRet );
 	User::Leave(aRet);
 	}
 		
@@ -1543,6 +1626,7 @@ void CRichTextIndex::RbPasteParaIxL(const TLogicalPosition& aPos,TInt aParasPast
 		(*iParaIx)[aPos.iParaElement].iParaAttribs=iRollbackParaAttribsHandle;
 		iRollbackParaAttribsHandle=NULL;
 		}
+	OstTrace1( TRACE_FATAL, CRICHTEXTINDEX_RBPASTEPARAIXL, "Leave code=%d", aRet );
 	User::Leave(aRet);
 	}
 
@@ -1570,5 +1654,6 @@ void CRichTextIndex::RbPastePhraseIxL(const TLogicalPosition& aPos,TInt aPhraseC
 //
 	{
 	RbRemoveInsertedPhraseAttribsEntries(aPos.iPhraseElement,aPhraseCount);
+	OstTrace1( TRACE_FATAL, CRICHTEXTINDEX_RBPASTEPHRASEIXL, "Leave code=%d", aRet );
 	User::Leave(aRet);
 	}

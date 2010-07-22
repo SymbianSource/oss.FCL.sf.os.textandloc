@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 1995-2009 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 1995-2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -35,12 +35,16 @@ public:
 
 	static CTIsolatedFontStore* NewL();
 	static CTIsolatedFontStore* NewLC();
+	
+	static CTIsolatedFontStore* NewL(RHeap*);
+	static CTIsolatedFontStore* NewLC(RHeap*);
 
 	void LoadRasterizersL();
 	
 private:
 
 	CTIsolatedFontStore();
+	CTIsolatedFontStore(RHeap* aHeap);
 	void ConstructL();
 	void ListImplementationsWithRetry(TUid& aInterfaceUid, RImplInfoPtrArray &aImplementationArray, TBool aRomOnly);
 	void SafeInstallOfRasterizerL(TUid aInterfaceImplUid);
@@ -49,6 +53,11 @@ public:
 	CFontStore* iFs;
 private:
 	RHeap* iHeap;
+	
+	// Indicate the ownership of iHeap.
+	// ETrue means iHeap is allocated in ConstructL() and owned by CTIsolatedFontStore in current process; 
+    // EFalse means iHeap is a pointer to a heap which is passed in as parameter. Do not take ownership.  
+	TBool  iIsHeapOwner; 
 	};
 
 #endif // TISOLATEDFONTSTORE_H

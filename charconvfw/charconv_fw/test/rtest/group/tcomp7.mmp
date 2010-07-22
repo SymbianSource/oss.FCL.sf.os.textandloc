@@ -33,3 +33,4 @@ LIBRARY			charconv.lib
 LIBRARY			utf7.lib
 
 SMPSAFE
+//RTEST

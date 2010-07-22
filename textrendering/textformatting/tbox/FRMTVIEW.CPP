@@ -20,6 +20,11 @@
 #include "FRMTVIEW.H"
 #include "FRMCONST.H"
 
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "FRMTVIEWTraces.h"
+#endif
+
 #ifdef SYMBIAN_ENABLE_SPLIT_HEADERS
 #include "FRMCONST_INTERNAL.H"
 #include "FRMCONST_PARTNER.H"
@@ -265,6 +270,10 @@ void TCursor::Draw(TUint aCursors)
 
 void TCursor::DrawLineCursor(TInt aHeight)
 	{
+	if (!iLineCursorBitmap)
+	    {
+	    OstTrace0( TRACE_FATAL, DUP1_TCURSOR_DRAWLINECURSOR, "EFLineCursorBitmapNotSet" );
+	    }
 	__ASSERT_ALWAYS(iLineCursorBitmap,FormPanic(EFLineCursorBitmapNotSet));
 	TRect cursorMargin=iDisplay.LineCursorMargin();
 	TRect bitmapRect;
@@ -407,6 +416,10 @@ EXPORT_C CTextView::CTextView():
 	iHorizontalScroll(EFNoPreviousHorizontalScroll),
 	iContextIsNavigation(ETrue)
 	{
+	if (EFMemoryOK == EFRecovering)
+	    {
+	    OstTrace0( TRACE_DUMP, CTEXTVIEW_CTEXTVIEW, "EFSystemConstantsChanged" );
+	    }
 	__ASSERT_DEBUG(EFMemoryOK != EFRecovering,FormPanic(EFSystemConstantsChanged));
 	}
 
@@ -414,6 +427,10 @@ EXPORT_C void CTextView::ConstructL(CTextLayout *aLayout,const TRect &aDisplay,C
 									MGraphicsDeviceMap *aDeviceMap,RWindow *aWin,RWindowGroup *aGroupWin,
 									RWsSession *aSession)
 	{
+	if (!aLayout)
+	    {
+	    OstTrace0( TRACE_FATAL, CTEXTVIEW_CONSTRUCTL, "EFInvalidLayout" );
+	    }
 	__ASSERT_ALWAYS(aLayout,FormPanic(EFInvalidLayout));
 	iHorizontalScrollJump=EFDefaultHorizontalScrollJump;
 	iWrap = CIdle::NewL(EFBackgroundFormattingPriority);
@@ -438,6 +455,10 @@ EXPORT_C CTextView::~CTextView()
 not be NULL or a panic occurs. */
 EXPORT_C void CTextView::SetLayout(CTextLayout *aLayout)
 	{
+	if (!aLayout)
+	    {
+	    OstTrace0( TRACE_FATAL, CTEXTVIEW_SETLAYOUT, "EFInvalidLayout" );
+	    }
 	__ASSERT_ALWAYS(aLayout,FormPanic(EFInvalidLayout));
 	iLayout = aLayout;
 	iCursorPos.SetLayout(aLayout);
@@ -754,7 +775,11 @@ EXPORT_C void CTextView::MatchCursorHeightL(const TFontSpec& aFontSpec)
 	TRAPD(err,iLayout->GetFontHeightAndAscentL(aFontSpec,fontHeight,fontAscent));
 	if (!err)
 		iCursor.SetAscentAndDescent(fontAscent,fontHeight - fontAscent);
-	User::LeaveIfError(err);
+	if (err)
+	    {
+        OstTrace1( TRACE_FATAL, CTEXTVIEW_MATCHCURSORHEIGHTL, "Leave code=%d", err );
+        User::Leave(err);
+	    }
 	}
 
 /** Gets the current selection.
@@ -782,6 +807,10 @@ EXPORT_C TBool CTextView::IsPictureFrameSelected(TRect& aPictureFrameRect,TInt& 
 	{
 	if (iCursorPos.IsPictureFrame())
 		{
+		if (!iPictureFrame)
+		    {
+		    OstTrace0( TRACE_DUMP, CTEXTVIEW_ISPICTUREFRAMESELECTED, "EFNoPictureFrame" );
+		    }
 		__ASSERT_DEBUG(iPictureFrame,FormPanic(EFNoPictureFrame));
 		aPictureFrameRect=iPictureFrame->Rect();
 		aDocPos=Selection().LowerPos();
@@ -935,7 +964,15 @@ EXPORT_C TCursorSelection CTextView::GetForwardDeletePositionL()
 		return selection;
 		}
 
+	if (selection.iCursorPos >= anchor)
+	    {
+	    OstTrace0( TRACE_DUMP, CTEXTVIEW_GETFORWARDDELETEPOSITIONL, "selection.iCursorPos >= anchor" );
+	    }
 	__ASSERT_DEBUG(selection.iCursorPos < anchor, User::Invariant());
+	if (selection.Length())
+	    {
+	    OstTrace0( TRACE_DUMP, DUP1_CTEXTVIEW_GETFORWARDDELETEPOSITIONL, "selection.Length()!=0" );
+	    }
 	__ASSERT_DEBUG(selection.Length() == 0, User::Invariant());
 
 	// Now we have found the next formatted position. However, this
@@ -948,6 +985,10 @@ EXPORT_C TCursorSelection CTextView::GetForwardDeletePositionL()
 	TBool ignoreNextSpacingCharacter = EFalse;
 	for (TInt i = selection.iCursorPos; i != anchor; ++i)
 		{
+		if (i >= anchor)
+		    {
+		    OstTrace0( TRACE_DUMP, DUP2_CTEXTVIEW_GETFORWARDDELETEPOSITIONL, "i >= anchor" );
+		    }
 		__ASSERT_DEBUG(i < anchor, User::Invariant());
 		TChar c = sourceCache.GetUtf32(i);
 		if ( IsGraphicalSpacing(c) )
@@ -1014,8 +1055,15 @@ EXPORT_C TCursorSelection CTextView::GetBackwardDeletePositionL()
 		selection.iAnchorPos = 0;
 		return selection;
 		}
-
+	if (anchor >= selection.iCursorPos)
+	    {
+	    OstTrace0( TRACE_DUMP, CTEXTVIEW_GETBACKWARDDELETEPOSITIONL, "anchor >= selection.iCursorPos" );
+	    }
 	__ASSERT_DEBUG(anchor < selection.iCursorPos, User::Invariant());
+	if (selection.Length() != 0)
+	    {
+	    OstTrace0( TRACE_DUMP, DUP1_CTEXTVIEW_GETBACKWARDDELETEPOSITIONL, "selection.Length() != 0" );
+	    }
 	__ASSERT_DEBUG(selection.Length() == 0, User::Invariant());
 
 	// If this cluster is a ligature, it needs to be split.
@@ -1088,6 +1136,10 @@ TBool CTextView::NextLineL()
 background formatting. Enters OOM before leaving. */
 void CTextView::DisplayNewLinesL(TInt aFrom,TInt aTo)
 	{
+	if (iNoMemory)
+	    {
+	    OstTrace0( TRACE_DUMP, CTEXTVIEW_DISPLAYNEWLINESL, "EFNoMemory" );
+	    }
 	__ASSERT_DEBUG(!iNoMemory,FormPanic(EFNoMemory));
 	if (aTo>iGood)
 		{
@@ -1419,13 +1471,31 @@ EXPORT_C TInt CTextView::HandleCharEditL(TUint aType/*=EFCharacterInsert*/
  	TBool formatting = IsFormatting();
 	TBool moreToDo = ETrue;
 
+	if (iCursorPos.IsSelection())
+	    {
+	    OstTrace0( TRACE_DUMP, CTEXTVIEW_HANDLECHAREDITL, "EFSelectionCannotCharEdit" );
+	    }
 	__ASSERT_DEBUG(!iCursorPos.IsSelection(),FormPanic(EFSelectionCannotCharEdit));
+	if (aType>CTextLayout::EFRightDelete)
+	    {
+	    OstTrace0( TRACE_DUMP, DUP1_CTEXTVIEW_HANDLECHAREDITL, "EFBadCharacterEditType" );
+	    }
 	__ASSERT_DEBUG(aType<=CTextLayout::EFRightDelete,FormPanic(EFBadCharacterEditType));
+	if ( !(!aFormatChanged || aType==CTextLayout::EFRightDelete 
+                            || aType==CTextLayout::EFLeftDelete) )
+	    {
+	    OstTrace0( TRACE_DUMP, DUP2_CTEXTVIEW_HANDLECHAREDITL, "EFBadCharacterEditType" );
+	    }
 	__ASSERT_DEBUG(!aFormatChanged || aType==CTextLayout::EFRightDelete 
 							|| aType==CTextLayout::EFLeftDelete,FormPanic(EFBadCharacterEditType));
 	TBool recovered=NoMemoryCheckL();
 	iCursor.MatchCursorHeightToAdjacentChar();
 	TPoint dummyPoint;
+	if ( !(iLayout->PosInBand(iCursorPos.TmDocPos(),dummyPoint)
+	        || !formatting) )
+	    {
+	    OstTrace0( TRACE_DUMP, DUP3_CTEXTVIEW_HANDLECHAREDITL, "EFBackgroundFormatting" );
+	    }
 	__ASSERT_DEBUG(iLayout->PosInBand(iCursorPos.TmDocPos(),dummyPoint)
 		|| !formatting, FormPanic(EFBackgroundFormatting));
 	TTmDocPos doc_pos = iCursorPos.TmDocPos();
@@ -1550,7 +1620,15 @@ TPoint CTextView::HandleBlockChangeL(TCursorSelection aSelection,TInt aOldCharsC
 		iDisplay.DeactivateContext();
 		}
 	iDisplay.SetRects(RScreenDisplay::EFClipViewRect);
+	if (from>viewChanges.iFormattedFrom && from>0)
+	    {
+	    OstTrace0( TRACE_DUMP, DUP1_CTEXTVIEW_HANDLEBLOCKCHANGEL, "EFScrollError" );
+	    }
 	__ASSERT_DEBUG(from<=viewChanges.iFormattedFrom || from<=0,FormPanic(EFScrollError));
+	if (to<viewChanges.iFormattedTo && to<iDrawTextLayoutContext.DisplayHeight())
+	    {
+	    OstTrace0( TRACE_DUMP, DUP2_CTEXTVIEW_HANDLEBLOCKCHANGEL, "EFScrollError" );
+	    }
 	__ASSERT_DEBUG(to>=viewChanges.iFormattedTo || to>=iDrawTextLayoutContext.DisplayHeight(),FormPanic(EFScrollError));
 	if (from>0)
 		DisplayLineRangeL(0,from);
@@ -2183,7 +2261,15 @@ void CTextView::ScrollTextL(TInt aScrollY,TInt aFrom,TInt aScrollX,TBool aScroll
 	TRect rect;
 	TInt height=iDrawTextLayoutContext.DisplayHeight();
 
+	if (aScrollX==0 && aScrollY==0)
+	    {
+	    OstTrace0( TRACE_DUMP, CTEXTVIEW_SCROLLTEXTL, "EFScrollByZero2" );
+	    }
 	__ASSERT_DEBUG(aScrollX!=0 || aScrollY!=0,FormPanic(EFScrollByZero2));
+	if (aFrom!=0 && aScrollX!=0)
+	    {
+	    OstTrace0( TRACE_DUMP, DUP1_CTEXTVIEW_SCROLLTEXTL, "EFScrollError" );
+	    }
 	__ASSERT_DEBUG(aFrom==0 || aScrollX==0,FormPanic(EFScrollError));       //Can only scroll the whole of the ViewRect Horizontally
 	if (aScrollX==0)
 		rect=iDrawTextLayoutContext.iViewRect;
@@ -2237,6 +2323,10 @@ void CTextView::ScrollRect(TInt aScrollY,TInt& aFrom,TInt& aTo)
 
 	TInt top=rect.iTl.iY;
 
+	if (aTo<0 || aTo<=aFrom)
+	    {
+	    OstTrace0( TRACE_DUMP, CTEXTVIEW_SCROLLRECT, "EFScrollError" );
+	    }
 	__ASSERT_DEBUG(aTo>=0 && aTo>aFrom,FormPanic(EFScrollError));
 	aFrom-=aScrollY;
 	if (aFrom>0)
@@ -2335,7 +2425,6 @@ EXPORT_C void CTextView::SetSelectionVisibilityL(TBool aVisible)
 	if (needInverting && !iDrawTextLayoutContext.TextOverrideColor() && (iFlags & EFTextVisible))
 		{
 	 	TCursorSelection selection;
-
 		__ASSERT_DEBUG(iLayout->__DbgIsFormattingUpToDate(),FormPanic(EFFormatOutOfDate));
 		iFlags |= EFSelectionVisible;
 		iCursorPos.GetSelection(selection);
@@ -2497,6 +2586,10 @@ EXPORT_C TPoint CTextView::SetViewL(TInt aDocPos,TInt& aYPos,TViewYPosQualifier 
 	{
 	if (NoMemoryCheckL())
 		aDiscardFormat = CTextView::EFViewDontDiscardFullRedraw;
+	if (aDocPos < 0 || aDocPos > iLayout->DocumentLength())
+	    {
+	    OstTrace0( TRACE_DUMP, CTEXTVIEW_SETVIEWL, "EFInvalidDocPos" );
+	    }
 	__ASSERT_ALWAYS(aDocPos >= 0 && aDocPos <= iLayout->DocumentLength(),FormPanic(EFInvalidDocPos));
 	aYPos -= TopViewRect();
 	TTmDocPos pos(aDocPos,
@@ -2626,6 +2719,10 @@ the final paragraph. In this case, use HandleInsertDeleteL() or
 HandleCharEditL() instead. */
 EXPORT_C void CTextView::HandleAdditionalCharactersAtEndL()
 	{
+	if (IsFormatting())
+	    {
+	    OstTrace0( TRACE_DUMP, CTEXTVIEW_HANDLEADDITIONALCHARACTERSATENDL, "EFBackgroundFormatting" );
+	    }
 	__ASSERT_DEBUG(!IsFormatting(),FormPanic(EFBackgroundFormatting));
 	if (!NoMemoryCheckL())
 		{
@@ -2723,8 +2820,16 @@ void CTextView::HighlightUsingExtensions(CTextLayout::TRangeChange aOptimizedRan
 	{
 	TInt visPos;
 	TInt visLen=iLayout->PosRangeInBand(visPos);
-
+	
+	if (visLen<0)
+	    {
+	    OstTrace0( TRACE_DUMP, CTEXTVIEW_HIGHLIGHTUSINGEXTENSIONS, "EFNoMemory" );
+	    }
 	__ASSERT_DEBUG(visLen>=0,FormPanic(EFNoMemory));  //  Shouldn't be in OOM here.
+	if (!SelectionVisible())
+	    {
+	    OstTrace0( TRACE_DUMP, DUP1_CTEXTVIEW_HIGHLIGHTUSINGEXTENSIONS, "EFSelectionNotVisible" );
+	    }
 	__ASSERT_DEBUG(SelectionVisible(),FormPanic(EFSelectionNotVisible));
 
 	if (!aOptimizedRange.Clip(visPos, visPos + visLen))
@@ -2833,6 +2938,10 @@ It assumes that:  1) cursor is sitting on a picture frame (iCursorPos.IsPictureF
 */
 void CTextView::DrawPictureFrameL(TRect& aClipRect)
 	{
+	if (!iCursorPos.IsPictureFrame())
+	    {
+	    OstTrace0( TRACE_DUMP, CTEXTVIEW_DRAWPICTUREFRAMEL, "EFNoPictureFrame" );
+	    }
 	__ASSERT_DEBUG(iCursorPos.IsPictureFrame(),FormPanic(EFNoPictureFrame));
 	TCursorSelection selection;
 	iCursorPos.GetSelection(selection);
@@ -2858,6 +2967,10 @@ void CTextView::DrawPictureFrameL(TRect& aClipRect)
 /** Enters the OOM state. */
 void CTextView::NoMemoryL(TInt aError)
 	{
+	if (iNoMemory==EFOutOfMemory)
+	    {
+	    OstTrace0( TRACE_DUMP, CTEXTVIEW_NOMEMORYL, "EFNoMemory" );
+	    }
 	__ASSERT_DEBUG(iNoMemory!=EFOutOfMemory,FormPanic(EFNoMemory));
 	iLayout->DiscardFormat();
 	if (iNoMemory==EFMemoryOK)
@@ -2885,6 +2998,10 @@ TBool CTextView::NoMemoryCheckL()
 	{
 	TBool recovered=iNoMemory;
 
+	if (iNoMemory==EFRecovering)
+	    {
+	    OstTrace0( TRACE_DUMP, CTEXTVIEW_NOMEMORYCHECKL, "EFRecoverNoMemory" );
+	    }
 	__ASSERT_DEBUG(iNoMemory!=EFRecovering,FormPanic(EFRecoverNoMemory));
 	if (iNoMemory)
 		RecoverNoMemoryL();
@@ -2895,7 +3012,10 @@ TBool CTextView::NoMemoryCheckL()
 Enters OOM before leaving */
 void CTextView::RecoverNoMemoryL()
 	{
-
+	if (iNoMemory!=EFOutOfMemory)
+	    {
+	    OstTrace0( TRACE_DUMP, CTEXTVIEW_RECOVERNOMEMORYL, "EFRecoverNoMemory" );
+	    }
 	__ASSERT_DEBUG(iNoMemory==EFOutOfMemory,FormPanic(EFRecoverNoMemory));
 	iNoMemory=EFRecovering;
 	RecreateWindowServerObjectsL();
@@ -2904,6 +3024,10 @@ void CTextView::RecoverNoMemoryL()
 	if (pos.iPos > end.iPos)
 		iCursorPos.SetDocPos(end);
 	ViewL(iCursorPos.TmDocPos(),iGood);
+	if (iNoMemory!=EFRecovering)
+	    {
+	    OstTrace0( TRACE_DUMP, DUP1_CTEXTVIEW_RECOVERNOMEMORYL, "EFNoMemory" );
+	    }
 	__ASSERT_DEBUG(iNoMemory==EFRecovering,FormPanic(EFNoMemory));
 	iNoMemory=EFMemoryOK;
 	iGood=0;
@@ -2928,6 +3052,10 @@ view to scroll. To carry out a horizontal scroll, use ScrollDisplayL().
 cause the view to scroll. Must be a positive value or a panic occurs. */
 EXPORT_C void CTextView::SetHorizontalScrollJump(TInt aScrollJump)
 	{
+	if (aScrollJump<0)
+	    {
+	    OstTrace0( TRACE_DUMP, CTEXTVIEW_SETHORIZONTALSCROLLJUMP, "EFInvalidJumpValue" );
+	    }
 	__ASSERT_ALWAYS(aScrollJump>=0,FormPanic(EFInvalidJumpValue));
 	__ASSERT_DEBUG(aScrollJump<EFUnreasonablyLargeHorizontalScrollJump
 																	,FormPanic(EFInvalidJumpValue));
@@ -3238,7 +3366,10 @@ void CTextView::DoDrawTextSupportL(const TRect& aScreenDrawRect,
 	RDrawTextSupport support(&iDisplay, &iDrawTextLayoutContext, bitmap);
 	CleanupClosePushL(support);
 	if (error)
-		User::Leave(error);
+	    {
+	    OstTrace1( TRACE_DUMP, CTEXTVIEW_DODRAWTEXTSUPPORTL, "Leave code=%d", error );
+	    User::Leave(error);
+	    }
 
 	// If we are flicker-free drawing (and there was enough memory for it) or
 	// drawing to an off screen bitmap for some other reason, set up

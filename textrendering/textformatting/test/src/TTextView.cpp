@@ -1585,17 +1585,10 @@ void CTextViewTest::TestForPDEF115165L()
 	charFormatMask.SetAll();
 	iCharLayer->SetL(charFormat, charFormatMask);
 	iEtext->SetGlobalCharFormat(iCharLayer);
-
+	_LIT(KLtoRChar,"a");
+	_LIT(KRtoLChar,"\x6B2");
 	_LIT(KLtoRText,"aaa");
 	_LIT(KRtoLText,"\x6B2\x6B2\x6B2");
-	_LIT(KLtoRTextLong,"aaaaaaaaaaaa");
-	_LIT(KLtoRTextLong2,"aaaaaaaaaaaaaaa");
-	_LIT(KRtoLTextLong,"\x6B2\x6B2\x6B2\x6B2\x6B2\x6B2\x6B2\x6B2\x6B2\x6B2\x6B2\x6B2"); //12 char
-	_LIT(KRtoLTextLong2,"\x6B2\x6B2\x6B2\x6B2\x6B2\x6B2\x6B2\x6B2\x6B2\x6B2\x6B2\x6B2\x6B2\x6B2\x6B2"); //15 char
-	_LIT(KLtoRTextVeryLong,"aaaaaaaaaaaaaaaaaaaa"); // 20 characters
-	_LIT(KLtoRTextVeryLong2,"aaaaaaaaaaaaaaaaaaaaaaaaa"); // 25 characters
-	_LIT(KRtoLTextVeryLong,"\x6B2\x6B2\x6B2\x6B2\x6B2\x6B2\x6B2\x6B2\x6B2\x6B2\x6B2\x6B2\x6B2\x6B2\x6B2\x6B2\x6B2\x6B2\x6B2\x6B2"); //20 char
-	_LIT(KRtoLTextVeryLong2,"\x6B2\x6B2\x6B2\x6B2\x6B2\x6B2\x6B2\x6B2\x6B2\x6B2\x6B2\x6B2\x6B2\x6B2\x6B2\x6B2\x6B2\x6B2\x6B2\x6B2\x6B2\x6B2\x6B2\x6B2\x6B2"); //25 char
 	_LIT(KParaSep, "\x2029");
 
 	TRect rect;
@@ -1616,40 +1609,53 @@ void CTextViewTest::TestForPDEF115165L()
 	TPoint point1,point2;
 	iLayout->DocPosToXyPosL(0,point1);
 	iLayout->DocPosToXyPosL(1,point2);
+
+	TInt wLTR = point2.iX - point1.iX;		//It depends on platform. WINSCW/H4 w=5; H6 w=4
 	
-	TInt w = point2.iX - point1.iX;		//It depends on platform. WINSCW/H4 w=5; H6 w=4
-	
-//	DocPos1 is LTR, DocPos1+1 is LTR, DocPos2 is LTR, DocPos2+1 is LTR
+	iLayout->DocPosToXyPosL(5,point1);
+	iLayout->DocPosToXyPosL(4,point2);
+	TInt wRTL = point2.iX - point1.iX;        //It depends on platform. WINSCW/H4 w=5; H6 w=4
+	RDebug::Print(_L("wLTR %d,wRTL %d"), wLTR,wRTL);
+
+	//  DocPos1 is LTR, DocPos1+1 is LTR, DocPos2 is LTR, DocPos2+1 is RTL
+    rect = iLayout->GetLineRectL(0,2);
+    RDebug::Print(_L("iTl.iX %d,iY %d, iBr.iX %d,iY %d"), rect.iTl.iX,rect.iTl.iY,rect.iBr.iX,rect.iBr.iY);
+    test(rect.iTl.iX == 0 && rect.iBr.iX == 3*wLTR);
+
+    //  DocPos1 is LTR, DocPos1+1 is LTR, DocPos2 is RTL, DocPos2+1 is RTL
+    rect = iLayout->GetLineRectL(0,4);
+    RDebug::Print(_L("iTl.iX %d,iY %d, iBr.iX %d,iY %d"), rect.iTl.iX,rect.iTl.iY,rect.iBr.iX,rect.iBr.iY);
+    test(rect.iTl.iX == 0 && rect.iBr.iX == 3*wLTR + 2*wRTL);
+
+    //  DocPos1 is LTR, DocPos1+1 is LTR, DocPos2 is RTL, DocPos2+1 is LTR
+    rect = iLayout->GetLineRectL(0,5);
+    RDebug::Print(_L("iTl.iX %d,iY %d, iBr.iX %d,iY %d"), rect.iTl.iX,rect.iTl.iY,rect.iBr.iX,rect.iBr.iY);
+    test(rect.iTl.iX == 0 && rect.iBr.iX == 3*wLTR + wRTL);
+    
+    //	DocPos1 is LTR, DocPos1+1 is LTR, DocPos2 is LTR, DocPos2+1 is LTR
 	rect = iLayout->GetLineRectL(0,7);
-	test(rect.iTl.iX == 0 && rect.iBr.iX == 8*w);
-
-//	DocPos1 is LTR, DocPos1+1 is LTR, DocPos2 is LTR, DocPos2+1 is RTL
-	rect = iLayout->GetLineRectL(0,2);
-	test(rect.iTl.iX == 0 && rect.iBr.iX == 3*w);
-
-//	DocPos1 is LTR, DocPos1+1 is LTR, DocPos2 is RTL, DocPos2+1 is LTR
-	rect = iLayout->GetLineRectL(0,5);
-	test(rect.iTl.iX == 0 && rect.iBr.iX == 4*w);
-
-//	DocPos1 is LTR, DocPos1+1 is LTR, DocPos2 is RTL, DocPos2+1 is RTL
-	rect = iLayout->GetLineRectL(0,4);
-	test(rect.iTl.iX == 0 && rect.iBr.iX == 5*w);
-
+    RDebug::Print(_L("iTl.iX %d,iY %d, iBr.iX %d,iY %d"), rect.iTl.iX,rect.iTl.iY,rect.iBr.iX,rect.iBr.iY);
+	test(rect.iTl.iX == 0 && rect.iBr.iX == 3*wLTR + 3*wRTL + 2*wLTR);
+	
 //	DocPos1 is LTR, DocPos1+1 is RTL, DocPos2 is LTR, DocPos2+1 is LTR
 	rect = iLayout->GetLineRectL(2,7);
-	test(rect.iTl.iX == 2*w && rect.iBr.iX == 8*w);
+	RDebug::Print(_L("iTl.iX %d,iY %d, iBr.iX %d,iY %d"), rect.iTl.iX,rect.iTl.iY,rect.iBr.iX,rect.iBr.iY);
+	test(rect.iTl.iX == 2*wLTR && rect.iBr.iX == 3*wLTR + 3*wRTL + 2*wLTR);
 
 //	DocPos1 is LTR, DocPos1+1 is RTL, DocPos2 is LTR, DocPos2+1 is RTL
 	rect = iLayout->GetLineRectL(2,8);
-	test(rect.iTl.iX == 2*w && rect.iBr.iX == 9*w);
+	RDebug::Print(_L("iTl.iX %d,iY %d, iBr.iX %d,iY %d"), rect.iTl.iX,rect.iTl.iY,rect.iBr.iX,rect.iBr.iY);
+	test(rect.iTl.iX == 2*wLTR && rect.iBr.iX == 3*wLTR + 3*wRTL + 3*wLTR);
 
 //	DocPos1 is LTR, DocPos1+1 is RTL, DocPos2 is RTL, DocPos2+1 is LTR
 	rect = iLayout->GetLineRectL(2,5);
-	test(rect.iTl.iX == 2*w && rect.iBr.iX == 4*w);
+	RDebug::Print(_L("iTl.iX %d,iY %d, iBr.iX %d,iY %d"), rect.iTl.iX,rect.iTl.iY,rect.iBr.iX,rect.iBr.iY);
+	test(rect.iTl.iX == 2*wLTR && rect.iBr.iX == 3*wLTR + wRTL);
 
 //	DocPos1 is LTR, DocPos1+1 is RTL, DocPos2 is RTL, DocPos2+1 is RTL
 	rect = iLayout->GetLineRectL(2,4);
-	test(rect.iTl.iX == 2*w && rect.iBr.iX == 5*w);
+	RDebug::Print(_L("iTl.iX %d,iY %d, iBr.iX %d,iY %d"), rect.iTl.iX,rect.iTl.iY,rect.iBr.iX,rect.iBr.iY);
+	test(rect.iTl.iX == 2*wLTR && rect.iBr.iX == 3*wLTR + 2*wRTL);
 
 //	Sample text for test
 //	Doc_Pos:     | 9|10|11| 8| 7| 6| 3| 4| 5| 2| 1| 0|
@@ -1665,77 +1671,45 @@ void CTextViewTest::TestForPDEF115165L()
 	
 //	DocPos1 is RTL, DocPos1+1 is LTR, DocPos2 is LTR, DocPos2+1 is LTR
 	rect = iLayout->GetLineRectL(2,4);
-	test(rect.iTl.iX == (75/5-20)*w+100 && rect.iBr.iX == (90/5-20)*w+100);
+	RDebug::Print(_L("iTl.iX %d,iY %d, iBr.iX %d,iY %d"), rect.iTl.iX,rect.iTl.iY,rect.iBr.iX,rect.iBr.iY);	
+	test(rect.iTl.iX == iWindowRect.Width() - 3*wRTL - 2*wLTR && rect.iBr.iX == iWindowRect.Width() - 2*wRTL);
 			
 //	DocPos1 is RTL, DocPos1+1 is LTR, DocPos2 is LTR, DocPos2+1 is RTL
 	rect = iLayout->GetLineRectL(2,5);
-	test(rect.iTl.iX == (80/5-20)*w+100 && rect.iBr.iX == (90/5-20)*w+100);
+	RDebug::Print(_L("iTl.iX %d,iY %d, iBr.iX %d,iY %d"), rect.iTl.iX,rect.iTl.iY,rect.iBr.iX,rect.iBr.iY);	
+	test(rect.iTl.iX == iWindowRect.Width() - 3*wRTL - wLTR && rect.iBr.iX == iWindowRect.Width() - 2*wRTL);
 
 //	DocPos1 is RTL, DocPos1+1 is LTR, DocPos2 is RTL, DocPos2+1 is LTR
 	rect = iLayout->GetLineRectL(2,8);
-	test(rect.iTl.iX == (55/5-20)*w+100 && rect.iBr.iX == (90/5-20)*w+100);
+	RDebug::Print(_L("iTl.iX %d,iY %d, iBr.iX %d,iY %d"), rect.iTl.iX,rect.iTl.iY,rect.iBr.iX,rect.iBr.iY);	
+	test(rect.iTl.iX == iWindowRect.Width() - 3*wRTL - 3*wLTR - 3*wRTL && rect.iBr.iX == iWindowRect.Width() - 2*wRTL);
 
 //	DocPos1 is RTL, DocPos1+1 is LTR, DocPos2 is RTL, DocPos2+1 is RTL
 	rect = iLayout->GetLineRectL(2,7);
-	test(rect.iTl.iX == (60/5-20)*w+100 && rect.iBr.iX == (90/5-20)*w+100);
+	RDebug::Print(_L("iTl.iX %d,iY %d, iBr.iX %d,iY %d"), rect.iTl.iX,rect.iTl.iY,rect.iBr.iX,rect.iBr.iY);
+	test(rect.iTl.iX == iWindowRect.Width() - 3*wRTL - 3*wLTR - 2*wRTL && rect.iBr.iX == iWindowRect.Width() - 2*wRTL);
 
 //	DocPos1 is RTL, DocPos1+1 is RTL, DocPos2 is LTR, DocPos2+1 is LTR
 	rect = iLayout->GetLineRectL(0,4);
-	test(rect.iTl.iX == (75/5-20)*w+100 && rect.iBr.iX == 100);
+	RDebug::Print(_L("iTl.iX %d,iY %d, iBr.iX %d,iY %d"), rect.iTl.iX,rect.iTl.iY,rect.iBr.iX,rect.iBr.iY);	
+	test(rect.iTl.iX == iWindowRect.Width() - 3*wRTL - 2*wLTR && rect.iBr.iX == 100);
 
 //	DocPos1 is RTL, DocPos1+1 is RTL, DocPos2 is LTR, DocPos2+1 is RTL
 	rect = iLayout->GetLineRectL(0,5);
-	test(rect.iTl.iX == (80/5-20)*w+100 && rect.iBr.iX == 100);
+	RDebug::Print(_L("iTl.iX %d,iY %d, iBr.iX %d,iY %d"), rect.iTl.iX,rect.iTl.iY,rect.iBr.iX,rect.iBr.iY);
+	test(rect.iTl.iX == iWindowRect.Width() - 3*wRTL - wLTR && rect.iBr.iX == 100);
 
 //	DocPos1 is RTL, DocPos1+1 is RTL, DocPos2 is RTL, DocPos2+1 is LTR
 	rect = iLayout->GetLineRectL(0,8);
-	test(rect.iTl.iX == (55/5-20)*w+100 && rect.iBr.iX == 100);
+	RDebug::Print(_L("iTl.iX %d,iY %d, iBr.iX %d,iY %d"), rect.iTl.iX,rect.iTl.iY,rect.iBr.iX,rect.iBr.iY);	
+	test(rect.iTl.iX == iWindowRect.Width() - 3*wRTL - 3*wLTR - 3*wRTL && rect.iBr.iX == 100);
 
 //	DocPos1 is RTL, DocPos1+1 is RTL, DocPos2 is RTL, DocPos2+1 is RTL
 	rect = iLayout->GetLineRectL(0,7);
-	test(rect.iTl.iX == (60/5-20)*w+100 && rect.iBr.iX == 100);
+	RDebug::Print(_L("iTl.iX %d,iY %d, iBr.iX %d,iY %d"), rect.iTl.iX,rect.iTl.iY,rect.iBr.iX,rect.iBr.iY);	
+	test(rect.iTl.iX == iWindowRect.Width() - 3*wRTL - 3*wLTR - 2*wRTL && rect.iBr.iX == 100);
 	
-	STestDataTInt4 DataEmH4[] = {
-			{0,12,0,100 },{20,24,0,20},{0,0,0,5},{12,12,95,100},{7,7,35,40},
-			{7,12,35,100},{13,20,95,100},{10,9,50,100},
-			{3,19,15,100},{20,38,5,100},{19,19,95,100},{20,20,95,100},{19,20,95,100},
-	};
-	STestDataTInt4 DataH6[] = {
-			{0,15,0,100}, {25,30,0,20},{0,0,0,4},{15,15,96,100},{7,7,28,32},
-			{7,15,28,100},{16,25,96,100},{10,9,40,100},
-			{3,24,12,100},{25,48,4,100}, {24,24,96,100},{25,25,96,100},{24,25,96,100},
-	};
-	
-	test(sizeof(DataEmH4)/sizeof(STestDataTInt4) == sizeof(DataH6)/sizeof(STestDataTInt4));
-	
-	STestDataTInt4 *testdata;
-	TPtrC pLtoRTextLong;
-	TPtrC pRtoLTextLong;
-	TPtrC pLtoRTextVeryLong;
-	TPtrC pRtoLTextVeryLong;
-	
-	if(w == 5)// for WINSCW(Em) and H4
-		{
-		testdata = DataEmH4;
-		pLtoRTextLong.Set(KLtoRTextLong);
-		pRtoLTextLong.Set(KRtoLTextLong);
-		pLtoRTextVeryLong.Set(KLtoRTextVeryLong);
-		pRtoLTextVeryLong.Set(KRtoLTextVeryLong);
-		}
-	else if (w == 4)  // for H6
-		{
-		testdata = DataH6;
-		pLtoRTextLong.Set(KLtoRTextLong2);
-		pRtoLTextLong.Set(KRtoLTextLong2);
-		pLtoRTextVeryLong.Set(KLtoRTextVeryLong2);
-		pRtoLTextVeryLong.Set(KRtoLTextVeryLong2);
-		}
-	else
-		{
-		test(0);
-		Destroy();
-		return;
-		}
+
 	
 //	Edge case tests
 //	Sample text
@@ -1749,24 +1723,68 @@ void CTextViewTest::TestForPDEF115165L()
 //	X-Coords:  | 0| 4| 8|12|16|20|24|28|32|36|40|44|48|52|56|60|64|68|72|76|80|84|88|92|96|100|  w=4
 //	2nd Line:    |29|28|27|26|25|24|23|22|21|20|
 	
+	TInt LtoRLength = (iWindowRect.Width() - 5*wRTL)/wLTR;
+	TInt RtoLLength = 10;
+	TInt RtoLinLine1= (iWindowRect.Width() - LtoRLength * wLTR)/wRTL;
+	TInt Line2Start = LtoRLength + RtoLinLine1;
+	
 	iEtext->Reset();
-	iEtext->InsertL(0,pLtoRTextLong);
-	iEtext->InsertL(iEtext->DocumentLength(),pRtoLTextLong);	
+	for(TInt i=0;i<LtoRLength;i++)
+        {
+        iEtext->InsertL(iEtext->DocumentLength(),KLtoRChar);
+        }
+	
+	for(TInt i=0;i<RtoLLength;i++)
+	    {
+	    iEtext->InsertL(iEtext->DocumentLength(),KRtoLChar);
+	    }	
 	iEtext->InsertL(iEtext->DocumentLength(),KParaSep);
 	iView->FormatTextL();
 
-	for (TInt i = 0; i < 8;i++)
-		{
-		//	Test for whole line i=0 to 1
-		//	Test for one char   i=2 to 4
-		//	Test for DocPos2 at the end of line  i=5
-		//	Test for DocPos2 at a different line i=6
-		//	Test for DocPos2 < DocPos1			 i=7
-		rect = iLayout->GetLineRectL(testdata[i].iDoc1,testdata[i].iDoc2);
-		test.Printf(_L("GetLineRect edge test i=%d \n"),i);
-		test(rect.iTl.iX == testdata[i].iPos1 && rect.iBr.iX == testdata[i].iPos2); //Line 1
-		}
-			
+    for(TInt i=0;i<LtoRLength + RtoLLength;i++)
+    {
+        rect = iLayout->GetLineRectL(i,i+1);
+        RDebug::Print(_L("%d: iTl.iX %d,iY %d, iBr.iX %d,iY %d"), i,rect.iTl.iX,rect.iTl.iY,rect.iBr.iX,rect.iBr.iY);
+    }          
+    
+    rect = iLayout->GetLineRectL(0,LtoRLength);
+    RDebug::Print(_L("iTl.iX %d,iY %d, iBr.iX %d,iY %d"), rect.iTl.iX,rect.iTl.iY,rect.iBr.iX,rect.iBr.iY);    
+    test(rect.iTl.iX == 0 && rect.iBr.iX == LtoRLength*wLTR + RtoLinLine1*wRTL ); //Line 1
+  
+    rect = iLayout->GetLineRectL(Line2Start, LtoRLength + RtoLLength);
+    RDebug::Print(_L("iTl.iX %d,iY %d, iBr.iX %d,iY %d"), rect.iTl.iX,rect.iTl.iY,rect.iBr.iX,rect.iBr.iY);
+    test(rect.iTl.iX == 0 && rect.iBr.iX == (RtoLLength - RtoLinLine1)*wRTL); //Line 2
+
+    rect = iLayout->GetLineRectL(0,0);
+    RDebug::Print(_L("iTl.iX %d,iY %d, iBr.iX %d,iY %d"), rect.iTl.iX,rect.iTl.iY,rect.iBr.iX,rect.iBr.iY);    
+    test(rect.iTl.iX == 0 && rect.iBr.iX == wLTR); //first char
+    
+    //firt char of RTL
+    rect = iLayout->GetLineRectL(LtoRLength,LtoRLength);
+    RDebug::Print(_L("iTl.iX %d,iY %d, iBr.iX %d,iY %d"), rect.iTl.iX,rect.iTl.iY,rect.iBr.iX,rect.iBr.iY);    
+    test(rect.iTl.iX == LtoRLength*wLTR + (RtoLinLine1-1)*wRTL && rect.iBr.iX == LtoRLength*wLTR + RtoLinLine1*wRTL); //end of line 1
+
+    //middle of L to R
+    rect = iLayout->GetLineRectL(LtoRLength/2,LtoRLength/2);
+    RDebug::Print(_L("iTl.iX %d,iY %d, iBr.iX %d,iY %d"), rect.iTl.iX,rect.iTl.iY,rect.iBr.iX,rect.iBr.iY);    
+    test(rect.iTl.iX == LtoRLength/2 * wLTR && rect.iBr.iX == (LtoRLength/2+1) * wLTR);
+      
+    //middle of LTR to first of RTL
+    rect = iLayout->GetLineRectL(LtoRLength/2,LtoRLength);
+    RDebug::Print(_L("iTl.iX %d,iY %d, iBr.iX %d,iY %d"), rect.iTl.iX,rect.iTl.iY,rect.iBr.iX,rect.iBr.iY);    
+    test(rect.iTl.iX == LtoRLength/2 * wLTR && rect.iBr.iX == LtoRLength*wLTR + RtoLinLine1*wRTL);
+ 
+    //second of RTL to start of 2nd line ??
+    rect = iLayout->GetLineRectL(LtoRLength+1,Line2Start);
+    RDebug::Print(_L("iTl.iX %d,iY %d, iBr.iX %d,iY %d"), rect.iTl.iX,rect.iTl.iY,rect.iBr.iX,rect.iBr.iY);    
+    test(rect.iTl.iX == LtoRLength*wLTR + (RtoLinLine1-1)*wRTL && rect.iBr.iX == LtoRLength*wLTR + RtoLinLine1*wRTL); //end of line 1
+  
+    //middle of L to R
+    rect = iLayout->GetLineRectL(LtoRLength/2,LtoRLength/2-1);
+    RDebug::Print(_L("iTl.iX %d,iY %d, iBr.iX %d,iY %d"), rect.iTl.iX,rect.iTl.iY,rect.iBr.iX,rect.iBr.iY);    
+    test(rect.iTl.iX == LtoRLength/2 * wLTR && rect.iBr.iX == LtoRLength*wLTR + RtoLinLine1*wRTL);
+    
+		
 //	Test for edge cases while two lines are in different direction
 //	Sample text
 //	1st Line:    | 0| 1| 2| 3| 4| 5| 6| 7| 8| 9|10|11|12|13|14|15|16|17|18|19|
@@ -1778,19 +1796,56 @@ void CTextViewTest::TestForPDEF115165L()
 //	1st Line:    | 0| 1| 2| 3| 4| 5| 6| 7| 8| 9|10|11|12|13|14|15|16|17|18|19|20|21|22|23|24|
 //	X-Coords:  | 0| 4| 8| 12|16|20|24|28|32|36|40|44|48|52|56|60|64|68|72|76|80|84|88|92|96|100|  w=4
 //	2nd Line:    |49|48|47|46|45|44|43|42|41|40|39|38|37|36|35|34|33|32|31|30|29|28|27|26|25|
-	iEtext->Reset();
-	iEtext->InsertL(0,pLtoRTextVeryLong);
-	iEtext->InsertL(iEtext->DocumentLength(),pRtoLTextVeryLong);
+    
+    LtoRLength = iWindowRect.Width()/wLTR;
+    RtoLLength = iWindowRect.Width()/wRTL;
+        
+    iEtext->Reset();
+    for(TInt i=0;i<LtoRLength;i++)
+        {
+        iEtext->InsertL(iEtext->DocumentLength(),KLtoRChar);
+        }
+    
+    for(TInt i=0;i<RtoLLength;i++)
+        {
+        iEtext->InsertL(iEtext->DocumentLength(),KRtoLChar);
+        }       
 	iEtext->InsertL(iEtext->DocumentLength(),KParaSep);
 	iView->FormatTextL();
 
-	for (TInt i = 8; i < 13; i++)
-		{
-		rect = iLayout->GetLineRectL(testdata[i].iDoc1,testdata[i].iDoc2);
-		test.Printf(_L("GetLineRect edge test i=%d \n"),i);
-		test(rect.iTl.iX == testdata[i].iPos1 && rect.iBr.iX == testdata[i].iPos2); //Line 1
-		}	
-	Destroy();
+    for(TInt i=0;i<LtoRLength + RtoLLength;i++)
+    {
+        rect = iLayout->GetLineRectL(i,i+1);
+        RDebug::Print(_L("%d: iTl.iX %d,iY %d, iBr.iX %d,iY %d"), i,rect.iTl.iX,rect.iTl.iY,rect.iBr.iX,rect.iBr.iY);
+    }  
+ 
+    
+    //1st line
+    rect = iLayout->GetLineRectL(3, LtoRLength-1);
+    RDebug::Print(_L("iTl.iX %d,iY %d, iBr.iX %d,iY %d"), rect.iTl.iX,rect.iTl.iY,rect.iBr.iX,rect.iBr.iY);
+    test(rect.iTl.iX == 3*wLTR && rect.iBr.iX == LtoRLength*wLTR); //Line 2
+
+    //2nd line
+    rect = iLayout->GetLineRectL(LtoRLength,LtoRLength + RtoLLength -2);
+    RDebug::Print(_L("iTl.iX %d,iY %d, iBr.iX %d,iY %d"), rect.iTl.iX,rect.iTl.iY,rect.iBr.iX,rect.iBr.iY);
+    test(rect.iTl.iX == wRTL && rect.iBr.iX == RtoLLength*wRTL); //Line 2
+
+    //end of 1st line
+    rect = iLayout->GetLineRectL(LtoRLength-1, LtoRLength-1);
+    RDebug::Print(_L("iTl.iX %d,iY %d, iBr.iX %d,iY %d"), rect.iTl.iX,rect.iTl.iY,rect.iBr.iX,rect.iBr.iY);
+    test(rect.iTl.iX == (LtoRLength-1)*wLTR && rect.iBr.iX == LtoRLength*wLTR); //Line 2
+
+    //start of 2nd line
+    rect = iLayout->GetLineRectL(LtoRLength, LtoRLength);
+    RDebug::Print(_L("iTl.iX %d,iY %d, iBr.iX %d,iY %d"), rect.iTl.iX,rect.iTl.iY,rect.iBr.iX,rect.iBr.iY);
+    test(rect.iTl.iX == (RtoLLength-1)*wRTL && rect.iBr.iX == RtoLLength*wRTL); //Line 2
+
+     //1st line to 2nd line
+     rect = iLayout->GetLineRectL(LtoRLength-1, LtoRLength);
+     RDebug::Print(_L("iTl.iX %d,iY %d, iBr.iX %d,iY %d"), rect.iTl.iX,rect.iTl.iY,rect.iBr.iX,rect.iBr.iY);
+     test(rect.iTl.iX == (LtoRLength-1)*wLTR && rect.iBr.iX == LtoRLength*wLTR); //Line 2
+
+
 	}
 
 /**

@@ -19,6 +19,11 @@
 #include "TxtWriter.h"
 #include <txtetext.h>
 #include "TXTPLAIN.H"
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "TxtWriterTraces.h"
+#endif
+
 
 static const TText KLineBreak = 0x0A;//Used by TSLBTransaltor class - 0x0A, 0x0D, {0x0D, 0x0A}
                               //character aequences found in the input stream will be translated 
@@ -99,6 +104,10 @@ interface - iOutputChar data member), translating line breaks to paragraph delim
 */
 void TParagraphTextWriter::WriteL(TText aChar)
 	{
+	if (aChar == 0x0D)
+	    {
+	    OstTrace0( TRACE_DUMP, TPARAGRAPHTEXTWRITER_WRITEL, "Invariant" );
+	    }
 	__ASSERT_DEBUG(aChar != 0x0D, User::Invariant());
 	if(aChar == KLineBreak)
 		{
@@ -126,6 +135,10 @@ The translation rules are:
 */
 void TLineTextWriter::WriteL(TText aChar)
 	{
+	if (aChar == 0x0D)
+	    {
+	    OstTrace0( TRACE_DUMP, TLINETEXTWRITER_WRITEL, "Invariant" );
+	    }
 	__ASSERT_DEBUG(aChar != 0x0D, User::Invariant());
 	TText prevChar = iPrevChar;
 	iPrevChar = aChar;

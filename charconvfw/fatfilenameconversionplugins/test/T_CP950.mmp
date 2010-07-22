@@ -31,3 +31,4 @@ SOURCE			T_CP950.CPP
 LIBRARY			euser.lib 
 
 SMPSAFE
+//RTEST

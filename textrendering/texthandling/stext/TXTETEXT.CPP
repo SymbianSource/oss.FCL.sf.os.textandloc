@@ -41,6 +41,11 @@
 #include "TXTRTPFL.H"
 #include "TXTCLIPBOARD.H"
 
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "TXTETEXTTraces.h"
+#endif
+
 #ifdef SYMBIAN_ENABLE_SPLIT_HEADERS
 #include "TXTETEXT_INTERNAL.H"
 #endif
@@ -258,7 +263,15 @@ of the delete, indicating that the resulting paragraph must be reformatted.
 EXPORT_C void CEditableText::StartFepInlineEditL(TBool& aParagraphContainingStartPositionOfInlineTextHasChangedFormat,TInt& aNumberOfCharactersSuccessfullyDeleted,TInt& aNumberOfCharactersSuccessfullyInserted,TInt& aPositionOfInsertionPointInDocument,TInt aNewPositionOfInsertionPointInDocument,const TDesC& aInitialInlineText,TInt aPositionOfInlineTextInDocument,TInt aNumberOfCharactersToHide,MFepInlineTextFormatRetriever& aInlineTextFormatRetriever)
 /** @internalAll */	
 	{
+	if (aPositionOfInlineTextInDocument<0 || aNumberOfCharactersToHide<0 || aPositionOfInlineTextInDocument+aNumberOfCharactersToHide>DocumentLength())
+	    {
+	    OstTrace0( TRACE_DUMP, CEDITABLETEXT_STARTFEPINLINEEDITL, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPositionOfInlineTextInDocument>=0 && aNumberOfCharactersToHide>=0 && aPositionOfInlineTextInDocument+aNumberOfCharactersToHide<=DocumentLength(),Panic(ECharPosBeyondDocument));
+	if (InlineEditData()!=NULL)
+	    {
+	    OstTrace0( TRACE_DUMP, DUP1_CEDITABLETEXT_STARTFEPINLINEEDITL, "EAlreadyFepInlineEditing" );
+	    }
 	__ASSERT_ALWAYS(InlineEditData()==NULL,Panic(EAlreadyFepInlineEditing));
 	aParagraphContainingStartPositionOfInlineTextHasChangedFormat=EFalse;
 	aNumberOfCharactersSuccessfullyDeleted=0;
@@ -295,12 +308,20 @@ EXPORT_C void CEditableText::UpdateFepInlineTextL(TBool& aParagraphContainingSta
 /** @internalAll */	
     {
 	CInlineEditData* const inlineEditData=InlineEditData();
+	if (inlineEditData==NULL)
+	    {
+	    OstTrace0( TRACE_DUMP, CEDITABLETEXT_UPDATEFEPINLINETEXTL, "ENotCurrentlyFepInlineEditing" );
+	    }
 	__ASSERT_ALWAYS(inlineEditData!=NULL,Panic(ENotCurrentlyFepInlineEditing));
 	aParagraphContainingStartPositionOfInlineTextHasChangedFormat=EFalse;
 	aNumberOfCharactersSuccessfullyDeleted=0;
 	aNumberOfCharactersSuccessfullyInserted=0;
 	HBufC*& inlineText=inlineEditData->iInlineText;
 	HBufC* oldInlineText=inlineText;
+	if (oldInlineText!=NULL && inlineEditData->iLengthOfInlineText!=oldInlineText->Length())
+	    {
+	    OstTrace0( TRACE_DUMP, DUP1_CEDITABLETEXT_UPDATEFEPINLINETEXTL, "EDebug" );
+	    }
 	__ASSERT_DEBUG(oldInlineText==NULL || inlineEditData->iLengthOfInlineText==oldInlineText->Length(),Panic(EDebug));
 	const TInt lengthOfNewInlineText=aNewInlineText.Length();
 	if (oldInlineText!=NULL && *oldInlineText==aNewInlineText)
@@ -346,7 +367,15 @@ EXPORT_C void CEditableText::CommitFepInlineEditL(TBool& aParagraphContainingSta
  */	
     {
 	const CInlineEditData* const inlineEditData=InlineEditData();
+	if (inlineEditData==NULL)
+	    {
+	    OstTrace0( TRACE_FATAL, DUP1_CEDITABLETEXT_COMMITFEPINLINEEDITL, "ENotCurrentlyFepInlineEditing" );
+	    }
 	__ASSERT_ALWAYS(inlineEditData!=NULL,Panic(ENotCurrentlyFepInlineEditing));
+	if (inlineEditData->iInlineText!=NULL && inlineEditData->iLengthOfInlineText!=inlineEditData->iInlineText->Length())
+	    {
+	    OstTrace0( TRACE_DUMP, CEDITABLETEXT_COMMITFEPINLINEEDITL, "EDebug" );
+	    }
 	__ASSERT_DEBUG(inlineEditData->iInlineText==NULL || inlineEditData->iLengthOfInlineText==inlineEditData->iInlineText->Length(),Panic(EDebug));
 	aParagraphContainingStartPositionOfInlineTextHasChangedFormat=EFalse;
 	const TInt lengthOfInlineText=inlineEditData->iLengthOfInlineText;
@@ -370,6 +399,10 @@ EXPORT_C void CEditableText::CancelFepInlineEdit(TBool& aParagraphContainingStar
 		{
 		const TInt positionOfInlineTextInDocument=inlineEditData->iPositionOfInlineTextInDocument;
 		const TInt lengthOfInlineText=inlineEditData->iLengthOfInlineText;
+		if (inlineEditData->iInlineText!=NULL && lengthOfInlineText!=inlineEditData->iInlineText->Length())
+		    {
+		    OstTrace0( TRACE_DUMP, CEDITABLETEXT_CANCELFEPINLINEEDIT, "EDebug" );
+		    }
 		__ASSERT_DEBUG(inlineEditData->iInlineText==NULL || lengthOfInlineText==inlineEditData->iInlineText->Length(),Panic(EDebug));
 		TRAPD(notUsed,
 						if (lengthOfInlineText>0)
@@ -381,6 +414,10 @@ EXPORT_C void CEditableText::CancelFepInlineEdit(TBool& aParagraphContainingStar
 						const HBufC* const hiddenText=inlineEditData->iHiddenText;
 						if (hiddenText!=NULL)
 							{
+							if (hiddenText->Length()<=0)
+							    {
+							    OstTrace0( TRACE_DUMP, DUP1_CEDITABLETEXT_CANCELFEPINLINEEDIT, "EDebug" );
+							    }
 							__ASSERT_DEBUG(hiddenText->Length()>0, Panic(EDebug));
 							InsertL(positionOfInlineTextInDocument,*hiddenText);
 							aNumberOfCharactersSuccessfullyInserted=hiddenText->Length();
@@ -562,6 +599,10 @@ EXPORT_C void CPlainText::DoConstructL(TDocumentStorage aStorage,TInt aDefaultTe
 /** Allocates storage of CBufFlat or CBufSeg, according to the parameter aStorage.
 Creates & initializes the field set.*/
 	{
+	if (iByteStore!=NULL)
+	    {
+	    OstTrace0( TRACE_DUMP, CPLAINTEXT_DOCONSTRUCTL, "EConstructCalledTwice" );
+	    }
 	__ASSERT_DEBUG(iByteStore==NULL,Panic(EConstructCalledTwice));
 	
 	iByteStore=(aStorage==ESegmentedStorage)
@@ -884,8 +925,20 @@ TStreamId CPlainText::DoCopyToStoreL(CStreamStore& aStore,CStreamDictionary& aDi
 	{
 	__TEST_INVARIANT;
 	TInt documentLength = DocumentLength();
+	if (aPos < 0 || aPos > documentLength)
+	    {
+	    OstTrace0( TRACE_FATAL, CPLAINTEXT_DOCOPYTOSTOREL, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos >= 0 && aPos <= documentLength,Panic(ECharPosBeyondDocument));
+	if (aLength < 0)
+	    {
+	    OstTrace0( TRACE_FATAL, DUP1_CPLAINTEXT_DOCOPYTOSTOREL, "ECopyToStreamNegativeLength" );
+	    }
 	__ASSERT_ALWAYS(aLength >= 0,Panic(ECopyToStreamNegativeLength));
+	if (aPos + aLength > documentLength)
+	    {
+	    OstTrace0( TRACE_FATAL, DUP2_CPLAINTEXT_DOCOPYTOSTOREL, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos + aLength <= documentLength,Panic(ECharPosBeyondDocument));
 
 	if (aLength == 0)
@@ -924,8 +977,20 @@ void CPlainText::CopyToStreamL(RWriteStream& aStream,TInt aPos,TInt aLength)cons
 	{
 	__TEST_INVARIANT;
 	TInt documentLength = DocumentLength();
+	if (aPos < 0 || aPos > documentLength)
+	    {
+	    OstTrace0( TRACE_FATAL, CPLAINTEXT_COPYTOSTREAML, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos >= 0 && aPos <= documentLength,Panic(ECharPosBeyondDocument));
+	if (aLength < 0)
+	    {
+	    OstTrace0( TRACE_FATAL, DUP1_CPLAINTEXT_COPYTOSTREAML, "ECopyToStreamNegativeLength" );
+	    }
 	__ASSERT_ALWAYS(aLength >= 0,Panic(ECopyToStreamNegativeLength));
+	if (aPos + aLength > documentLength)
+	    {
+	    OstTrace0( TRACE_FATAL, DUP2_CPLAINTEXT_COPYTOSTREAML, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos + aLength <= documentLength,Panic(ECharPosBeyondDocument));
 
 	aStream.WriteInt32L(aLength);
@@ -961,6 +1026,10 @@ raises a panic.
 
 TInt CPlainText::DoPasteFromStoreL(const CStreamStore& aStore,TStreamId aStreamId,TInt aPos)
 	{
+	if (aPos>DocumentLength())
+	    {
+	    OstTrace0( TRACE_FATAL, CPLAINTEXT_DOPASTEFROMSTOREL, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos<=DocumentLength(),Panic(ECharPosBeyondDocument));
 
 	TInt charsPasted=0;
@@ -1007,6 +1076,7 @@ TInt CPlainText::PasteFromStreamL(RReadStream& aStream,TInt aPos)
 	if (error != KErrNone)
 		{
 		DoPtDelete(aPos,chars_read);
+		OstTrace1( TRACE_FATAL, DUP1_CPLAINTEXT_PASTEFROMSTREAML, "Leave code=%d", error );
 		User::Leave(error);
 		}
 
@@ -1058,6 +1128,10 @@ void CPlainText::InsertEodL()
 /** Inserts the end-of-document character upon document construction.*/
 	{
 // ASSERT: The plain text component is empty.
+	if (DocumentLength()!=-1)
+	    {
+	    OstTrace0( TRACE_DUMP, DUP1_CPLAINTEXT_INSERTEODL, "ECorruptTextStore" );
+	    }
 	__ASSERT_DEBUG(DocumentLength()==-1,Panic(ECorruptTextStore));
 	TBuf<1> content;
 	content.Append(EParagraphDelimiter);
@@ -1113,6 +1187,10 @@ Must be valid, or a panic occurs.
 @param aBuf The descriptor to insert. */
 	{
 	__TEST_INVARIANT;
+	if (aInsertPos<0 || aInsertPos>DocumentLength())
+	    {
+	    OstTrace0( TRACE_FATAL, CPLAINTEXT_INSERTL, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aInsertPos>=0 && aInsertPos<=DocumentLength(),Panic(ECharPosBeyondDocument));
 
 	TInt contentLength = 1;
@@ -1126,7 +1204,7 @@ Must be valid, or a panic occurs.
 		{
 		TText16 high = TChar::GetHighSurrogate(aChar);
 		TText16 low = TChar::GetLowSurrogate(aChar);
-		RDebug::Print(_L("CPlainText::InsertL(%d), %X expand to %X %X."), aInsertPos, aChar, high, low);
+		RDebug::Print(_L("CPlainText::InsertL(%d), %X expand to %X %X."), aInsertPos, TUint(aChar), high, low);
 	
 		TBuf<2> content;
 		contentLength = 2;
@@ -1156,6 +1234,10 @@ EXPORT_C void CPlainText::PtInsertL(TInt aPos,const TDesC& aBuf)
 Maintain field set.*/
 	{
 	__TEST_INVARIANT;
+	if (aPos<0 || aPos>DocumentLength())
+	    {
+	    OstTrace0( TRACE_FATAL, CPLAINTEXT_PTINSERTL, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos>=0 && aPos<=DocumentLength(),Panic(ECharPosBeyondDocument));
 
 	DoPtInsertL(aPos,aBuf);
@@ -1241,8 +1323,20 @@ EXPORT_C TBool CPlainText::DoPtDelete(TInt aPos,TInt aLength)
  EFalse, so no reformatting occurs.*/
 	{
 	TInt documentLength=DocumentLength()+1;
+	if (aPos<0 || aPos>documentLength)
+	    {
+	    OstTrace0( TRACE_FATAL, CPLAINTEXT_DOPTDELETE, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos>=0 && aPos<=documentLength,Panic(ECharPosBeyondDocument));
+	if (aLength<0)
+	    {
+	    OstTrace0( TRACE_FATAL, DUP1_CPLAINTEXT_DOPTDELETE, "EDeleteNegativeLength" );
+	    }
 	__ASSERT_ALWAYS(aLength>=0,Panic(EDeleteNegativeLength));
+	if (aPos+aLength>documentLength)
+	    {
+	    OstTrace0( TRACE_FATAL, DUP2_CPLAINTEXT_DOPTDELETE, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos+aLength<=documentLength,Panic(ECharPosBeyondDocument));
 
 	iByteStore->Delete(aPos*sizeof(TText),aLength*sizeof(TText));
@@ -1290,6 +1384,10 @@ If EOrganiseByParagraph, all line feeds are converted into paragraph delimiters.
 		file.Close();
 		file_session.Close();
 		}
+	if (error < 0)
+	    {
+	    OstTrace1( TRACE_FATAL, DUP1_CPLAINTEXT_IMPORTTEXTFILEL, "Leave code=%x", error );
+	    }
 	User::LeaveIfError(error);
 	return chars_inserted;
 	}
@@ -1314,6 +1412,10 @@ converted into CR/LF pairs.
 @param aMaxLineLength The maximum number of characters in each line, (only 
 relevant if the text organisation is EOrganiseByLine). */
 	{
+	if (aTextOrganisation != EOrganiseByParagraph && aLineWrap <= 0)
+	    {
+	    OstTrace0( TRACE_DUMP, CPLAINTEXT_EXPORTASTEXTL, "EExportLineWrapInvalid" );
+	    }
 	__ASSERT_DEBUG(aTextOrganisation == EOrganiseByParagraph || aLineWrap > 0,Panic(EExportLineWrapInvalid));
 	RFs file_session;
 	TInt error = file_session.Connect();
@@ -1332,6 +1434,10 @@ relevant if the text organisation is EOrganiseByLine). */
 		file.Close();
 		file_session.Close();
 		}
+	if (error < 0)
+	    {
+	    OstTrace1( TRACE_FATAL, DUP2_CPLAINTEXT_EXPORTASTEXTL, "Leave code=%x", error );
+	    }
 	User::LeaveIfError(error);
 	}
 
@@ -1485,6 +1591,10 @@ less than the requested length. In this case multiple calls to Read() may be nec
 */	
     {
 	__TEST_INVARIANT;
+	if (aStartPos<0 || aStartPos>DocumentLength())
+	    {
+	    OstTrace0( TRACE_FATAL, DUP1_CPLAINTEXT_READ, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aStartPos>=0 && aStartPos<=DocumentLength(),Panic(ECharPosBeyondDocument));
 	
 	TPtr8 buf=iByteStore->Ptr(aStartPos*sizeof(TText));
@@ -1511,6 +1621,10 @@ less than the requested length. In this case multiple calls to Read() may be nec
 */
 	{
 	__TEST_INVARIANT;
+	if (aStartPos<0 || aStartPos>DocumentLength())
+	    {
+	    OstTrace0( TRACE_FATAL, CPLAINTEXT_READ, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aStartPos>=0 && aStartPos<=DocumentLength(),Panic(ECharPosBeyondDocument));
 	
 	TPtr8 buf=iByteStore->Ptr(aStartPos*sizeof(TText));
@@ -1534,7 +1648,15 @@ panic occurs.*/
     {
 	__TEST_INVARIANT;
 	TInt documentLength=DocumentLength();
+	if (aPos<0 || aPos>documentLength)
+	    {
+	    OstTrace0( TRACE_FATAL, CPLAINTEXT_EXTRACT, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos>=0 && aPos<=documentLength,Panic(ECharPosBeyondDocument));
+	if (aBuf.MaxLength()<documentLength - aPos)
+	    {
+	    OstTrace0( TRACE_FATAL, DUP1_CPLAINTEXT_EXTRACT, "EExtractBufferTooSmall" );
+	    }
 	__ASSERT_ALWAYS(aBuf.MaxLength()>=documentLength - aPos,Panic(EExtractBufferTooSmall));
 
 	DoExtract(aBuf,aPos,documentLength-aPos);
@@ -1556,7 +1678,15 @@ occurs.
 @param aLength The number of characters to copy. */
 	{
 	__TEST_INVARIANT;
+	if (aPos<0 || aPos>DocumentLength())
+	    {
+	    OstTrace0( TRACE_FATAL, DUP2_CPLAINTEXT_EXTRACT, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos>=0 && aPos<=DocumentLength(),Panic(ECharPosBeyondDocument));
+	if (aBuf.MaxLength()<aLength)
+	    {
+	    OstTrace0( TRACE_FATAL, DUP3_CPLAINTEXT_EXTRACT, "EExtractBufferTooSmall" );
+	    }
 	__ASSERT_ALWAYS(aBuf.MaxLength()>=aLength,Panic(EExtractBufferTooSmall));
 
 	DoExtract(aBuf,aPos,aLength);
@@ -1566,6 +1696,10 @@ occurs.
 // inline text, depending on the flag.
 EXPORT_C void CPlainText::ExtractSelectively(TDes& aBuf,TInt aPos,TInt aLength,TUint aFlags)
 	{
+	if (aPos < 0 || aPos > DocumentLength())
+	    {
+	    OstTrace0( TRACE_FATAL, CPLAINTEXT_EXTRACTSELECTIVELY, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos >= 0 && aPos <= DocumentLength(),Panic(ECharPosBeyondDocument));
 	DoExtract(aBuf,aPos,aLength,aFlags);
 	}
@@ -1656,6 +1790,10 @@ void CPlainText::UpdatePageTable(TInt aPos,TInt aLength)
 //
 	{
 	__TEST_INVARIANT;
+	if (aPos<0 || aPos>DocumentLength()+1)
+	    {
+	    OstTrace0( TRACE_FATAL, CPLAINTEXT_UPDATEPAGETABLE, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos>=0 && aPos<=DocumentLength()+1,Panic(ECharPosBeyondDocument));
 	
 	if (iPageTable)
@@ -1672,6 +1810,10 @@ SetPageTable() to set up the page table.
 @return The page number containing document position aPos. */
     {
 	__TEST_INVARIANT;
+	if (aPos<0 || aPos>DocumentLength())
+	    {
+	    OstTrace0( TRACE_FATAL, CPLAINTEXT_PAGECONTAININGPOS, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos>=0 && aPos<=DocumentLength(),Panic(ECharPosBeyondDocument));
 
     if (!iPageTable || (iPageTable->Count()<1))
@@ -1725,7 +1867,15 @@ NULL, or a panic occurs.
 field types, see the UID values defined in flddef.h. */
 	{
 	__TEST_INVARIANT;
+	if (aPos<0 || aPos>DocumentLength())
+	    {
+	    OstTrace0( TRACE_FATAL, CPLAINTEXT_INSERTFIELDL, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos>=0 && aPos<=DocumentLength(),Panic(ECharPosBeyondDocument));
+	if (!aField)
+	    {
+	    OstTrace0( TRACE_FATAL, DUP1_CPLAINTEXT_INSERTFIELDL, "ENoTextField" );
+	    }
 	__ASSERT_ALWAYS(aField,Panic(ENoTextField));
 
 	if (!FieldSetPresent())
@@ -1752,6 +1902,10 @@ at which the field was inserted.
 position, or a panic occurs. */
 	{
 	__TEST_INVARIANT;
+	if (aPos<0 || aPos>DocumentLength())
+	    {
+	    OstTrace0( TRACE_FATAL, CPLAINTEXT_UPDATEFIELDL, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos>=0 && aPos<=DocumentLength(),Panic(ECharPosBeyondDocument));
 
 	if (!FieldSetPresent())
@@ -1816,6 +1970,10 @@ valid position or a panic occurs.
 at aPos. */
 	{
 	__TEST_INVARIANT;
+	if (aPos<0 || aPos>DocumentLength())
+	    {
+	    OstTrace0( TRACE_FATAL, CPLAINTEXT_REMOVEFIELD, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos>=0 && aPos<=DocumentLength(),Panic(ECharPosBeyondDocument));
 
 	TBool fieldRemoved=EFalse;
@@ -1902,6 +2060,10 @@ position or a panic occurs.
 field located at aPos. */
 	{
 	__TEST_INVARIANT;
+	if (aPos<0 || aPos>DocumentLength())
+	    {
+	    OstTrace0( TRACE_FATAL, CPLAINTEXT_CONVERTFIELDTOTEXT, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos>=0 && aPos<=DocumentLength(),Panic(ECharPosBeyondDocument));
 
 	TBool fieldConverted=EFalse;

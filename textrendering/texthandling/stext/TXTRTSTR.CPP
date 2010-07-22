@@ -26,6 +26,11 @@
 #include "TXTRTPFL.H"
 #include "ParseLst.h"
 
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "TXTRTSTRTraces.h"
+#endif
+
 #ifdef SYMBIAN_ENABLE_SPLIT_HEADERS
 #include "TXTETEXT_INTERNAL.H"
 #include "TXTRICH_INTERNAL.H"
@@ -402,8 +407,20 @@ at editing them causes a panic.
 
 	__TEST_INVARIANT;
 	TInt documentLength = DocumentLength();
+	if (aPos < 0 || aPos > documentLength)
+	    {
+	    OstTrace0( TRACE_FATAL, DUP1_CRICHTEXT_DETACHFROMSTOREL, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos >= 0 && aPos <= documentLength,Panic(ECharPosBeyondDocument));
+	if (aLength < 0)
+	    {
+	    OstTrace0( TRACE_FATAL, CRICHTEXT_DETACHFROMSTOREL, "ECopyToStreamNegativeLength" );
+	    }
 	__ASSERT_ALWAYS(aLength >= 0,Panic(ECopyToStreamNegativeLength));
+	if (aPos + aLength > documentLength)
+	    {
+	    OstTrace0( TRACE_FATAL, DUP2_CRICHTEXT_DETACHFROMSTOREL, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos + aLength <= documentLength,Panic(ECharPosBeyondDocument));
 	
 	if (aLength > 0 && IndexPresent())
@@ -436,6 +453,10 @@ Note: A panic occurs if the factory is NULL, but the store resolver is not NULL.
 the picture is stored in. */
 	{
 	__TEST_INVARIANT;
+	if (!aPictureFactory && aStoreResolver)
+	    {
+	    OstTrace0( TRACE_FATAL, CRICHTEXT_SETPICTUREFACTORY, "EInvalidPictureFactorySettings" );
+	    }
 	__ASSERT_ALWAYS(!(!aPictureFactory && aStoreResolver),Panic(EInvalidPictureFactorySettings));
 
 	iPictureFactory=aPictureFactory;
@@ -452,6 +473,10 @@ constructs and returns a default one.
 picture header. */
 	{
 	__TEST_INVARIANT;
+	if (aPos<0 || aPos>DocumentLength())
+	    {
+	    OstTrace0( TRACE_FATAL, CRICHTEXT_PICTUREHEADER, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos>=0 && aPos<=DocumentLength(),Panic(ECharPosBeyondDocument));
 
 	return (IndexPresent())
@@ -470,6 +495,10 @@ or a panic occurs.
 @see CRichText::PictureHandleL() */
 	{
 	__TEST_INVARIANT;
+	if (aPos<0 || aPos>DocumentLength())
+	    {
+	    OstTrace0( TRACE_FATAL, CRICHTEXT_DROPPICTUREOWNERSHIP, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos>=0 && aPos<=DocumentLength(),Panic(ECharPosBeyondDocument));
 
 	TPictureHeader* p = IndexPresent()? iIndex->PictureHeaderPtr(aPos) : 0;

@@ -49,6 +49,8 @@ _LIT8(KISO,"\x6d\x6f\x72\x6f\x0d\x0a\x6d\x69\x74\xe4\x20\x6b\x75\x75\x6c\x75\x75
 _LIT8(KSomeISO, "\x48\x65\x6a\x21\x20\x0d\x0a\x0d\x0a\x68\xe4\x72\x20\x6b\x6f\x6d\x6d\x65\x72\x20\x65\x74\x74\x20\x6d\x61\x69\x6c\x20\x6d\x65\x64\x20\x6d\x61\x73\x73\x61\x20\x74\x65\x78\x74\x20\x6f\x63\x68\x20\x65\x74\x74\x20\x61\x74\x74\x61\x63\x68\x6d\x65\x6e\x74\x2e\x20\x44\x65\x74\x74\x61\x20\x6c\x69\x6c\x6c\x61\x20\x6d\x61\x69\x6c");
 _LIT8(KUnicodeFail,"\x0d");
 _LIT8(KISODEF,"\xd7\x6d\x30\xf7"); // Test for defect raised in 6.1 (EXT-5HLEKN)
+_LIT8(KShortUnicode1, "\xff\xfe\x29\x00\x3d\x00");
+_LIT8(KShortUnicode2, "\xff\xfe\x41\x00\x61\x00");
 
 /**
 * Work around for DEF063276.
@@ -683,6 +685,8 @@ LOCAL_C void DoE32MainL()
 	TestAutodetectL(*arrayOfCharacterSetsAvailable,GB2312Corrupt,KCharacterSetIdentifierGb18030);
 	TestAutodetectL(*arrayOfCharacterSetsAvailable,KISO, KCharacterSetIdentifierIso88591);
 	TestAutodetectL(*arrayOfCharacterSetsAvailable,KSomeISO, KCharacterSetIdentifierIso88591);
+	TestAutodetectL(*arrayOfCharacterSetsAvailable,KShortUnicode1,KCharacterSetIdentifierUnicodeLittle);
+	TestAutodetectL(*arrayOfCharacterSetsAvailable,KShortUnicode2,KCharacterSetIdentifierUnicodeLittle);
 
 	// INC086007 (and PDEF088039) - start
 	_LIT8(Kexport,"https://espmg002.ext.nokia.com/push/unifi \nhttps://nam.ext.nokia.com/ \n\nhttp://gutenberg.spiegel.de/doyle/napoleon/Druckversion_napoleon.htm\nhttp://gutenberg.spiegel.de/doyle/baskervi/Druckversion_baske-de.htm\n\nhttp://www.heise.de/newsticker/heise.rdf\nhttp://www.teltarif.de/db/news.rss\nhttp://www.linuxdevices.com/backend/headlines10.rdf\nhttp://www.dpreview.com/news/dpr.rdf\nhttp://planet.maemo.org/rss10.xml\nhttp://www.macnews.de/index.php?_mcnpage=71148\nhttp://www.tecchannel.de/news/feed/complete.rss\nhttp://www.n-tv.de/23.rss\nhttp://www.br-online.de/global/export/dynRdf.jsp?channel=\nhttp://www.wdr.de/xml/newsticker.rdf\nhttp://www.tagesschau.de/newsticker.rdf\nhttp://www.n24.de/rss/?rubrik=home\nhttp://www.n24.de/rss/?rubrik=wirtschaft\nhttp://www.n24.de/rss/?rubrik=politik\nhttp://www.welt.de/z/newsticker/ticker_welt.xml\nhttp://www.ftd.de/static/ticker/ftd-topnews.rdf\nhttp://www.ftd.de/static/container/rss/ftd-rss-1200.rdf\nhttp://www.ftd.de/static/container/rss/ftd-rss-200.rdf\nhttp://www.ftd.de/static/container/rss/ftd-rss-300.rdf\nhttp://rss.cnn.com/rss/cnn_world.rss\nhttp://rss.cnn.com/rss/cnn_tech.rss\nhttp://rss.cnn.com/rss/money_topstories.rss\nhttp://rss.cnn.com/rss/cnn_space.rss\nhttp://news.yandex.ru/index.rss\nhttp://news.yandex.ru/world.rss\nhttp://news.yandex.ru/politics.rss\nhttp://news.yandex.ru/science.rss\nhttp://www.jpost.com/servlet/Satellite?pagename=JPost/Page/RSS&amp;cid=1123495333389\n\n\n\n");

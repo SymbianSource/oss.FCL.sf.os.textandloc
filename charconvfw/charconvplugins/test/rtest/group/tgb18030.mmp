@@ -33,3 +33,4 @@ LIBRARY			charconv.lib
 LIBRARY			hal.lib
 
 SMPSAFE
+//RTEST

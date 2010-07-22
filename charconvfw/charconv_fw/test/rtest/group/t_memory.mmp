@@ -31,3 +31,4 @@ LIBRARY			euser.lib
 LIBRARY			charconv.lib
 
 SMPSAFE
+//RTEST

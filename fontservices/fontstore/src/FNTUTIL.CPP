@@ -18,9 +18,16 @@
 
 #include "FNTSTD.H"
 
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "FNTUTILTraces.h"
+#endif
+
+
 GLDEF_C void Panic(TFntStorePanic aPanic)
 	{
 	_LIT(KFntStorePanicCategory,"FntStore");
+	OstTrace1( TRACE_FATAL, _PANIC, "::Panic;aPanic=%x", ( TUint )&( aPanic ) );	
 	User::Panic(KFntStorePanicCategory,aPanic);
 	}
 

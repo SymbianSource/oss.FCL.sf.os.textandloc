@@ -35,6 +35,12 @@
 #include <graphics/openfontrasterizer.h>
 #include <graphics/openfontconstants.h>
 
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "FNTSTORETraces.h"
+#endif
+
+
 static const TUint32 KOutlineGlyphIdHashMask = 0x0000ffff;
 static const TUint32 KOutlineFileUidHashMask = 0x00ff0000;
 static const TUint32 KOutlineFaceIndexHashMask = 0x0f000000;
@@ -1060,6 +1066,7 @@ void CBitmapFont::InstallOpenFontShaper(COpenFont* aOpenFont, CShaper::TInput& a
 		if (err == KErrNone)
 			{
 			aOpenFont->SetShaper(shaper);
+			OstTrace0( TRACE_IMPORTANT, CBITMAPFONT_INSTALLOPENFONTSHAPER, "A shaper is installed" );
 			break;
 			}
 		}
@@ -1079,7 +1086,11 @@ EXPORT_C void CBitmapFont::DeleteShape(TInt aSessionHandle,TShapeHeader* aHeader
 		//delete any cache entry that is not referenced at all
 		TInt ret=OpenFont()->DecrementCachedRefCount(aSessionHandle,aHeader);
 		//panic in debug mode if trying to delete something that is not there.
-		__ASSERT_DEBUG(ret==KErrNone || ret==KErrNotFound, User::Invariant());
+		if ((ret != KErrNone) && (ret != KErrNotFound))
+		    {
+		    OstTrace1( TRACE_FATAL, CBITMAPFONT_DELETESHAPE, "OpenFont()->DecrementCachedRefCount() return %d, Invariant", ret);
+		    __ASSERT_DEBUG(0, User::Invariant());
+		    }
 		}
 	}
 
@@ -1104,7 +1115,11 @@ TInt CBitmapFont::Height(TInt aNum) const
 CFontBitmap* CBitmapFont::FontBitmap() const
 /** This member is private and not intended for use. */
 	{
-    __ASSERT_ALWAYS(!IsOpenFont(),Panic(EFntTypefaceHasNoFontBitmaps));
+	if (IsOpenFont())
+	    {
+	    OstTrace0( TRACE_FATAL, CBITMAPFONT_FONTBITMAP, "Panic(EFntTypefaceHasNoFontBitmaps)" );
+	    __ASSERT_ALWAYS(0, Panic(EFntTypefaceHasNoFontBitmaps));
+	    }
     if(iFontBitmapOffset)
         return reinterpret_cast<CFontBitmap*>(reinterpret_cast<TInt>(this)+iFontBitmapOffset);
     else
@@ -2326,9 +2341,7 @@ void ReadFromFileL(RFile& aFile, TDes8& aDes, TInt aLength)
 	User::LeaveIfError(aFile.Read(aDes, aLength));
 	if (aDes.Length() != aLength)
 		{
-#ifdef _DEBUG
-		RDebug::Print(_L("EOF reading structure from font file\n"));
-#endif
+		OstTrace0( TRACE_DUMP, _READFROMFILEL, "EOF reading structure from font file, Leave(KErrCorrupt)" );
 		User::Leave(KErrCorrupt);
 		}
 	}
@@ -2343,10 +2356,8 @@ TUint TtfTableTagFromBufferL(TDes8& aDes)
 		// must be ASCII character between 32 & 126 inclusive (per Apple's TTF specification document)
 		if ( (temp < 32) || (temp > 126) )
 			{
+			OstTrace1( TRACE_DUMP, _TTFTABLETAGFROMBUFFERL, "invalid ASCII character (0x%x) in ttf table tag, Leave(KErrCorrupt)", temp);
 			User::Leave(KErrCorrupt);
-#ifdef _DEBUG
-			RDebug::Print(_L("invalid ASCII character (0x%x) in ttf table tag\n"), temp);
-#endif
 			}
 		value = (value << 8) | temp;
 		}
@@ -2357,10 +2368,7 @@ TUint TtfTableTagFromBufferL(TDes8& aDes)
 */
 void CFontStore::SanityCheckForTtfL(RFile& aFontFile, TUint aFontFileSize, TBool aStrictChecking)
 	{
-#if defined(_DEBUG)
-	RDebug::Print(_L("TTF File Size is %u (0x%x) bytes\n"), aFontFileSize, aFontFileSize);
-#endif
-
+	OstTraceExt2( TRACE_DUMP, CFONTSTORE_SANITYCHECKFORTTFL, "TTF File Size is %u (0x%x) bytes", aFontFileSize, aFontFileSize );
 	// check the Offset Table at the start of the file
 	TBuf8<16>	fileBuffer;
 
@@ -2374,9 +2382,7 @@ void CFontStore::SanityCheckForTtfL(RFile& aFontFile, TUint aFontFileSize, TBool
 
 	if ( (numTables == 0) || (numTables & 0xF0000000) || (tableStart > aFontFileSize) )
 		{
-#ifdef _DEBUG
-		RDebug::Print(_L("# of tables (%i) in ttf is invalid\n"), numTables);
-#endif
+		OstTrace1( TRACE_DUMP, DUP1_CFONTSTORE_SANITYCHECKFORTTFL, "# of tables (%d) in ttf is invalid, Leave(KErrCorrupt)", numTables );
 		User::Leave(KErrCorrupt);
 		}
 
@@ -2393,10 +2399,8 @@ void CFontStore::SanityCheckForTtfL(RFile& aFontFile, TUint aFontFileSize, TBool
 	if ( (searchRange < 16) || (entrySelector > 24)
 		|| (aStrictChecking && (rangeShift != ( (numTables << 4) - searchRange )) ) )
 		{
-#ifdef _DEBUG
-		RDebug::Print(_L("searchRange (0x%x), entrySelector (0x%x) or rangeShift (0x%x) invalid for numTables (%i)\n"), 
-			searchRange, entrySelector, rangeShift, numTables);
-#endif
+		OstTraceExt4( TRACE_DUMP, DUP2_CFONTSTORE_SANITYCHECKFORTTFL, "searchRange (0x%x), entrySelector (0x%x) or rangeShift (0x%x) invalid for numTables (%d), Leave(KErrCorrupt)", 
+		        searchRange, entrySelector, rangeShift, numTables );
 		User::Leave(KErrCorrupt);
 		}
 
@@ -2404,9 +2408,8 @@ void CFontStore::SanityCheckForTtfL(RFile& aFontFile, TUint aFontFileSize, TBool
 	TUint exp = 1 << entrySelector;		// log to exponent
 	if ( (numTables < exp) || (numTables > (exp << 1)) )
 		{
-#ifdef _DEBUG
-		RDebug::Print(_L("entrySelector (0x%x) wrong for numTables(%i)\n"), entrySelector, numTables);
-#endif
+		OstTraceExt2( TRACE_DUMP, DUP3_CFONTSTORE_SANITYCHECKFORTTFL, "entrySelector (0x%x) wrong for numTables(%d), Leave(KErrCorrupt)", 
+		        entrySelector, numTables );
 		User::Leave(KErrCorrupt);
 		}
 
@@ -2433,10 +2436,8 @@ void CFontStore::SanityCheckForTtfL(RFile& aFontFile, TUint aFontFileSize, TBool
 		// table Tags must be unique & in order
 		if (tableTag <= lastTableTag)
 			{
-#ifdef _DEBUG
-			RDebug::Print(_L("ttf table tag ('%c%c%c%c') is out of order\n"), 
-				tableTag >> 24, (tableTag >> 16) & 0x7F, (tableTag >> 8) & 0x7F, tableTag & 0x7F);
-#endif
+			OstTraceExt4( TRACE_DUMP, DUP4_CFONTSTORE_SANITYCHECKFORTTFL, "ttf table tag ('%c%c%c%c') is out of order, Leave(KErrCorrupt)",
+			        tableTag >> 24, (tableTag >> 16) & 0x7F, (tableTag >> 8) & 0x7F, tableTag & 0x7F);
 			User::Leave(KErrCorrupt);
 			}
 
@@ -2446,9 +2447,8 @@ void CFontStore::SanityCheckForTtfL(RFile& aFontFile, TUint aFontFileSize, TBool
 		TInt end = length + offset;
 		if ( (offset & 3) || (offset < tableStart) || (length == 0) || (end < offset) || (end > aFontFileSize))
 			{
-#ifdef _DEBUG
-			RDebug::Print(_L("offset (0x%x) or length (0x%x) are bad\n"), offset, length);
-#endif		
+			OstTraceExt2( TRACE_DUMP, DUP5_CFONTSTORE_SANITYCHECKFORTTFL, "offset (0x%x) or length (0x%x) are bad, Leave(KErrCorrupt)",
+			        offset, length );
 			User::Leave(KErrCorrupt);
 			}
 
@@ -2469,10 +2469,8 @@ void CFontStore::SanityCheckForTtfL(RFile& aFontFile, TUint aFontFileSize, TBool
 	// for single font files highestTableEnd & totalFontSize should be the same
 	if (highestTableEnd != totalFontSize)
 		{
-#ifdef _DEBUG
-		RDebug::Print(_L("Total Font Size (0x%x) is different from end of the last table (0x%x)\n"), 
-				highestTableEnd, totalFontSize);
-#endif
+		OstTraceExt2( TRACE_DUMP, DUP6_CFONTSTORE_SANITYCHECKFORTTFL, "Total Font Size (0x%x) is different from end of the last table (0x%x), Leave(KErrCorrupt)",
+		        highestTableEnd, totalFontSize);
 		User::Leave(KErrCorrupt);
 		}
 	}
@@ -3624,7 +3622,9 @@ TInt CFontStore::GetNearestFontInPixels(
 			}
 		else
 			{
-			__ASSERT_DEBUG(EFalse, Panic(EFntNoFontFound));
+			OstTraceExt2( TRACE_FATAL, CFONTSTORE_GETNEARESTFONTINPIXELS, "GetNearestOpenFontInPixelsL() return %d, openFont is 0x%x, Panic(EFntNoFontFound)",
+			        error, (unsigned int)openFont);
+			__ASSERT_DEBUG(0, Panic(EFntNoFontFound));
 			return KErrGeneral;
 			}
 		}
@@ -3774,8 +3774,13 @@ EXPORT_C void CFontStore::TypefaceSupport(TTypefaceSupport &aTypefaceSupport,TIn
 		aTypefaceSupport = *iOpenFontTypefaceSupportList[aTypefaceIndex - iTypefaceList.Count()]->TypefaceSupport();
 		return;
 		}
-
-	__ASSERT_DEBUG((aTypefaceIndex >= 0) && (aTypefaceIndex < iTypefaceList.Count()),Panic(EFntTypefaceIndexOutOfRange));
+	
+	if (!((aTypefaceIndex >= 0) && (aTypefaceIndex < iTypefaceList.Count())))
+	    {
+	    OstTraceExt2( TRACE_FATAL, CFONTSTORE_TYPEFACESUPPORT, "aTypefaceIndex=%d, iTypefaceList.Count()=%d Panic(EFntTypefaceIndexOutOfRange)",
+	            aTypefaceIndex, iTypefaceList.Count());
+	    __ASSERT_DEBUG(0,Panic(EFntTypefaceIndexOutOfRange));
+	    }
 	TTypeface* typeface = iTypefaceList[aTypefaceIndex];
 	aTypefaceSupport.iTypeface = *typeface;
 	TInt count = iTypefaceFontBitmapList.Count();
@@ -3933,7 +3938,11 @@ void CFontStore::InternalizeFontStoreFileL(CFontStoreFile* aFontStoreFile, TInt 
 			TUid uid;
 			stream >> uid;
  			CFontBitmap* fontbitmap = GetFontBitmapById(uid);
-			__ASSERT_DEBUG(fontbitmap,Panic(EFntFontBitmapNotLoaded));
+ 			if (!fontbitmap)
+ 			    {
+ 			    OstTrace0( TRACE_FATAL, CFONTSTORE_INTERNALIZEFONTSTOREFILEL, "Panic(EFntFontBitmapNotLoaded)" );
+ 			   __ASSERT_DEBUG(0,Panic(EFntFontBitmapNotLoaded));
+ 			    }
 #ifndef _DEBUG
 			User::LeaveIfNull(fontbitmap);
 #endif			
@@ -3992,7 +4001,11 @@ void CFontStore::InternalizeFontStoreFileL(CFontStoreFile* aFontStoreFile, TInt 
 TTypeface* CFontStore::GetNearestTypeface(const TTypeface& aTypeface) const
 	{
 	TInt index,count = iTypefaceList.Count();
-	__ASSERT_DEBUG(count>0,Panic(EFntNoTypefaces));
+	if (count <= 0)
+	    {
+	    OstTrace1( TRACE_FATAL, CFONTSTORE_GETNEARESTTYPEFACE, "count=%d, Panic(EFntNoTypefaces)", count );
+	    __ASSERT_DEBUG(0,Panic(EFntNoTypefaces));
+	    }
 	for (index=0; (index<count) && aTypeface.iName.CompareF(iTypefaceList[index]->iName); index++)	  
 		{ // tries matching	typeface name
 		}
@@ -4032,14 +4045,22 @@ TTypefaceFontBitmap CFontStore::GetNearestTypefaceFontBitmap(const TFontSpec& aF
 	{
 	TTypefaceFontBitmap typefacefontbitmap;
 	TInt count = iTypefaceFontBitmapList.Count();
-	__ASSERT_DEBUG(count > 0, Panic(EFntNoTypefaceFontBitmaps));
+	if (count <= 0)
+	    {
+	    OstTrace1( TRACE_FATAL, CFONTSTORE_GETNEARESTTYPEFACEFONTBITMAP, "count=%d, Panic(EFntNoTypefaceFontBitmaps)", count );
+	    __ASSERT_DEBUG(0, Panic(EFntNoTypefaceFontBitmaps));
+	    }
 	TInt i;
 	TInt j;
 	// Assumes there is at least one fontbitmap per typeface
 	for (i = 0; (i < count) && !(aFontSpecInPixels.iTypeface == *iTypefaceFontBitmapList[i].iTypeface); i++)
 		{  // Finds first fontbitmap with correct typeface
 		}
-	__ASSERT_DEBUG(i < count, Panic(EFntTypefaceHasNoFontBitmaps));
+	if (i >= count)
+	    {
+	    OstTraceExt2( TRACE_FATAL, DUP1_CFONTSTORE_GETNEARESTTYPEFACEFONTBITMAP, "i=%d, count=%d, Panic(EFntTypefaceHasNoFontBitmaps)", i, count );
+	    __ASSERT_DEBUG(i < count, Panic(EFntTypefaceHasNoFontBitmaps));
+	    }
 	TTypeface* typeface = iTypefaceFontBitmapList[i].iTypeface;
 	TInt height = 0;
 	if (aMaxHeight > 0)
@@ -4191,7 +4212,11 @@ TInt CFontStore::VerticalPixelsToTwips(TInt aPixelHeight) const
 // but with a sanity-check cutoff to round up past two-thirds
 TInt CFontStore::VerticalTwipsToPixels(TInt aTwipsHeight) const
 	{
-	__ASSERT_DEBUG(iKPixelHeightInTwips,Panic(EFntKPixelHeightInTwipsZero));
+	if (!iKPixelHeightInTwips)
+	    {
+	    OstTrace0( TRACE_FATAL, CFONTSTORE_VERTICALTWIPSTOPIXELS, "Panic(EFntKPixelHeightInTwipsZero)" );
+	    __ASSERT_DEBUG(0, Panic(EFntKPixelHeightInTwipsZero));
+	    }
 	return ((aTwipsHeight * 1000) + (iKPixelHeightInTwips / 3)) / iKPixelHeightInTwips;  // Rounds down below two-thirds of a twip
 	}
 

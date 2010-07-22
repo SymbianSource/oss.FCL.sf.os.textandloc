@@ -34,3 +34,4 @@ LIBRARY			charconv.lib
 LIBRARY			ecom.lib 
 
 SMPSAFE
+//RTEST

@@ -16,7 +16,7 @@
 */
 
 
-#include "Ecom/RegistryInfo.rh"
+#include "ecom/registryinfo.rh"
 
 RESOURCE REGISTRY_INFO KSC5601Info
     {

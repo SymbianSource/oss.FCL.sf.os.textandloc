@@ -26,6 +26,11 @@
 #include <frmtlay.h>
 #include "tmreformat.h"
 #include "frmUtils.h"
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "TMLAYOUTTraces.h"
+#endif
+
 
 #define UNUSED_VAR(a) a = a
 
@@ -1061,6 +1066,10 @@ is too large to be within the text.
 EXPORT_C TBool CTmTextLayout::GetDisplayedTextL(TInt aLineNumber, TDes& aText,
 	TInt& aNeeded) const
 	{
+	if (!iSource)
+	    {
+	    OstTrace0( TRACE_FATAL, CTMTEXTLAYOUT_GETDISPLAYEDTEXTL, "ENoSource" );
+	    }
 	__ASSERT_ALWAYS(iSource, TmPanic(ENoSource));
 	RTmGeneralInterpreter interpreter(*iSource, TTmInterpreterParam(*this));
 	CleanupClosePushL(interpreter);

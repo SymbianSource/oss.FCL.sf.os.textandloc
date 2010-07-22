@@ -20,6 +20,11 @@
 #include "FRMCONST.H"
 #include "FORMUTIL.H"
 
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "FRMSCRNDTraces.h"
+#endif
+
 #ifdef SYMBIAN_ENABLE_SPLIT_HEADERS
 #include "FRMCONST_INTERNAL.H"
 #include "FRMCONST_PARTNER.H"
@@ -104,6 +109,10 @@ void RScreenDisplay::CreateContextL()
 	//Create and activate the main Graphics Context
 	//
 	{
+	if (iGc)
+	    {
+	    OstTrace0( TRACE_DUMP, RSCREENDISPLAY_CREATECONTEXTL, "EFGcNotSet" );
+	    }
 	__ASSERT_DEBUG(iGc==NULL,FormPanic(EFGcNotSet));
 	User::LeaveIfError(iGd->CreateBitmapContext(iGc));
 	if (iWin)

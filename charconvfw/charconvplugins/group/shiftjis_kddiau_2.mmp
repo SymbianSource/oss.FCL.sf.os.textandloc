@@ -35,7 +35,7 @@ OS_LAYER_SYSTEMINCLUDE_SYMBIAN
 USERINCLUDE		../src/inc
 
 SOURCEPATH		../src/plugins
-SOURCE			shiftjis_2.cpp
+SOURCE			SHIFTJIS_2.CPP
 
 SOURCEPATH		../resource
 START RESOURCE	shiftjis.rss

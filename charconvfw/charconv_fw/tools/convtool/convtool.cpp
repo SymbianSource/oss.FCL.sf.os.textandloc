@@ -30,6 +30,14 @@
 
 #undef BIG_ENDIAN
 
+#if (defined(__MSVCRT__) || defined(_MSC_VER))
+//#define _stricmp  _stricmp
+//#define _strnicmp _strnicmp
+#else // linux 
+#define _stricmp  strcasecmp
+#define _strnicmp strncasecmp
+#endif
+
 const int KVersionNumber=025;
 const int KLargeNumber=1000000;
 
@@ -346,7 +354,7 @@ void FlushAndCloseFiles(FILE* aInputFile, FILE* aOutputFile)
 		}
 	}
 
-void main(int aArgc, char* aArgv[])
+int main(int aArgc, char* aArgv[])
 	{
 	int outputByteOrderMark=0;
 	TByteOrder unicodeByteOrder=EByteOrderUnspecified;
@@ -362,6 +370,6 @@ void main(int aArgc, char* aArgv[])
 	HandleByteOrderMarks(outputByteOrderMark, unicodeByteOrder, inputEncoding, outputEncoding, inputFile, outputFile);
 	DoConversion(unicodeByteOrder, inputEncoding, outputEncoding, inputFile, outputFile);
 	FlushAndCloseFiles(inputFile, outputFile);
-	exit(0);
+	return 0;
 	}
 

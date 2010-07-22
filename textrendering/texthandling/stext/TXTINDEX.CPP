@@ -27,6 +27,11 @@
 #include "TXTSTYLE.H"
 #include "TXTINDEX.H"
 
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "TXTINDEXTraces.h"
+#endif
+
 #ifdef SYMBIAN_ENABLE_SPLIT_HEADERS
 #include "TXTFMLYR_INTERNAL.H"
 #include "TXTSTYLE_INTERNAL.H"
@@ -70,6 +75,10 @@ DLLEXPORT_C void CRichTextIndex::__DbgTestInvariant()const
 		// ASSERT: The basedOn link is valid.
 		CFormatLayer* thisLayer=(*iParaIx)[para].iParaAttribs->iParaFormat;
 		CFormatLayer* base=CONST_CAST(CFormatLayer*,thisLayer->SenseBase());
+		if (base==NULL)
+		    {
+		    OstTrace0( TRACE_DUMP, CRICHTEXTINDEX_DBGTESTINVARIANT, "base==NULL" );
+		    }
 		__ASSERT_DEBUG(base!=NULL,User::Invariant());
 		if ((*iParaIx)[para].iParaAttribs->iRefCount>0)
 			numberOfReferencesToSharedList++;
@@ -83,7 +92,15 @@ DLLEXPORT_C void CRichTextIndex::__DbgTestInvariant()const
 				const RPhraseAttribsEntry* phrase=&(*iPhraseIx)[currentPhraseElement];
 				CCharFormatLayer* charFormatLayer=phrase->CharFormat();
 				// ASSERT: The basedOn link is valid.
+				if (charFormatLayer->SenseBase()==NULL)
+				    {
+				    OstTrace0( TRACE_DUMP, DUP1_CRICHTEXTINDEX_DBGTESTINVARIANT, "charFormatLayer->SenseBase()==NULL" );
+				    }
 				__ASSERT_DEBUG(charFormatLayer->SenseBase()!=NULL,User::Invariant());
+				if (TInt(charFormatLayer->SenseBase())<=0x1000)
+				    {
+				    OstTrace0( TRACE_DUMP, DUP2_CRICHTEXTINDEX_DBGTESTINVARIANT, "TInt(charFormatLayer->SenseBase())<=0x1000" );
+				    }
 				__ASSERT_DEBUG(TInt(charFormatLayer->SenseBase())>0x1000,User::Invariant());
 				sumOfPhraseLengths+=(*iPhraseIx)[currentPhraseElement].Length();
 				if ((*iPhraseIx)[currentPhraseElement].Length()==0)
@@ -94,16 +111,34 @@ DLLEXPORT_C void CRichTextIndex::__DbgTestInvariant()const
 				{
 				CCharFormatLayer* charFormatLayer=(*iParaIx)[para].iParaAttribs->iCharFormat;
 				// ASSERT: The basedOn link is valid.
+				if (charFormatLayer->SenseBase()==NULL)
+				    {
+				    OstTrace0( TRACE_DUMP, DUP3_CRICHTEXTINDEX_DBGTESTINVARIANT, "charFormatLayer->SenseBase()==NULL" );
+				    }
 				__ASSERT_DEBUG(charFormatLayer->SenseBase()!=NULL,User::Invariant());
 				sumOfPhraseLengths+=(*iParaIx)[para].iLength;
 				}
 			}
+		if (sumOfPhraseLengths!=paragraphLength)
+		    {
+		    OstTrace0( TRACE_DUMP, DUP4_CRICHTEXTINDEX_DBGTESTINVARIANT, "sumOfPhraseLengths!=paragraphLength" );
+		    }
 		__ASSERT_DEBUG(sumOfPhraseLengths==paragraphLength,User::Invariant());
 		}
 // ASSERT: We have no unexpected phrases left over
+	if (currentPhraseElement!=-1 &&
+            currentPhraseElement!=iPhraseIx->Count())
+	    {
+	    OstTrace0( TRACE_DUMP, DUP5_CRICHTEXTINDEX_DBGTESTINVARIANT, "We have no unexpected phrases left over" );
+	    }
 	__ASSERT_DEBUG(currentPhraseElement==-1 ||
 					currentPhraseElement==iPhraseIx->Count(),User::Invariant());
 // ASSERT: There is either zero(0) or one(1) zero length phrase in the whole index
+	if (!((zeroLengthPhraseCount==0) ||
+            (zeroLengthPhraseCount==1 && iPendingNewPhrasePos!=EInsertCharFormatReset)))
+	    {
+	    OstTrace0( TRACE_DUMP, DUP6_CRICHTEXTINDEX_DBGTESTINVARIANT, "There is either zero(0) or one(1) zero length phrase in the whole index" );
+	    }
 	__ASSERT_DEBUG( (zeroLengthPhraseCount==0) ||
 					(zeroLengthPhraseCount==1 && iPendingNewPhrasePos!=EInsertCharFormatReset),
 					User::Invariant());
@@ -117,6 +152,11 @@ DLLEXPORT_C void CRichTextIndex::__DbgTestInvariant()const
 		while ((currentSharedPara=iterator++)!=NULL)
 			totalReferenceCount+=currentSharedPara->iRefCount;
 		}
+	if ((numberOfReferencesToSharedList!=totalReferenceCount) &&
+            (numberOfReferencesToSharedList!=totalReferenceCount-1))
+	    {
+	    OstTrace0( TRACE_DUMP, DUP7_CRICHTEXTINDEX_DBGTESTINVARIANT, "Invariant" );
+	    }
 	__ASSERT_DEBUG((numberOfReferencesToSharedList==totalReferenceCount) ||
 				   (numberOfReferencesToSharedList==totalReferenceCount-1),User::Invariant());
 // ASSERT: iPictureCount corresponds to the number of pictures in the stored in the index.
@@ -126,6 +166,10 @@ DLLEXPORT_C void CRichTextIndex::__DbgTestInvariant()const
 		picCount+=((*iPhraseIx)[item].IsPicturePhrase())
 					? 1
 					: 0;
+	if (iPictureCount!=picCount)
+	    {
+	    OstTrace0( TRACE_DUMP, DUP8_CRICHTEXTINDEX_DBGTESTINVARIANT, "Invariant" );
+	    }
 	__ASSERT_DEBUG(iPictureCount==picCount,User::Invariant());
 #endif
 	}
@@ -186,6 +230,10 @@ CRichTextIndex::~CRichTextIndex()
 	TInt count;
 	if (iPhraseIx)
 		{// Destroy the phrase index and its contents.
+		if (!iParaIx)
+		    {
+		    OstTrace0( TRACE_FATAL, CRICHTEXTINDEX_CRICHTEXTINDEX, "EPhraseIxPresentWithNoParaIx" );
+		    }
 		__ASSERT_ALWAYS(iParaIx,Panic(EPhraseIxPresentWithNoParaIx));
 		count=iPhraseIx->Count();
 		for (TInt offset=0;offset<count;offset++)
@@ -211,6 +259,10 @@ CRichTextIndex::~CRichTextIndex()
 	TDblQueIter<CParaAttribs> iterator(iSharedParaQueHead);
 	while ((currentSharedPara=iterator++)!=NULL)
 		currentSharedPara->Release(currentSharedPara->iRefCount);
+	if (!iSharedParaQueHead.IsEmpty())
+	    {
+	    OstTrace0( TRACE_FATAL, DUP1_CRICHTEXTINDEX_CRICHTEXTINDEX, "ERichTextIndexIntegrityErr" );
+	    }
 	__ASSERT_ALWAYS(iSharedParaQueHead.IsEmpty(),Panic(ERichTextIndexIntegrityErr));
 	}
 
@@ -397,6 +449,10 @@ void CRichTextIndex::InsertL(TInt aPos,const TDesC& aBuf,const CParaFormatLayer&
 		{// For each para inserted between the fist and last
 		TParaAttribsEntry& para=(*iParaIx)[pastePos.iParaElement+paraItem];
 		TInt length=ParaLengthFromBuffer(buf)+1;
+		if (length==KErrNotFound)
+		    {
+		    OstTrace0( TRACE_DUMP, CRICHTEXTINDEX_INSERTL, "EInsertEmbeddedParaErr" );
+		    }
 		__ASSERT_DEBUG(length!=KErrNotFound,Panic(EInsertEmbeddedParaErr));
 		para.iLength=length;
 		buf.Set(buf.Right(buf.Length()-length));
@@ -452,6 +508,10 @@ void CRichTextIndex::SplitParagraphAtPastePosL(TLogicalPosition& aPastePos,TLogi
 			current.iPhrase->AdjustLength(-1);  // collapse phrase by right amount
 			if (insertPendingPos!=EInsertCharFormatReset)
 				{
+				if (current.iPhrase->Length()!=0)
+				    {
+				    OstTrace0( TRACE_DUMP, CRICHTEXTINDEX_SPLITPARAGRAPHATPASTEPOSL, "Invariant" );
+				    }
 				__ASSERT_DEBUG(current.iPhrase->Length()==0,User::Invariant());
 				iPendingNewPhrasePos=insertPendingPos;
 				}
@@ -459,9 +519,14 @@ void CRichTextIndex::SplitParagraphAtPastePosL(TLogicalPosition& aPastePos,TLogi
 				{
 				RemoveFromPhraseIx(iPos.iPhraseElement,1);
 				current.iParaAttribs->iPhraseCount--;
+				if (current.iParaAttribs->PhraseCount()<=1)
+				    {
+				    OstTrace0( TRACE_DUMP, DUP1_CRICHTEXTINDEX_SPLITPARAGRAPHATPASTEPOSL, "Invariant" );
+				    }
 				__ASSERT_DEBUG(current.iParaAttribs->PhraseCount()>1,User::Invariant());
 				}
 			}
+		OstTrace1( TRACE_DUMP, DUP2_CRICHTEXTINDEX_SPLITPARAGRAPHATPASTEPOSL, "Leave code=%d", ret );
 		User::Leave(ret);
 		}
 	if (insertPendingPos != EInsertCharFormatReset)
@@ -490,8 +555,16 @@ void CRichTextIndex::InsertL(TInt aPos,const TPictureHeader& aPicHdr, TBool& aPi
 
 	RebalanceIndex();
 // ASSERT: A valid picture header, referencing a valid picture has been inserted.
+	if (!aPicHdr.iPicture.IsPtr() || aPicHdr.iPicture.AsPtr()==NULL)
+	    {
+	    OstTrace0( TRACE_FATAL, DUP1_CRICHTEXTINDEX_INSERTL, "EInsertNullPicHdrData" );
+	    }
 	__ASSERT_ALWAYS(aPicHdr.iPicture.IsPtr() && aPicHdr.iPicture.AsPtr()!=NULL,Panic(EInsertNullPicHdrData));
 // ASSERT: The current insert pos hasn't been changed without cancelling SetInsertCharFormat.
+	if ((iPendingNewPhrasePos!=EInsertCharFormatReset) && (aPos!=iPendingNewPhrasePos))
+	    {
+	    OstTrace0( TRACE_FATAL, DUP2_CRICHTEXTINDEX_INSERTL, "ESetInsertCharFormatIntegrityErr" );
+	    }
 	__ASSERT_ALWAYS((iPendingNewPhrasePos==EInsertCharFormatReset) || (aPos==iPendingNewPhrasePos),
 					Panic(ESetInsertCharFormatIntegrityErr));
 	if (iPendingNewPhrasePos!=EInsertCharFormatReset)
@@ -516,6 +589,10 @@ void CRichTextIndex::InsertL(TInt aPos,const TPictureHeader& aPicHdr, TBool& aPi
 		}
 	GetCurrentRecords(current);
 //	ASSERT: The reclaim succeeded.  We must always end up with a PhraseIx-not constant char format.
+	if (current.iPhrase==NULL)
+	    {
+	    OstTrace0( TRACE_DUMP, DUP3_CRICHTEXTINDEX_INSERTL, "EReclaimShareError" );
+	    }
 	__ASSERT_DEBUG(current.iPhrase!=NULL,Panic(EReclaimShareError));
 	TRAPD(ret1,
 	SplitPhraseL(aPos));  // Phrase may not be split if at boundary.
@@ -771,6 +848,10 @@ TBool CRichTextIndex::DeleteParagraph(TInt aPos,TInt aLength)
 	CancelInsertCharFormat();
 	ScanToPosition(aPos,EScanToPositionAbsolute,&iLastUsed);
 
+	if (iPos.iParaElementOffset!=0)
+	    {
+	    OstTrace0( TRACE_DUMP, CRICHTEXTINDEX_DELETEPARAGRAPH, "EDeleteParagraphInvalidStartValue" );
+	    }
 	__ASSERT_DEBUG(iPos.iParaElementOffset==0,Panic(EDeleteParagraphInvalidStartValue));
 
 	TIndexDeleteInfo info;
@@ -813,6 +894,10 @@ void CRichTextIndex::DeleteFromParagraph(TInt aPos,TInt aLength)
 	TInt startParaLength=current.iParaEntry->iLength;
 	TInt lengthRemainingInPara=startParaLength-iPos.iParaElementOffset;
 
+	if (aLength>=lengthRemainingInPara)
+	    {
+	    OstTrace0( TRACE_FATAL, CRICHTEXTINDEX_DELETEFROMPARAGRAPH, "EDeleteFromParagraphInvalidRange" );
+	    }
 	__ASSERT_ALWAYS(aLength<lengthRemainingInPara,Panic(EDeleteFromParagraphInvalidRange));
 	}
 #endif
@@ -1028,6 +1113,10 @@ length phrase, ready to accept the pending content of the specified format.
 */
 void CRichTextIndex::SetInsertCharFormatL(const TCharFormatX& aFormat,const TCharFormatXMask& aMask,TInt aPos)
 	{
+	if (InsertCharFormatIsActive() && aPos!=iPendingNewPhrasePos)
+	    {
+	    OstTrace0( TRACE_FATAL, CRICHTEXTINDEX_SETINSERTCHARFORMATL, "ESetInsertCharFormatIntegrityErr" );
+	    }
 	__ASSERT_ALWAYS(!InsertCharFormatIsActive() || aPos==iPendingNewPhrasePos,
 					Panic(ESetInsertCharFormatIntegrityErr));
 	if (InsertCharFormatIsActive())
@@ -1039,6 +1128,10 @@ void CRichTextIndex::SetInsertCharFormatL(const TCharFormatX& aFormat,const TCha
 void CRichTextIndex::NewInsertCharFormatL(const TCharFormatX& aFormat,
 	const TCharFormatXMask& aMask, TInt aPos)
 	{
+	if (InsertCharFormatIsActive())
+	    {
+	    OstTrace0( TRACE_FATAL, CRICHTEXTINDEX_NEWINSERTCHARFORMATL, "ESetInsertCharFormatIntegrityErr" );
+	    }
 	__ASSERT_ALWAYS(!InsertCharFormatIsActive(),
 		Panic(ESetInsertCharFormatIntegrityErr));
 	ScanToPosition(aPos,EScanToPositionMatchLeft);
@@ -1071,6 +1164,7 @@ void CRichTextIndex::NewInsertCharFormatL(const TCharFormatX& aFormat,
 			if (PhraseSplit())
 				MergePhrases(aPos);
 			}
+		OstTrace0( TRACE_FATAL, DUP1_CRICHTEXTINDEX_NEWINSERTCHARFORMATL, "LeaveNoMemory" );
 		User::LeaveNoMemory();
 		}
 	iPendingNewPhrasePos=aPos;
@@ -1089,11 +1183,19 @@ void CRichTextIndex::UpdateInsertCharFormatL(const TCharFormatX& aFormat,
 
 CCharFormatLayer* CRichTextIndex::GetCurrentInsertCharFormat()
 	{
+	if (!InsertCharFormatIsActive())
+	    {
+	    OstTrace0( TRACE_DUMP, CRICHTEXTINDEX_GETCURRENTINSERTCHARFORMAT, "ESetInsertCharFormatIntegrityErr" );
+	    }
 	__ASSERT_DEBUG(InsertCharFormatIsActive(),
 		Panic(ESetInsertCharFormatIntegrityErr));
 	ScanToPosition(iPendingNewPhrasePos,EScanToPositionMatchLeft);
 	TCurrentIndexRecords current;
 	GetCurrentRecords(current);
+	if ((*iPhraseIx)[iPos.iPhraseElement].Length() != 0)
+	    {
+	    OstTrace0( TRACE_DUMP, DUP1_CRICHTEXTINDEX_GETCURRENTINSERTCHARFORMAT, "ESetInsertCharFormatIntegrityErr" );
+	    }
 	__ASSERT_DEBUG((*iPhraseIx)[iPos.iPhraseElement].Length() == 0,
 		Panic(ESetInsertCharFormatIntegrityErr));
 	return (*iPhraseIx)[iPos.iPhraseElement].CharFormat();
@@ -1123,6 +1225,10 @@ void CRichTextIndex::RebalanceIndex()
 	if (iRollbackParaAttribsHandle)
 		{
 		// ASSERT: The specified para attribs is indeed in the share list.
+		if (!iRollbackParaAttribsHandle->IsShared())
+		    {
+		    OstTrace0( TRACE_FATAL, CRICHTEXTINDEX_REBALANCEINDEX, "EParaAttribsNotInSharedList" );
+		    }
 		__ASSERT_ALWAYS(iRollbackParaAttribsHandle->IsShared(),Panic(EParaAttribsNotInSharedList));
 		iRollbackParaAttribsHandle->Release();
 		iRollbackParaAttribsHandle=NULL;
@@ -1154,6 +1260,10 @@ position. Does not delete any phrase of non-zero length.
 */
 TBool CRichTextIndex::DeleteInsertCharFormat()
 	{
+	if (!InsertCharFormatIsActive())
+	    {
+	    OstTrace0( TRACE_DUMP, CRICHTEXTINDEX_DELETEINSERTCHARFORMAT, "Invariant" );
+	    }
 	__ASSERT_DEBUG(InsertCharFormatIsActive(), User::Invariant());
 	ScanToPosition(iPendingNewPhrasePos,EScanToPositionMatchLeft);
 	TCurrentIndexRecords current;
@@ -1455,6 +1565,10 @@ const CParaFormatLayer* CRichTextIndex::ParagraphStyle(TBool& aStyleChangesOverR
 
 void CRichTextIndex::SplitPhraseL(TInt aPhrase,TInt anOffset,RPhraseAttribsEntry& aPhraseAttribs,CParaAttribs& aParaAttribs)
 	{
+	if (anOffset<=0 || anOffset>=aPhraseAttribs.Length())
+	    {
+	    OstTrace0( TRACE_DUMP, CRICHTEXTINDEX_SPLITPHRASEL, "Invariant" );
+	    }
 	__ASSERT_DEBUG(anOffset>0 && anOffset<aPhraseAttribs.Length(),User::Invariant());
 //
 	CCharFormatLayer* charLayer=CCharFormatLayer::NewCopyBaseL(aPhraseAttribs.CharFormat());
@@ -1487,9 +1601,17 @@ void CRichTextIndex::Share(TParaAttribsEntry& aParaEntry,TInt aPhrase)
 //
 	{
 	CParaAttribs* paraAttribs=aParaEntry.iParaAttribs;
+	if (paraAttribs->iPhraseCount!=1)
+	    {
+	    OstTrace0( TRACE_DUMP, CRICHTEXTINDEX_SHARE, "Invariant" );
+	    }
 	__ASSERT_DEBUG(paraAttribs->iPhraseCount==1,User::Invariant());
 
 	RPhraseAttribsEntry& phraseAttribs=iPhraseIx->At(aPhrase);
+	if (phraseAttribs.IsPicturePhrase())
+	    {
+	    OstTrace0( TRACE_DUMP, DUP1_CRICHTEXTINDEX_SHARE, "Invariant" );
+	    }
 	__ASSERT_DEBUG(!phraseAttribs.IsPicturePhrase(),User::Invariant());
 
 	CParaAttribs* share=GetParaAttribs(paraAttribs,*phraseAttribs.CharFormat());
@@ -1522,6 +1644,10 @@ void CRichTextIndex::ApplyCharFormatRollback()
 
 	TInt phrase=iPos.iPhraseElement;
 	TInt base=iPos.iParaBasePhraseElement;
+	if (phrase<base || phrase>=base+paraAttribs->iPhraseCount)
+	    {
+	    OstTrace0( TRACE_DUMP, CRICHTEXTINDEX_APPLYCHARFORMATROLLBACK, "Invariant" );
+	    }
 	__ASSERT_DEBUG(phrase>=base && phrase<base+paraAttribs->iPhraseCount,User::Invariant());
 	if (phrase<base+paraAttribs->iPhraseCount-1)	// merge to the right
 		MergePhrases(phrase+1,iPhraseIx->At(phrase+1),*paraAttribs);
@@ -1537,6 +1663,10 @@ void CRichTextIndex::ApplyCharFormatL(const TCharFormatX& aFormat,const TCharFor
 // aPos to aPos+(aLength-1).
 //
 	{
+	if (aLength<0)
+	    {
+	    OstTrace0( TRACE_DUMP, CRICHTEXTINDEX_APPLYCHARFORMATL, "Invariant" );
+	    }
 	__ASSERT_DEBUG(aLength>=0,User::Invariant());
 	__TEST_INVARIANT;
 
@@ -1590,6 +1720,10 @@ void CRichTextIndex::ApplyCharFormatL(const TCharFormatX& aFormat,const TCharFor
 
 		do
 			{
+			if (phrase>=iPos.iParaBasePhraseElement+paraAttribs->iPhraseCount)
+			    {
+			    OstTrace0( TRACE_DUMP, DUP1_CRICHTEXTINDEX_APPLYCHARFORMATL, "Invariant" );
+			    }
 			__ASSERT_DEBUG(phrase<iPos.iParaBasePhraseElement+paraAttribs->iPhraseCount,User::Invariant());
 //
 			RPhraseAttribsEntry* phraseAttribs=&iPhraseIx->At(phrase);
@@ -1627,6 +1761,10 @@ void CRichTextIndex::ApplyCharFormatL(const TCharFormatX& aFormat,const TCharFor
 				phraseAttribs=&iPhraseIx->At(phrase);		// SplitPhraseL modifies the index array, we must do this!
 				}
 
+			if (phraseAttribs->Length()!=len)
+			    {
+			    OstTrace0( TRACE_DUMP, DUP2_CRICHTEXTINDEX_APPLYCHARFORMATL, "Invariant" );
+			    }
 			__ASSERT_DEBUG(phraseAttribs->Length()==len,User::Invariant());
 
 // STEP 2.3	Change the format of the current phrase layer
@@ -1647,6 +1785,10 @@ void CRichTextIndex::ApplyCharFormatL(const TCharFormatX& aFormat,const TCharFor
 			charsToFormat-=len;
 			} while (charsToFormat);
 
+		if (phrase!=iPos.iParaBasePhraseElement+paraAttribs->iPhraseCount && aLength!=0)
+		    {
+		    OstTrace0( TRACE_DUMP, DUP3_CRICHTEXTINDEX_APPLYCHARFORMATL, "Invariant" );
+		    }
 		__ASSERT_DEBUG(phrase==iPos.iParaBasePhraseElement+paraAttribs->iPhraseCount || aLength==0,User::Invariant());
 
 // STEP 3	Reduce the paragraph attributes back to canonical form
@@ -1672,9 +1814,25 @@ void CRichTextIndex::ApplyCharFormatL(const TCharFormatX& aFormat,const TCharFor
 		iPos.iParaBasePhraseElement=phrase;
 #ifdef _DEBUG
 		ScanToPosition(aPos,EScanToPositionAbsolute);
+		if (iPos.iDocPos!=aPos)
+		    {
+		    OstTrace0( TRACE_DUMP, DUP4_CRICHTEXTINDEX_APPLYCHARFORMATL, "Invariant" );
+		    }
 		__ASSERT_DEBUG(iPos.iDocPos==aPos,User::Invariant());
+		if (iPos.iPhraseElement!=phrase)
+		    {
+		    OstTrace0( TRACE_DUMP, DUP5_CRICHTEXTINDEX_APPLYCHARFORMATL, "Invariant" );
+		    }
 		__ASSERT_DEBUG(iPos.iPhraseElement==phrase,User::Invariant());
+		if (iPos.iParaElementOffset!=paraOffset)
+		    {
+		    OstTrace0( TRACE_DUMP, DUP6_CRICHTEXTINDEX_APPLYCHARFORMATL, "Invariant" );
+		    }
 		__ASSERT_DEBUG(iPos.iParaElementOffset==paraOffset,User::Invariant());
+		if (iPos.iPhraseElementOffset!=phraseOffset)
+		    {
+		    OstTrace0( TRACE_DUMP, DUP7_CRICHTEXTINDEX_APPLYCHARFORMATL, "Invariant" );
+		    }
 		__ASSERT_DEBUG(iPos.iPhraseElementOffset==phraseOffset,User::Invariant());
 		__TEST_INVARIANT;
 #endif
@@ -2227,6 +2385,10 @@ CParaAttribs* CRichTextIndex::GetParaAttribs(const TLogicalPosition& aLogicalPos
 	else
 		{// No match, so piece together new shared paraAttribs and add to shared para list
 		sourceParaAttribs->iRefCount=1;
+		if (sourcePhrase->IsPicturePhrase())
+		    {
+		    OstTrace0( TRACE_FATAL, CRICHTEXTINDEX_GETPARAATTRIBS, "EReleasCharFormatLayerOwnershipCalledOnPicturePhrase" );
+		    }
 		__ASSERT_ALWAYS(!sourcePhrase->IsPicturePhrase(),Panic(EReleasCharFormatLayerOwnershipCalledOnPicturePhrase));
 		sourceParaAttribs->iCharFormat=sourcePhrase->ReleaseCharFormatLayerOwnership();
 		sourcePhrase->Discard();
@@ -2356,6 +2518,10 @@ void CRichTextIndex::ScanToPosition(TInt aCharPos,TScanToPositionMode aMode,TLog
 		}
 	else
 		{
+		if (iPos.iParaBasePhraseElement!=phraseElement)
+		    {
+		    OstTrace0( TRACE_DUMP, CRICHTEXTINDEX_SCANTOPOSITION, "EDebug" );
+		    }
 		__ASSERT_DEBUG(iPos.iParaBasePhraseElement==phraseElement,Panic(EDebug));
 		}
 	iPos.iPhraseElement=phraseElement;
@@ -2460,6 +2626,10 @@ void CRichTextIndex::SplitPhraseL(TInt aSplitPos)
 		return;  // aSplitPos on a phrase boundary; urgo no split.
 	TCurrentIndexRecords current; GetCurrentRecords(current);
 // ASSERT: This function set can only be called on CParaAttribs that specific char format.
+	if (current.iPhrase==NULL)
+	    {
+	    OstTrace0( TRACE_FATAL, DUP1_CRICHTEXTINDEX_SPLITPHRASEL, "ESplitPhraseCalledOnSharedPara" );
+	    }
 	__ASSERT_ALWAYS(current.iPhrase!=NULL,Panic(ESplitPhraseCalledOnSharedPara));
 	DoSplitPhraseL(*current.iPhrase,iPos.iPhraseElementOffset,current.iParaAttribs);
 	}
@@ -2489,6 +2659,10 @@ void CRichTextIndex::DoSplitPhraseL(RPhraseAttribsEntry& aCurrentPhrase,TInt aPh
 //
 	{
 // ASSERT: Cannot split a picture phrase.
+	if (aCurrentPhrase.IsPicturePhrase())
+	    {
+	    OstTrace0( TRACE_DUMP, CRICHTEXTINDEX_DOSPLITPHRASEL, "ESplitPhraseCalledOnPicturePhrase" );
+	    }
 	__ASSERT_DEBUG(!aCurrentPhrase.IsPicturePhrase(),Panic(ESplitPhraseCalledOnPicturePhrase));
 	CCharFormatLayer* layer=CCharFormatLayer::NewCopyBaseL(aCurrentPhrase.CharFormat());
 	CleanupStack::PushL(layer);
@@ -2520,6 +2694,10 @@ TBool CRichTextIndex::HasMarkupData(const CFormatLayer* aGlobalParaFormatLayer)c
 		return ETrue;
 	//
 	TInt sharedParaCount=SharedParaCount(this);
+	if (sharedParaCount<1 && (sharedParaCount!=0 || phraseCount<=0))
+	    {
+	    OstTrace0( TRACE_FATAL, CRICHTEXTINDEX_HASMARKUPDATA, "ERichTextIndexIntegrityErr" );
+	    }
 	__ASSERT_ALWAYS(sharedParaCount>=1 || (sharedParaCount==0 && phraseCount>0),Panic(ERichTextIndexIntegrityErr));
 	if (sharedParaCount>1)
 		return ETrue;
@@ -2592,6 +2770,10 @@ void CRichTextIndex::AppendParaIndexL(const CRichTextIndex* aSource,const TGloba
 		if (sParaAttribs->IsShared())
 			{
 			tParaAttribs=map->Item(sParaAttribs);
+			if (tParaAttribs==NULL)
+			    {
+			    OstTrace0( TRACE_DUMP, CRICHTEXTINDEX_APPENDPARAINDEXL, "ESharedFormatsMapIntegrityError" );
+			    }
 			__ASSERT_DEBUG(tParaAttribs!=NULL,Panic(ESharedFormatsMapIntegrityError));
 			tParaAttribs->iRefCount++;
 			}
@@ -2625,6 +2807,10 @@ void CRichTextIndex::AppendSharedFormatsL(CParaAttribsMap& aMap,const CRichTextI
 	CParaAttribs* currentSharedPara;
 	while ((currentSharedPara=iterator++)!=NULL)
 		{
+		if (!currentSharedPara->IsShared())
+		    {
+		    OstTrace0( TRACE_DUMP, CRICHTEXTINDEX_APPENDSHAREDFORMATSL, "Invariant" );
+		    }
 		__ASSERT_DEBUG(currentSharedPara->IsShared(),User::Invariant());
 
 		CParaFormatLayer* sPl=currentSharedPara->iParaFormat;
@@ -2689,10 +2875,18 @@ void CRichTextIndex::AppendPhraseIndexL(const CRichTextIndex* aSource,const TGlo
 		{
 		TInt jj=pictureMap->At(kk);
 		TPictureHeader* sHeader=(*aSource->iPhraseIx)[jj].PictureHeaderPtr();
+		if (!sHeader)
+		    {
+		    OstTrace0( TRACE_DUMP, CRICHTEXTINDEX_APPENDPHRASEINDEXL, "Invariant" );
+		    }
 		__ASSERT_DEBUG(sHeader,User::Invariant());
 		if (sHeader->iPicture.IsPtr())
 			{	// transfer picture to us
 			TPictureHeader* tHeader=(*iPhraseIx)[jj+originalPhraseCount].PictureHeaderPtr();
+			if (!tHeader)
+			    {
+			    OstTrace0( TRACE_DUMP, DUP1_CRICHTEXTINDEX_APPENDPHRASEINDEXL, "Invariant" );
+			    }
 			__ASSERT_DEBUG(tHeader,User::Invariant());
 			tHeader->iPicture=sHeader->iPicture.AsPtr();
 			sHeader->iPicture=NULL;
@@ -2842,6 +3036,10 @@ DLLEXPORT_C void RPhraseAttribsEntry::__DbgTestInvariant()const
 	{
 #ifdef _DEBUG
 // ASSERT: iLength is +ve (applying to character formatting, or	is set to indicate a picture phrase.
+	if (iLength<0 && !IsPicturePhrase())
+	    {
+	    OstTrace0( TRACE_DUMP, RPHRASEATTRIBSENTRY_DBGTESTINVARIANT, "Invariant" );
+	    }
 	__ASSERT_DEBUG(iLength>=0 || IsPicturePhrase(),User::Invariant());
 #endif
 	}
@@ -2925,6 +3123,11 @@ void RPhraseAttribsEntry::AdjustLength(TInt aIncrement)
 	{
 // ASSERT: The length of a picture phrase may only be altered by deleting it, in which case
 //			the only adjustment made will be an increment of -1 (EPictureIndicator).
+	if (IsPicturePhrase() && (!IsPicturePhrase() || aIncrement!=EPictureIndicator)
+                                      && (!IsPicturePhrase() || aIncrement!=0) )
+	    {
+	    OstTrace0( TRACE_DUMP, RPHRASEATTRIBSENTRY_ADJUSTLENGTH, "EModifiedPicturePhraseLength" );
+	    }
 	__ASSERT_DEBUG(!IsPicturePhrase() || (IsPicturePhrase() && aIncrement==EPictureIndicator)
 									  || (IsPicturePhrase() && aIncrement==0)
 									  ,Panic(EModifiedPicturePhraseLength));
