@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2002-2009 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 2002-2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -21,15 +21,14 @@
 #include "TMSTD.H"
 
 #include <e32test.h>
-
 #include <bitdev.h>
+#include "ttmcode.h"
 
-CTrapCleanup* TrapCleanup;
-RTest test(_L("TTmCode - Tests CTmCode class"));
-
-
-void RunTestsL()
+TVerdict CTTmCodeStep::doTestStepL()
 	{
+    SetTestStepResult(EPass);
+    INFO_PRINTF1(_L("TTmCode - Tests CTmCode class"));
+    INFO_PRINTF1(_L(" @SYMTestCaseID:SYSLIB-FORM-LEGACY-TTMCODE-0001 CTmCode tests "));
 	CTmCode* code = new(ELeave) CTmCode;
 	CleanupStack::PushL(code);
 
@@ -38,7 +37,7 @@ void RunTestsL()
 	TInt num = 42;
 	code->AppendNumberL(num);
 	TTmCodeReader reader(*code, 0, 0x7FFFFFFF);
-	test(reader.ReadNumber() == num);
+	TEST(reader.ReadNumber() == num);
 
 	// Testcase 2 - Append largest positive number occupying 1 byte (where a byte is 7 bits in the case of CTmCode), check correct value read back
 	TInt size;
@@ -47,35 +46,35 @@ void RunTestsL()
 	num = 63;
 	TInt pos = code->AppendNumberL(num);
 	sizeDelta = code->Size() - size;
-	test(sizeDelta == 1 && (pos - size) == 1 && reader.ReadNumber() == num);
+	TEST(sizeDelta == 1 && (pos - size) == 1 && reader.ReadNumber() == num);
 
 	// Testcase 3 - Append smallest positive number occupying 2 bytes, check correct value read back
 	size = code->Size();
 	num = 64;
 	pos = code->AppendNumberL(num);
 	sizeDelta = code->Size() - size;
-	test(sizeDelta == 2 && (pos - size) == 2 && reader.ReadNumber() == num);
+	TEST(sizeDelta == 2 && (pos - size) == 2 && reader.ReadNumber() == num);
 
 	// Testcase 4 - Append largest negative number occupying 1 byte, check correct value read back
 	size = code->Size();
 	num = -64;
 	pos = code->AppendNumberL(num);
 	sizeDelta = code->Size() - size;
-	test(sizeDelta == 1 && (pos - size) == 1 && reader.ReadNumber() == num);
+	TEST(sizeDelta == 1 && (pos - size) == 1 && reader.ReadNumber() == num);
 
 	// Testcase 5 - Append smallest negative number occupying 2 bytes, check correct value read back
 	size = code->Size();
 	num = -65;
 	pos = code->AppendNumberL(num);
 	sizeDelta = code->Size() - size;
-	test(sizeDelta == 2 && (pos - size) == 2 && reader.ReadNumber() == num);
+	TEST(sizeDelta == 2 && (pos - size) == 2 && reader.ReadNumber() == num);
 
 	// Testcase 6 - Append rect, check same rect returned
 	size = code->Size();
 	TRect rect(1, 1, 2, 2);
 	pos = code->AppendRectL(rect);
 	sizeDelta = code->Size() - size;
-	test(sizeDelta == 4 && (pos - size) == 4 && reader.ReadRect() == rect);
+	TEST(sizeDelta == 4 && (pos - size) == 4 && reader.ReadRect() == rect);
 
 	// Testcase 7 - Replace first 2 bytes with 3 different bytes
 	CTmCode* code2 = new(ELeave) CTmCode;
@@ -86,7 +85,7 @@ void RunTestsL()
 	code2->AppendNumberL(2);
 	code->ChangeL(0, 1, *code2);
 	reader.SetCodePos(0);
-	test(reader.ReadNumber() == 1 && reader.ReadNumber() == 1 && reader.ReadNumber() == 2 && reader.ReadNumber() == 63);
+	TEST(reader.ReadNumber() == 1 && reader.ReadNumber() == 1 && reader.ReadNumber() == 2 && reader.ReadNumber() == 63);
 
 	// Testcase 8 - Insert 1000 numbers, then read them
 	size = code->Size();
@@ -95,18 +94,18 @@ void RunTestsL()
 		code->AppendNumberL(ii);
 	reader.SetCodePos(size);
 	for (ii = 0; ii < 1000; ii++)
-		test(reader.ReadNumber() == ii);
+	    TEST(reader.ReadNumber() == ii);
 
 	// Testcase 9 - Insert number at position 42 (1st segment), then reader to 42 and read number
 	code->InsertNumberL(4242, 42);
 	reader.SetCodePos(42);
-	test(reader.ReadNumber() == 4242);
+	TEST(reader.ReadNumber() == 4242);
 
 	// Testcase 10 - Insert number so it spans a segment boundary, check it reads back OK
 	num = -1234567;
 	code->InsertNumberL(num, 511);
 	reader.SetCodePos(511);
-	test(reader.ReadNumber() == num);
+	TEST(reader.ReadNumber() == num);
 
 	// Testcase 11 - ChangeL using a range that spans a segment boundary
 	code->InsertByteL(0x11, 515);
@@ -116,24 +115,12 @@ void RunTestsL()
 	code->ChangeL(510, 515, *code2);
 	TTmCodeReader reader2(*code, 0, 0x7FFFFFFF);
 	reader2.SetCodePos(510);
-	test(reader2.ReadNumber() == static_cast<TInt32>(0xabababab));
-	test(reader2.ReadByte() == static_cast<TUint8>(0x11));
-
-
+	TEST(reader2.ReadNumber() == static_cast<TInt32>(0xabababab));
+	TEST(reader2.ReadByte() == static_cast<TUint8>(0x11));
 
 	CleanupStack::PopAndDestroy(code2);
 	CleanupStack::PopAndDestroy(code);
+	
+	return TestStepResult();
 	}
 
-
-TInt E32Main()
-	{
-	TrapCleanup = CTrapCleanup::New();
-	test.Start(_L(" @SYMTestCaseID:SYSLIB-FORM-LEGACY-TTMCODE-0001 CTmCode tests "));
-	TRAPD(err, RunTestsL());
-	test(err == KErrNone);
-	test.End();
-	test.Close();
-	delete TrapCleanup;
-	return 0;
-	}

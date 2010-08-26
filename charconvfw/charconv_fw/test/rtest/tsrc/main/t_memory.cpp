@@ -20,7 +20,6 @@
 
 #include <e32std.h>
 #include <e32base.h>
-#include <e32test.h>
 #include <f32file.h>
 #include <charconv.h>
 #include <convdata.h>
@@ -29,31 +28,17 @@
 
 ///////////////////////////////////////////////////////////////////////////////////////
 
-RTest TheTest(_L("T_Memory"));
 
-///////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////
-//Tests macroses and functions.
-//If (!aValue) then the test will be panicked, the test data files will be deleted.
-static void Check(TInt aValue, TInt aLine)
-	{
-	if(!aValue)
-		{
-		TheTest(EFalse, aLine);
-		}
-	}
-//If (aValue != aExpected) then the test will be panicked, the test data files will be deleted.
-static void Check(TInt aValue, TInt aExpected, TInt aLine)
-	{
-	if(aValue != aExpected)
-		{
-		RDebug::Print(_L("*** Expected error: %d, got: %d\r\n"), aExpected, aValue);
-		TheTest(EFalse, aLine);
-		}
-	}
-//Use these to test conditions.
-#define TEST(arg) ::Check((arg), __LINE__)
-#define TEST2(aValue, aExpected) ::Check(aValue, aExpected, __LINE__)
+#include "t_memory.h"
+
+#define test(cond)                                  \
+    TEST((cond));                                   \
+    if (!(cond))                                    \
+        {                                           \
+        ERR_PRINTF1(_L("ERROR: Test Failed"));      \
+        User::Leave(1);                             \
+        }
+
 
 ///////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -111,12 +96,12 @@ the thread local storage
 @SYMTestExpectedResults Test must not fail
 @SYMREQ                 REQ0000
 */
-LOCAL_C void TestDef41901L()
+void CT_MEMORY::TestDef41901L()
 	{
 	RFs fileServerSession;
 	CleanupClosePushL(fileServerSession);
 	User::LeaveIfError(fileServerSession.Connect());
-	TheTest.Start(_L(" @SYMTestCaseID:SYSLIB-CHARCONV-CT-0561 T_memory Charconv test for DEF041901\n "));
+	INFO_PRINTF1(_L(" @SYMTestCaseID:SYSLIB-CHARCONV-CT-0561 T_memory Charconv test for DEF041901\n "));
 
 	// create an instance of CCnvCharacterSetConverter
 	CCnvCharacterSetConverter* charConverter1;
@@ -130,10 +115,10 @@ LOCAL_C void TestDef41901L()
 
 	outputString.SetLength(0);
 	availability = charConverter1->PrepareToConvertToOrFromL(KCharacterSetIdentifierSms7Bit, fileServerSession);
-	TEST(availability == CCnvCharacterSetConverter::EAvailable);
+	test(availability == CCnvCharacterSetConverter::EAvailable);
 	unconvertedCount = charConverter1->ConvertFromUnicode(outputString, KSourceString);
-	TEST(unconvertedCount == 0);
-	TheTest.Printf(_L("After first charConverter1 conversion.\n"));
+	test(unconvertedCount == 0);
+	INFO_PRINTF1(_L("After first charConverter1 conversion.\n"));
 
 	// perfrom heap checking on a second instance of CCnvCharacterSetConverter
 	TInt pass=1;
@@ -143,46 +128,45 @@ LOCAL_C void TestDef41901L()
 		__UHEAP_FAILNEXT(pass);
 		TRAP(ret,CreateAndDestroyConverterL());
 		__UHEAP_RESET;
-		TheTest.Printf(_L("CCnvCharacterSetConverter OOM test: pass[%d] ret[%d]\n"),pass,ret);
+		INFO_PRINTF3(_L("CCnvCharacterSetConverter OOM test: pass[%d] ret[%d]\n"),pass,ret);
 		pass++;
 		}
 
  	// now testing of charConverter2 is complete, test that charConverter1 is still ok.
  	// Note: this is the test code DEF041901 see teamtrack for more details.
 	availability = charConverter1->PrepareToConvertToOrFromL(KCharacterSetIdentifierSms7Bit, fileServerSession);
-	TEST(availability == CCnvCharacterSetConverter::EAvailable);
+	test(availability == CCnvCharacterSetConverter::EAvailable);
 	unconvertedCount = charConverter1->ConvertFromUnicode(outputString, KSourceString);
-	TEST(unconvertedCount == 0);
+	test(unconvertedCount == 0);
 
-	TheTest.Printf(_L("Charconv test for DEF041901 passed ok\n"));
+	INFO_PRINTF1(_L("Charconv test for DEF041901 passed ok\n"));
 
 	CleanupStack::PopAndDestroy(charConverter1);
 	CleanupStack::PopAndDestroy();	// RFs
 	}
 
 
-LOCAL_C void DoE32MainL()
-	{
-	TestDef41901L();
-	}
+CT_MEMORY::CT_MEMORY()
+    {
+    SetTestStepName(KTestStep_T_MEMORY);
+    }
 
-GLDEF_C TInt E32Main()
-	{
-	__UHEAP_MARK;
 
-	TheTest.Title();
+TVerdict CT_MEMORY::doTestStepL()
+    {
+    SetTestStepResult(EFail);
 
-	CTrapCleanup* trapCleanup=CTrapCleanup::New();
-	TEST(trapCleanup != NULL);
+    __UHEAP_MARK;
 
-	TRAPD(error, DoE32MainL());
-	TEST2(error, KErrNone);
+    TRAPD(error1, TestDef41901L());
 
-	delete trapCleanup;
 
-	TheTest.End();
-	TheTest.Close();
+    __UHEAP_MARKEND;
 
-	__UHEAP_MARKEND;
-	return KErrNone;
-	}
+    if(error1 == KErrNone )
+        {
+        SetTestStepResult(EPass);
+        }
+
+    return TestStepResult();
+    }

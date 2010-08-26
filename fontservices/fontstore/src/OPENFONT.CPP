@@ -26,6 +26,7 @@
 #include "linkedfontsprivate.h"
 #include <graphics/openfontrasterizer.h>
 #include <graphics/gdi/glyphsample.h>
+#include <e32math.h>
 
 #include "OstTraceDefinitions.h"
 #ifdef OST_TRACE_COMPILER_IN_USE
@@ -904,13 +905,13 @@ void COpenFont::OnFileDeleted()
     iFileOffset = 0;
 	}
 
-COpenFontGlyphCache* COpenFont::GetGlyphCache()
+COpenFontGlyphCache* COpenFont::GetGlyphCache() const
 	{
     if (iGlyphCacheOffset == 0)
         {
         return NULL;
         }
-    return reinterpret_cast<COpenFontGlyphCache*>(PtrAdd(this, iGlyphCacheOffset));
+    return reinterpret_cast<COpenFontGlyphCache*>(PtrAdd(const_cast<COpenFont*>(this), iGlyphCacheOffset));
 	}
 
 const COpenFontGlyph* COpenFont::Glyph(TInt aSessionHandle, TInt aCode) const
@@ -949,7 +950,7 @@ The cache is now created in COpenFont::Rasterize which can only be called within
 @param aCode The code for the glpyh to look for in the cache
 @return A pointer to the requested glyph if it was found in the glyph cache, NULL if it was not found.
 */
-const COpenFontGlyph* COpenFont::FontCacheGlyph(TInt aCode)
+const COpenFontGlyph* COpenFont::FontCacheGlyph(TInt aCode) const
 	{
 	if (COpenFontGlyphCache* glyphCache = GetGlyphCache())
 		{
@@ -1112,58 +1113,52 @@ void COpenFontSessionCache::Delete(RHeap* aHeap)
     iEntryArray.Close(aHeap);
     }
 
-const COpenFontGlyph* COpenFontSessionCache::Glyph(const COpenFont* aFont, TInt aCode, TInt& aIndex)
+const COpenFontGlyph* COpenFontSessionCache::Glyph(const COpenFont* aFont, TInt aCode, TInt& aIndex) const
 	{
     aIndex = -1;
-    TInt oldest = KMaxTInt;
-    TInt oldest_index = 0;
     TInt numEntries = iEntryArray.Count();
     TInt index = GLYPH_CODE(aCode) % numEntries;   // simple hash function to shorten searches
     for (TInt i = 0; i < numEntries; ++i, ++index)
         {
         if (index >= numEntries)
+            {
             index = 0;
-        COpenFontSessionCacheEntry* entry = iEntryArray[index];
+            }
+        const COpenFontSessionCacheEntry* entry = iEntryArray[index];
         if (entry == NULL)
             {
-            if (aIndex == -1)
+            if (aIndex < 0)
+                {
                 aIndex = index;
+                }
             }
-        else
-            { 
-            if (entry->Font() == aFont && entry->iCode == aCode)
-                {
-                entry->iLastAccess = iLastAccess++;
-                return entry;
-                }
-            if (entry->iLastAccess < oldest)
-                {
-                oldest = entry->iLastAccess;
-                oldest_index = index;
-                }
+        else if (entry->Font() == aFont && entry->iCode == aCode)
+            {
+            return entry;
             }
         }
-    if (aIndex == -1)
-        aIndex = oldest_index;
     return NULL;
 	}
 
 
 void COpenFontSessionCache::Insert(RHeap* aHeap, COpenFontSessionCacheEntry* aEntry, TInt aIndex)
 	{
-    if (aIndex < 0 || aIndex >= iEntryArray.Count())
+    if (aIndex >= iEntryArray.Count())
         {
         Panic(EFntSessionCacheIndexOutOfRange);
         }
+    if (aIndex < 0)
+        {
+        aIndex = Math::Rand(iRandomSeed) % iEntryArray.Count();
+        }
     COpenFontSessionCacheEntry::Delete(aHeap, iEntryArray[aIndex]);
     iEntryArray.SetAt(aIndex, aEntry);
-    aEntry->iLastAccess = iLastAccess++;
 	}
 
 COpenFontSessionCache::COpenFontSessionCache(TInt aSessionHandle):
     iSessionHandle(aSessionHandle),
-    iLastAccess(0)
-    {    
+    iRandomSeed(0)
+    {
     }
 
 TInt COpenFontSessionCacheList::AddCache(COpenFontSessionCache* aCache)

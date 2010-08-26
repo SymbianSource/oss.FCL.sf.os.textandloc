@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 1997-2009 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 1997-2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -16,15 +16,32 @@
 */
 
 
-#include <e32test.h>
 #include <txtlaydc.h>
 #include <txtglobl.h>
 #include <txtfrmat.h>
 #include <txtfmlyr.h>
+#include "T_LAYDOC.h"
+
+LOCAL_D CTestStep *pTestStep = NULL;
+#define test(cond)											\
+	{														\
+	TBool __bb = (cond);									\
+	pTestStep->TEST(__bb);									\
+	if (!__bb)												\
+		{													\
+		pTestStep->ERR_PRINTF1(_L("ERROR: Test Failed"));	\
+		User::Leave(1);										\
+		}													\
+	}
+#undef INFO_PRINTF1
+#undef INFO_PRINTF2
+// copy from tefexportconst.h
+#define INFO_PRINTF1(p1)        pTestStep->Logger().LogExtra(((TText8*)__FILE__), __LINE__, ESevrInfo, (p1))
+#define INFO_PRINTF2(p1, p2)    pTestStep->Logger().LogExtra(((TText8*)__FILE__), __LINE__, ESevrInfo, (p1), (p2))
+
 
 #define UNUSED_VAR(a) a = a
 
-LOCAL_D RTest test(_L("TGlobalLayDoc - Layout class"));
 LOCAL_D TPtrC defaultText(_L("This is default text"));
 LOCAL_D TPtrC comp1(_L("fault text"));
 LOCAL_D TPtrC comp2(_L("t"));
@@ -92,23 +109,23 @@ GLDEF_C void TestRead(CEditableText::TDocumentStorage aStorage)
 	TCharFormat format;
 	TPtrC view;
 	
-	test.Start(_L("Sensing at start"));
+	INFO_PRINTF1(_L("Sensing at start"));
 	doc->GetChars(view,format,0);
 	CheckView(view,defaultText);
 	
-	test.Next(_L("Sensing from char.pos.10"));
+	INFO_PRINTF1(_L("Sensing from char.pos.10"));
 	doc->GetChars(view,format,10);
 	CheckView(view,comp1);
 	
-	test.Next(_L("Sensing from end-1"));
+	INFO_PRINTF1(_L("Sensing from end-1"));
 	doc->GetChars(view,format,19);
 	CheckView(view,comp2);
 	
-	test.Next(_L("Sensing from end"));
+	INFO_PRINTF1(_L("Sensing from end"));
 	doc->GetChars(view,format,20);
 	test(*view.Ptr()==CEditableText::EParagraphDelimiter);
 	
-	test.End();
+	
 	delete doc;
 	delete paraLayer;
 	delete charLayer;
@@ -180,17 +197,17 @@ GLDEF_C void TestParagraphStart(CEditableText::TDocumentStorage aStorage)
 	TPtrC body(content);
 	document->InsertL(0,body);
 	// Now do the tests.
-	test.Start(_L("Paragraph 1"));
+	INFO_PRINTF1(_L("Paragraph 1"));
 	DoParagraphStart(0,55,document);  // Paragraph 1
-	test.Next(_L("Paragraph 2"));
+	INFO_PRINTF1(_L("Paragraph 2"));
 	DoParagraphStart(55,23,document);  // Paragraph 2
-	test.Next(_L("Paragraph 3"));
+	INFO_PRINTF1(_L("Paragraph 3"));
 	DoParagraphStart(78,20,document);  // Paragraph 3
 
 	delete paraLayer;
 	delete charLayer;
 	delete document;
-	test.End();
+	
 	__UHEAP_MARKEND;
 	User::Heap().Check();
 	}
@@ -268,28 +285,28 @@ GLDEF_C void TestRegister(CEditableText::TDocumentStorage aStorage)
 	doc->SetGlobalParaFormat(layer);
 
 // Check constructor
-	test.Start(_L("Constructor"));
+	INFO_PRINTF1(_L("Constructor"));
 
 // Check DocumentLength
-	test.Next(_L("DocumentLength()"));
+	INFO_PRINTF1(_L("DocumentLength()"));
 	doc->LdDocumentLength();
 
 // Check ParagraphStart
-	test.Next(_L("ParagraphStart()"));
+	INFO_PRINTF1(_L("ParagraphStart()"));
 	doc->LdToParagraphStart(pos);
 
 // Check GetParagraphFormatL
-	test.Next(_L("GetParagraphFormatL()"));
+	INFO_PRINTF1(_L("GetParagraphFormatL()"));
 	doc->GetParagraphFormatL(format,pos);
 
 // Check GetChars
-	test.Next(_L("GetChars()"));
+	INFO_PRINTF1(_L("GetChars()"));
 	TPtrC view;
 	TCharFormat charFormat;
 	doc->GetChars(view,charFormat,pos);
 
 // check EnquirePage
-	test.Next(_L("EnquirePageBreak()"));
+	INFO_PRINTF1(_L("EnquirePageBreak()"));
 	doc->EnquirePageBreak(pos,0);
 
 	delete paraLayer;
@@ -297,7 +314,7 @@ GLDEF_C void TestRegister(CEditableText::TDocumentStorage aStorage)
 	delete doc;
 	delete layer;
 	delete format;
-	test.End();
+	
 	__UHEAP_MARKEND;
 	User::Heap().Check();
 	}
@@ -308,25 +325,25 @@ GLDEF_C void Test()
 //
 	{
 	__UHEAP_MARK;
-	test.Start(_L("Checking all methods present"));
+	INFO_PRINTF1(_L("Checking all methods present"));
 	TestRegister(CEditableText::EFlatStorage);
 
-	test.Next(_L("DocumentLength()"));
+	INFO_PRINTF1(_L("DocumentLength()"));
 	TestDocumentLength(CEditableText::EFlatStorage);
 
-	test.Next(_L("EnquirePage()"));
-	test.Start(_L("Always returns 0"));
-	test.End();
+	INFO_PRINTF1(_L("EnquirePage()"));
+	INFO_PRINTF1(_L("Always returns 0"));
+	
 
-	test.Next(_L("ParagraphStart()"));
+	INFO_PRINTF1(_L("ParagraphStart()"));
 	TestParagraphStart(CEditableText::EFlatStorage);
 
-	test.Next(_L("GetParagraphFormatL()"));
+	INFO_PRINTF1(_L("GetParagraphFormatL()"));
 	TestGetParagraphFormatL(CEditableText::EFlatStorage);
 		
-	test.Next(_L("GetChars"));
+	INFO_PRINTF1(_L("GetChars"));
 	TestRead(CEditableText::EFlatStorage);
-	test.End();
+	
 	__UHEAP_MARKEND;
 	}
 	
@@ -337,56 +354,59 @@ GLDEF_C void TestSeg()
 //
 	{
 	__UHEAP_MARK;
-	test.Next(_L("Checking all methods present"));
+	INFO_PRINTF1(_L("Checking all methods present"));
 	TestRegister(CEditableText::ESegmentedStorage);
 
-	test.Next(_L("DocumentLength()"));
+	INFO_PRINTF1(_L("DocumentLength()"));
 	TestDocumentLength(CEditableText::ESegmentedStorage);
 
-	test.Next(_L("EnquirePage()"));
-	test.Start(_L("Always returns 0"));
-	test.End();
+	INFO_PRINTF1(_L("EnquirePage()"));
+	INFO_PRINTF1(_L("Always returns 0"));
+	
 
-	test.Next(_L("ParagraphStart()"));
+	INFO_PRINTF1(_L("ParagraphStart()"));
 	TestParagraphStart(CEditableText::ESegmentedStorage);
 
-	test.Next(_L("SenseParagraphFormatL()"));
+	INFO_PRINTF1(_L("SenseParagraphFormatL()"));
 	TestGetParagraphFormatL(CEditableText::ESegmentedStorage);
 		
-	test.Next(_L("GetChars"));
+	INFO_PRINTF1(_L("GetChars"));
 	//TestRead();
-	//test.End();
-	test.Start(_L("Test not yet implemented"));
-	test.End();
+	//
+	INFO_PRINTF1(_L("Test not yet implemented"));
+	
 	__UHEAP_MARKEND;
 	}
-	
-	 
-GLDEF_C TInt E32Main()							 
-//
-// Drives the test program
-//
-	{
-	CTrapCleanup* cleanup=CTrapCleanup::New();
-	
 
-	test.Start(_L(" @SYMTestCaseID:SYSLIB-TTEXT-LEGACY-T_LAYDOC-0001 MLayDoc - Using Flat document "));
-	
-	__UHEAP_MARK;
-	TRAPD(ret,Test());
-	__UHEAP_MARKEND;
-    test(ret == KErrNone);
-	
-	test.Next(_L("MLaydoc - Using Segmented document"));
-	__UHEAP_MARK;
-	TRAP(ret,TestSeg());
-	__UHEAP_MARKEND;
-    test(ret == KErrNone);
+CT_LAYDOC::CT_LAYDOC()
+    {
+    SetTestStepName(KTestStep_T_LAYDOC);
+    pTestStep = this;
+    }
 
-	test.End();
-	test.Close();
+TVerdict CT_LAYDOC::doTestStepL()
+    {
+    SetTestStepResult(EFail);
 
-	delete cleanup;
+    CTrapCleanup* cleanup=CTrapCleanup::New();
 
-	return(0);
-	}
+    INFO_PRINTF1(_L(" @SYMTestCaseID:SYSLIB-TTEXT-LEGACY-T_LAYDOC-0001 MLayDoc - Using Flat document "));
+    
+    __UHEAP_MARK;
+    TRAPD(ret1,Test());
+    __UHEAP_MARKEND;
+    
+    INFO_PRINTF1(_L("MLaydoc - Using Segmented document"));
+    __UHEAP_MARK;
+    TRAPD(ret2,TestSeg());
+    __UHEAP_MARKEND;
+
+    delete cleanup;
+
+    if (ret1 == KErrNone && ret2 == KErrNone)
+        {
+        SetTestStepResult(EPass);
+        }
+
+    return TestStepResult();
+    }

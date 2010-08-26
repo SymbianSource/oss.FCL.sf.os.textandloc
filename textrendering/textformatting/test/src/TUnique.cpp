@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2000-2009 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 2000-2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -19,6 +19,7 @@
 
 #include "UniqueInstanceImpl.h"
 #include <e32test.h>
+#include "tunique.h"
 
 using namespace UniqueInstance;
 
@@ -46,8 +47,9 @@ void DeleteVoid(void* a)
 	}
 void DeleteTInt(TInt* a) { delete a; }
 
-CTrapCleanup* TrapCleanup;
-RTest test(_L("TUnique - Unique instance repository tests"));
+CTUniqueStep* TestStep;
+#define TESTPOINT(p) TestStep->testpoint(p,(TText8*)__FILE__,__LINE__)
+#define TESTPRINT(p) TestStep->print(p,(TText8*)__FILE__,__LINE__)
 }
 
 /////////////////
@@ -62,7 +64,7 @@ TInt TestEmpty(RSkipList& a)
 	{
 	if (!a.IsEmpty())
 		{
-		test.Printf(_L("RSkipList : unexpectedly has elements"));
+		TESTPRINT(_L("RSkipList : unexpectedly has elements"));
 		return 1;
 		}
 	return 0;
@@ -74,12 +76,12 @@ TInt TestAddL(RSkipList& a, void* aElt, TInt aExpectedRefCount)
 		e = a.AddNewL(aElt);
 	if (CompareVoids(e->iObject,aElt))
 		{
-		test.Printf(_L("RSkipList : added element does not compare equal to returned value"));
+        TESTPRINT(_L("RSkipList : added element does not compare equal to returned value"));
 		return 1;
 		}
 	if (e->iRefCount != aExpectedRefCount)
 		{
-		test.Printf(_L("RSkipList : unexpected reference count"));
+        TESTPRINT(_L("RSkipList : unexpected reference count"));
 		return 1;
 		}
 	return 0;
@@ -88,7 +90,7 @@ TInt TestRemove(RSkipList& a, void* aElt)
 	{
 	if (CompareVoids(a.Remove(aElt), aElt))
 		{
-		test.Printf(_L("RSkipList : removed element does not compare equal to returned value"));
+        TESTPRINT(_L("RSkipList : removed element does not compare equal to returned value"));
 		return 1;
 		}
 	return 0;
@@ -516,12 +518,12 @@ TInt TestObject(SElement* e, TInt val)
 	{
 	if (!e->iObject)
 		{
-		test.Printf(_L("CRepositoryImpl : object undefined"));
+        TESTPRINT(_L("CRepositoryImpl : object undefined"));
 		return 1;
 		}
 	if (*reinterpret_cast<TInt*>(e->iObject) != val)
 		{
-		test.Printf(_L("CRepositoryImpl : object has wrong value"));
+        TESTPRINT(_L("CRepositoryImpl : object has wrong value"));
 		return 1;
 		}
 	return 0;
@@ -550,9 +552,9 @@ void TestCRepositoryImplL()
 	delete z;
 
 	// test equal objects are nullified
-	test(zui->iObject == z2ui->iObject);
-	test(zui->iObject == z0ui->iObject);
-	test(zui->iObject == z3ui->iObject);
+	TESTPOINT(zui->iObject == z2ui->iObject);
+	TESTPOINT(zui->iObject == z0ui->iObject);
+	TESTPOINT(zui->iObject == z3ui->iObject);
 
 	rep->DeleteOrDec(z0ui);
 	rep->DeleteOrDec(z3ui);
@@ -571,10 +573,10 @@ void TestCRepositoryImplL()
 	rep->DeleteOrDec(p8765ui);
 
 	// test that copyable objects are not aliased
-	test(z != z2);
+	TESTPOINT(z != z2);
 	// test that a valid copy is returned
-	test(*z == 0);
-	test(*z2 == 0);
+	TESTPOINT(*z == 0);
+	TESTPOINT(*z2 == 0);
 
 	delete z;
 	delete z2;
@@ -598,7 +600,7 @@ TInt TestNull(const RUniqueInstance<TInt>& a)
 	{
 	if (a.Peek())
 		{
-		test.Printf(_L("RUniqueInstance : null object has value"));
+        TESTPRINT(_L("RUniqueInstance : null object has value"));
 		return 1;
 		}
 	return 0;
@@ -607,12 +609,12 @@ TInt TestValue(const RUniqueInstance<TInt>& a, TInt val)
 	{
 	if (!a.Peek())
 		{
-		test.Printf(_L("RUniqueInstance : unexpected null object"));
+        TESTPRINT(_L("RUniqueInstance : unexpected null object"));
 		return 1;
 		}
 	if (*a.Peek() != val)
 		{
-		test.Printf(_L("RUniqueInstance : object has wrong value"));
+        TESTPRINT(_L("RUniqueInstance : object has wrong value"));
 		return 1;
 		}
 	return 0;
@@ -621,12 +623,12 @@ TInt TestRaw(TInt* ob, TInt val)
 	{
 	if (!ob)
 		{
-		test.Printf(_L("RUniqueInstance : object unexpectedly does not own"));
+        TESTPRINT(_L("RUniqueInstance : object unexpectedly does not own"));
 		return 1;
 		}
 	if (*ob != val)
 		{
-		test.Printf(_L("RUniqueInstance : object owns incorrect value"));
+        TESTPRINT(_L("RUniqueInstance : object owns incorrect value"));
 		return 1;
 		}
 	return 0;
@@ -647,7 +649,7 @@ void TestRUniqueInstanceL()
 	c.TakeL(new(ELeave) TInt(45));
 
 	// test that equal elements are unified
-	test(a.Peek() == c.Peek());
+	TESTPOINT(a.Peek() == c.Peek());
 
 	TestValue(a, 45);
 	TestValue(b, -6);
@@ -727,22 +729,22 @@ void TestRUniqueInstanceL()
 	e.TakeL(new(ELeave) TInt(18));
 
 	// test that equal objects are unified
-	test(a.Peek() == e.Peek());
+	TESTPOINT(a.Peek() == e.Peek());
 
 	d.TakeL(new(ELeave) TInt(-445));
 
 	// test that equal objects are unified
-	test(b.Peek() == d.Peek());
+	TESTPOINT(b.Peek() == d.Peek());
 
 	a.TakeL(new(ELeave) TInt(-445));
 
 	// test that objects from different repositories are not unified
-	test(a.Peek() != b.Peek());
+	TESTPOINT(a.Peek() != b.Peek());
 
 	a.Close();
 
 	// test that destroyed object peeks null
-	test(a.Peek() == 0);
+	TESTPOINT(a.Peek() == 0);
 
 	b.MoveTo(c);
 	b.Close();
@@ -764,27 +766,16 @@ void TestRUniqueInstanceL()
 //		  //
 ////////////
 
-void RunTests()
+TVerdict CTUniqueStep::doTestStepL()
 	{
-	__UHEAP_MARK;
-	test.Title();
-	test.Start(_L(" @SYMTestCaseID:SYSLIB-FORM-LEGACY-UNIQUE-0001 Unique Instance Tests: "));
+    SetTestStepResult(EPass);
+    TestStep = this;
+    TESTPRINT(_L("TUnique - Unique instance repository tests"));
+	TESTPRINT(_L(" @SYMTestCaseID:SYSLIB-FORM-LEGACY-UNIQUE-0001 Unique Instance Tests: "));
 
 	TestRSkipListL();
 	TestCRepositoryImplL();
 	TestRUniqueInstanceL();
 
-	test.End();
-	test.Close();
-
-	__UHEAP_MARKENDC(0);
-	}
-
-TInt E32Main()
-	{
-	TrapCleanup = CTrapCleanup::New();
-	TRAPD(err, RunTests());
-    test(err == KErrNone);
-	delete TrapCleanup;
-	return 0;
+	return TestStepResult();
 	}

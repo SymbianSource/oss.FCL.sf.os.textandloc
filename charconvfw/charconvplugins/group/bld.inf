@@ -281,10 +281,15 @@ PRJ_MMPFILES
 	Win1255.mmp
 	Win1256.mmp
 	Win1257.mmp
-	Win1258.mmp	
+	Win1258.mmp
 
 PRJ_TESTEXPORTS
-
+	
+	../test/rtest/tsrc/main/T_ALL.script	/epoc32/data/z/test/T_ALL.script
+	../test/rtest/tsrc/main/T_ALL.bat		/epoc32/data/z/test/T_ALL.bat
+	../test/rtest/tsrc/main/T_ALL.script	/epoc32/winscw/c/test/T_ALL.script
+	../test/rtest/tsrc/main/T_ALL.bat		/epoc32/winscw/c/test/T_ALL.bat
+	
 	../test/data/swedish.txt				/epoc32/data/z/test/data/swedish.txt
 	../test/data/finnish.txt				/epoc32/data/z/test/data/finnish.txt
 	../test/data/swedish.txt				/epoc32/winscw/c/test/data/swedish.txt
@@ -548,7 +553,6 @@ PRJ_TESTEXPORTS
 	../test/data/win1258_uni_expect.dat	/epoc32/data/z/test/data/win1258_uni_expect.dat
 	../test/data/win1258_uni_input.dat	/epoc32/data/z/test/data/win1258_uni_input.dat
 
-	../test/rtest/group/charconvplugintests.bat		/epoc32/data/z/system/test/charconvplugintests.bat
 	../test/rtest/group/charconvplugintests.iby		/epoc32/rom/include/charconvplugintests.iby
 
 PRJ_TESTEXTENSIONS
@@ -558,63 +562,16 @@ PRJ_TESTEXTENSIONS
 	end
 
 PRJ_TESTMMPFILES
-
-	../test/rtest/group/tgeneralforeign.mmp
-	../test/rtest/group/tbuiltin.mmp
-	../test/rtest/group/tgb2312.mmp
-	../test/rtest/group/thz.mmp
-	../test/rtest/group/tgbk.mmp
-	../test/rtest/group/tgb18030.mmp
-	../test/rtest/group/tbig5.mmp
-	../test/rtest/group/tshiftjis_kddiau.mmp
-	../test/rtest/group/tshiftjis_docomo.mmp
-	../test/rtest/group/tiso2022jp.mmp
-	../test/rtest/group/tjis.mmp
-	../test/rtest/group/teucjp_packed.mmp
-	../test/rtest/group/tiso8859x.mmp
-	../test/rtest/group/treplacement.mmp
-	../test/rtest/group/tsnm.mmp
-	../test/rtest/group/tautodetect.mmp
-	../test/rtest/group/tucs2.mmp
-
 	../test/rtest/group/shiftjis_with_sample_extension.mmp		support		// Plug-in for test code.
-	// Special versions of Shift-JIS plugin with different UIDs do that they can co-exist for test purposes.	
+	../test/rtest/group/iso2022jp1_2_test.mmp					support		// For testing S60 variants of iso2022jp1.
+	../test/rtest/group/iso2022jp_2_test.mmp					support		// For testing S60 variants of iso2022jp.
+ 	../test/rtest/group/eucjp_packed_2_test.mmp					support		// For testing S60 variants of eucjp_packed.
+ 	../test/rtest/group/test_j5_kddiau.mmp						support		// For testing Kddiau variants of Shift-JIS.
 	../test/rtest/group/tis1620.mmp								support
 	../test/rtest/group/shiftjis_kddiau_test.mmp				support		// For testing Kddiau variants of Shift-JIS.
-	../test/rtest/group/tj5_kddiau.mmp
-	../test/rtest/group/tj5_docomo.mmp
-	../test/rtest/group/test_j5_kddiau.mmp						support		// For testing Kddiau variants of Shift-JIS.
-	../test/rtest/group/test_multi_plugins.mmp								// Test for DEF088036.
-	../test/rtest/group/textendedsms.mmp
-	../test/rtest/group/tturkishsingle.mmp
-	../test/rtest/group/tturkishlocking.mmp
-	../test/rtest/group/tturkishlockingsingle.mmp
-	../test/rtest/group/tportuguesegsmsingle.mmp
-	../test/rtest/group/tportugueselocking.mmp
-	../test/rtest/group/tportugueselockingsingle.mmp
-	../test/rtest/group/tspanishgsmsingle.mmp
-	../test/rtest/group/tiscii.mmp
-	../test/rtest/group/tKOI8U.mmp
-	../test/rtest/group/tKOI8R.mmp
-	../test/rtest/group/tTIS_620.mmp
-	../test/rtest/group/twin874.mmp
-	../test/rtest/group/twin1250.mmp
-	../test/rtest/group/twin1251.mmp
-	../test/rtest/group/twin1253.mmp
-	../test/rtest/group/twin1254.mmp
-	../test/rtest/group/twin1255.mmp
-	../test/rtest/group/twin1256.mmp
-	../test/rtest/group/twin1257.mmp
-	../test/rtest/group/twin1258.mmp
-	../test/rtest/group/tcp949.mmp
- 	../test/rtest/group/teucjpdirectmap.mmp
-	../test/rtest/group/tshiftjisdirectmap.mmp
- 	../test/rtest/group/eucjp_packed_2_test.mmp				support		// For testing S60 variants of eucjp_packed.
-	../test/rtest/group/teucjp_packed_2.mmp
-	../test/rtest/group/iso2022jp_2_test.mmp				support		// For testing S60 variants of iso2022jp.
-	../test/rtest/group/tiso2022jp_2.mmp
-	../test/rtest/group/iso2022jp1_2_test.mmp				support		// For testing S60 variants of iso2022jp1.
-	../test/rtest/group/tiso2022jp1_2.mmp
+ 		
+	../test/rtest/group/t_charconvpluginserver.mmp
+
 	
 PRJ_TESTEXTENSIONS
 	start extension syslibs/test/charconv_testpostbuild		// Remove shiftjis_kddiau.rsc and j5_kddiau.rsc so test version will work correctly.

@@ -31,13 +31,12 @@ PRJ_MMPFILES
 	IcuLayoutEngine.mmp
 	
 PRJ_TESTMMPFILES
-	TC_SHAP_shapeText.mmp
+	t_shapetestserver.mmp
 	../test/HindiDemo/group/hindiDemo.mmp manual
 	../test/CreateTestData/T_SHAP_createTestData.mmp support
 
 PRJ_TESTEXPORTS
 	../test/HindiDemo/group/HindiDemo.iby 			/epoc32/rom/include/hindidemo.iby
-	../test/TC_SHAP_shapeText.iby 			/epoc32/rom/include/tc_shap_shapetext.iby
 	../test/CreateTestData/T_SHAP_createTestData.iby 	/epoc32/rom/include/t_shap_createtestdata.iby
 	
 	//files containing input and expected output data for shaper
@@ -78,3 +77,16 @@ PRJ_TESTEXPORTS
 	../test/testdata/shapergurmukhi3.dat	z:/test/data/shapergurmukhi3.dat
 	../test/testdata/shapergurmukhi4.dat	z:/test/data/shapergurmukhi4.dat
 	../test/testdata/shapergurmukhi5.dat	z:/test/data/shapergurmukhi5.dat
+
+	../test/shapetest.iby										/epoc32/rom/include/shapetest.iby
+	../test/scripts/shapetest.bat								z:/shapetest/shapetest.bat
+	../test/scripts/shapetest_t_all.script						z:/shapetest/shapetest_t_all.script
+	../test/scripts/shapetest_t_hindi.script					z:/shapetest/shapetest_t_hindi.script
+	../test/scripts/shapetest_t_kannada.script					z:/shapetest/shapetest_t_kannada.script
+	../test/scripts/shapetest_t_gujarati.script					z:/shapetest/shapetest_t_gujarati.script
+	../test/scripts/shapetest_t_bengali.script					z:/shapetest/shapetest_t_bengali.script
+	../test/scripts/shapetest_t_tamil.script					z:/shapetest/shapetest_t_tamil.script
+	../test/scripts/shapetest_t_telugu.script					z:/shapetest/shapetest_t_telugu.script
+	../test/scripts/shapetest_t_gurmukhi.script					z:/shapetest/shapetest_t_gurmukhi.script
+	../test/scripts/shapetest_t_malayalam.script				z:/shapetest/shapetest_t_malayalam.script
+	

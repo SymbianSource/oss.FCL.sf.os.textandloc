@@ -96,9 +96,9 @@
 <SystemDefinition name="textandloc_build" schema="1.4.0">
   <systemModel>
     <layer name="os_layer">
-      <!--module name="freetype">
-        <unit name="freetype" unitID="tls.freetype"  bldFile="sf\os\textandloc\fontservices\freetypefontrasteriser\group" mrp="sf\os\textandloc\fontservices\freetypefontrasteriser\group\graphics_freetype.mrp"/>
-      </module-->
+      <module name="freetype">
+        <unit name="freetype" unitID="tls.freetype"  bldFile="sf\os\textandloc\fontservices\freetypefontrasteriser\group" mrp="sf\os\textandloc\fontservices\freetypefontrasteriser\group\graphics_freetype.mrp" filter="!dfs_build"/>
+      </module>
       <module name="app-framework_etext">
         <unit name="etext" unitID="tls.etext"  bldFile="sf\os\textandloc\textrendering\texthandling\group" mrp="sf\os\textandloc\textrendering\texthandling\group\app-framework_etext.mrp"/>
       </module>

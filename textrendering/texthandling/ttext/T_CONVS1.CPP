@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 1997-2009 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 1997-2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -20,20 +20,30 @@
 #include <txtfmlyr.h>
 #include <s32mem.h>
 #include <s32file.h>
-#include <e32test.h>
 #include <flddef.h>
 #include <fldbltin.h>
+#include "T_CONVS1.h"
+
+#define test(cond)											\
+	{														\
+	TBool __bb = (cond);									\
+	TEST(__bb);												\
+	if (!__bb)												\
+		{													\
+		ERR_PRINTF1(_L("ERROR: Test Failed"));				\
+		User::Leave(1);										\
+		}													\
+	}
 
 const TInt KTestCleanupStack=0x20;
 
 LOCAL_D CTrapCleanup* TheTrapCleanup;
-LOCAL_D RTest test(_L("T_CONVS1 - GlobalText Persistence"));
 
 LOCAL_D	TPtrC bigBuf(_L("This is a very big buffer indeed, containing text and special characters,\
  big enough to fill a segment of an editable text component that employs segmented storage"));
 
 ////////////////////////////////////////////////////////////////////////////////////////////
-class TTestFieldFactory : public MTextFieldFactory
+class TTestFieldFactoryCONVS1 : public MTextFieldFactory
 	{
 public:
 	// from MTextFieldFactory
@@ -42,7 +52,7 @@ public:
 	// Returns NULL if it does not recognise/support the field type
 	};
 
-CTextField* TTestFieldFactory::NewFieldL(TUid aFieldType)
+CTextField* TTestFieldFactoryCONVS1::NewFieldL(TUid aFieldType)
 // Creates a field (in aHeader) of the type specified in aHeader
 // 
 	{
@@ -55,7 +65,7 @@ CTextField* TTestFieldFactory::NewFieldL(TUid aFieldType)
 
 _LIT(KOutputFile, "c:\\etext\\t_convs1.tst");
 template <class T>
-void testStoreRestoreL(T& aCopy,const T& aOriginal)
+void CT_CONVS1::testStoreRestoreL(T& aCopy,const T& aOriginal)
 // Test document persistance.
 //
     {
@@ -83,7 +93,7 @@ void testStoreRestoreL(T& aCopy,const T& aOriginal)
 	theFs.Close();
     }
 
-LOCAL_C TInt IsEqual(const CPlainText* aCopy,const CPlainText* aOriginal)
+TInt CT_CONVS1::IsEqual(const CPlainText* aCopy,const CPlainText* aOriginal)
 //
 // Tests for equality of plain text components.
 // Takes account of multiple segments of a segmented text component.
@@ -105,7 +115,7 @@ LOCAL_C TInt IsEqual(const CPlainText* aCopy,const CPlainText* aOriginal)
 		lengthRead+=orig.Length();
 		}
 	test(lengthRead==lengthOfOriginal+1);
-	test.Next(_L("Restored plain text component matches original"));
+	INFO_PRINTF1(_L("Restored plain text component matches original"));
 	TInt copyFieldCount=aCopy->FieldCount();
 	TInt origFieldCount=aOriginal->FieldCount();
 	test(copyFieldCount==origFieldCount);
@@ -113,7 +123,7 @@ LOCAL_C TInt IsEqual(const CPlainText* aCopy,const CPlainText* aOriginal)
 	}
 
 
-LOCAL_C TInt DocsEqual(const CGlobalText* aCopy,const CGlobalText* aOrig)
+TInt CT_CONVS1::DocsEqual(const CGlobalText* aCopy,const CGlobalText* aOrig)
 //
 //
 //
@@ -123,7 +133,7 @@ LOCAL_C TInt DocsEqual(const CGlobalText* aCopy,const CGlobalText* aOrig)
 	}
 
 
-void GenerateGlobalTextL()
+void CT_CONVS1::GenerateGlobalTextL()
 //
 // Create a global text documnet.
 //
@@ -160,7 +170,7 @@ void GenerateGlobalTextL()
 	TParaFormatMask nn; r1->SetL((CParaFormat*)NULL,nn);
 	CGlobalText* restoredDoc=CGlobalText::NewL(r1,cr1,CEditableText::ESegmentedStorage);
 //	Store a text field in the global text.
-	TTestFieldFactory factory;
+	TTestFieldFactoryCONVS1 factory;
 	globalDoc->SetFieldFactory(&factory);
 	restoredDoc->SetFieldFactory(&factory);
 	CTextField* field=NULL;
@@ -171,11 +181,10 @@ void GenerateGlobalTextL()
 	globalDoc->InsertFieldL(0,field,KDateTimeFieldUid));
 	test(ret==KErrNone);
 //	And do the streaming/restore.
-	test.Start(_L("Storing global text with field record"));
-	test.Next(_L("Restoring global text"));
+	INFO_PRINTF1(_L("Storing global text with field record"));
+	INFO_PRINTF1(_L("Restoring global text"));
 	testStoreRestoreL(*restoredDoc,*globalDoc);
 	test(DocsEqual(restoredDoc,globalDoc));
-	test.End();
 //	Now clean up.
 	TInt restoredCharChain=cr1->ChainCount();
 	TInt restoredParaChain=r1->ChainCount();
@@ -205,7 +214,7 @@ void GenerateGlobalTextL()
 	}
 
 
-LOCAL_C void setupCleanup()
+void CT_CONVS1::setupCleanup()
 //
 // Initialise the cleanup stack.
 //
@@ -222,7 +231,7 @@ LOCAL_C void setupCleanup()
 	}
 
 
-LOCAL_C void DeleteDataFile(const TDesC& aFullName)
+void CT_CONVS1::DeleteDataFile(const TDesC& aFullName)
 	{
 	RFs fsSession;
 	TInt err = fsSession.Connect();
@@ -251,29 +260,31 @@ LOCAL_C void DeleteDataFile(const TDesC& aFullName)
 		}
 	}
 
-GLDEF_C TInt E32Main()
-//
-// Test streaming conversions.
-//
+CT_CONVS1::CT_CONVS1()
     {
-	setupCleanup();
-	test.Title();
-	__UHEAP_MARK;
-
-	test.Start(_L("Generate global text"));
-	test.Next(_L(" @SYMTestCaseID:SYSLIB-ETEXT-LEGACY-T_CONVS1-0001 "));
-	TRAPD(r,GenerateGlobalTextL());
-	test(r==KErrNone);
-	
-	__UHEAP_MARKEND;
-	
-	::DeleteDataFile(KOutputFile);	//deletion of data files must be before call to End() - DEF047652
-	test.End();
-	test.Close();
-	delete TheTrapCleanup;
-
-	
-
-	return 0;
+    SetTestStepName(KTestStep_T_CONVS1);
     }
 
+TVerdict CT_CONVS1::doTestStepL()
+    {
+    SetTestStepResult(EFail);
+
+    setupCleanup();
+    __UHEAP_MARK;
+
+    INFO_PRINTF1(_L("T_CONVS1 - GlobalText Persistence"));
+    INFO_PRINTF1(_L("Generate global text"));
+    INFO_PRINTF1(_L(" @SYMTestCaseID:SYSLIB-ETEXT-LEGACY-T_CONVS1-0001 "));
+    TRAPD(error1, GenerateGlobalTextL());
+
+    __UHEAP_MARKEND;
+    DeleteDataFile(KOutputFile);  //deletion of data files must be before call to End() - DEF047652
+    delete TheTrapCleanup;
+
+    if(error1 == KErrNone)
+        {
+        SetTestStepResult(EPass);
+        }
+
+    return TestStepResult();
+    }

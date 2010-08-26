@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2004-2009 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 2004-2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -16,7 +16,6 @@
 */
 
 
-#include <e32test.h>
 #include <charconv.h>
 #include <gdi.h>
 #include <conpics.h>
@@ -25,6 +24,41 @@
 
 #include "TXTPLAIN.H"
 #include "TxtWriter.h"
+#include "TETextDefect.h"
+
+LOCAL_D CTestStep *pTestStep = NULL;
+#define test(cond)								\
+	{											\
+	TBool __bb = (cond);						\
+	pTestStep->TEST(__bb);						\
+	if (!__bb)									\
+		{										\
+		ERR_PRINTF1(_L("ERROR: Test Failed"));	\
+		User::Leave(1);							\
+		}										\
+	}
+#define test2(cond, line)										\
+	{															\
+	TBool __bb = (cond);										\
+	pTestStep->TEST(__bb);										\
+	if (!__bb)													\
+		{														\
+		ERR_PRINTF2(_L("Line %d, ERROR: Test Failed"), line);	\
+		User::Leave(1);											\
+		}														\
+	}
+#undef INFO_PRINTF1
+#undef INFO_PRINTF2
+#undef ERR_PRINTF1
+#undef ERR_PRINTF2
+#undef ERR_PRINTF3
+// copy from tefexportconst.h
+#define INFO_PRINTF1(p1)        pTestStep->Logger().LogExtra(((TText8*)__FILE__), __LINE__, ESevrInfo, (p1))
+#define INFO_PRINTF2(p1, p2)    pTestStep->Logger().LogExtra(((TText8*)__FILE__), __LINE__, ESevrInfo, (p1), (p2))
+#define ERR_PRINTF1(p1)         pTestStep->Logger().LogExtra(((TText8*)__FILE__), __LINE__, ESevrErr, (p1)) 
+#define ERR_PRINTF2(p1, p2)     pTestStep->Logger().LogExtra(((TText8*)__FILE__), __LINE__, ESevrErr, (p1), (p2)) 
+#define ERR_PRINTF3(p1, p2, p3) pTestStep->Logger().LogExtra(((TText8*)__FILE__), __LINE__, ESevrErr, (p1), (p2), (p3)) ;
+
 
 //Used for supressing warning in OOM tests
  #define __UNUSED_VAR(var) var = var
@@ -35,7 +69,6 @@
 #endif
 
 _LIT(KTestName, "Start of Tests...");
-RTest theTest(KTestName);
 
 ///////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -44,24 +77,24 @@ LOCAL_C void Check(TInt aValue, TInt aLine)
 	{
 	if(!aValue)
 		{
-		theTest(EFalse, aLine);
+		test2(EFalse, aLine);
 		}
 	}
 LOCAL_C void Check(TInt aValue, TInt aExpected, TInt aLine)
 	{
 	if(aValue != aExpected)
 		{
-		theTest.Printf(_L("*** Expected error: %d, got: %d\r\n"), aExpected, aValue);
-		theTest(EFalse, aLine);
+	    ERR_PRINTF3(_L("*** Expected error: %d, got: %d\r\n"), aExpected, aValue);
+		test2(EFalse, aLine);
 		}
 	}
-#define TEST(arg) ::Check((arg), __LINE__)
-#define TEST2(aValue, aExpected) ::Check(aValue, aExpected, __LINE__)
+#define CHECK1(arg) ::Check((arg), __LINE__)
+#define CHECK2(aValue, aExpected) ::Check(aValue, aExpected, __LINE__)
 
 
 LOCAL_C void Inc049456L()
 	{
-   	theTest.Next(_L("Inc049456L"));
+   	INFO_PRINTF1(_L("Inc049456L"));
 
 	CPlainTextConverter* converter = CPlainTextConverter::NewLC();
 	CleanupStack::PopAndDestroy(converter);
@@ -69,7 +102,7 @@ LOCAL_C void Inc049456L()
 	
 LOCAL_C void OOM049456L()
 	{
-   	theTest.Next(_L("OOM049456L"));
+   	INFO_PRINTF1(_L("OOM049456L"));
 
 	TInt tryCount=0;
  	TInt error = KErrNone;
@@ -95,15 +128,15 @@ LOCAL_C void OOM049456L()
  		TInt endThreadHandleCount;
  		RThread().HandleCount(endProcessHandleCount, endThreadHandleCount);
  
- 		TEST(startProcessHandleCount == endProcessHandleCount);
- 		TEST(startThreadHandleCount  == endThreadHandleCount);
+ 		CHECK1(startProcessHandleCount == endProcessHandleCount);
+ 		CHECK1(startThreadHandleCount  == endThreadHandleCount);
  				
  		__UHEAP_MARKEND;
  		
  		}while(error==KErrNoMemory);
  		
- 	TEST2(error, KErrNone);
- 	theTest.Printf(_L("- server succeeded at heap failure rate of %i\n"),tryCount);		
+ 	CHECK2(error, KErrNone);
+ 	INFO_PRINTF2(_L("- server succeeded at heap failure rate of %i\n"),tryCount);		
 	}
 
 
@@ -111,7 +144,7 @@ LOCAL_C void OOM049456L()
 
 LOCAL_C void Inc051360L()
 	{
-   	theTest.Next(_L("Inc051360L"));
+   	INFO_PRINTF1(_L("Inc051360L"));
    	
 	// Test data to force a remainder of 2 from the charconv unicode conversion.
 	// The etext buffer is 1024 bytes that truncates the last utf-8 character.
@@ -223,7 +256,7 @@ LOCAL_C void Inc051360L()
 	const TUint16* ptr = (TUint16*) (ptr8.Ptr());
 	TPtrC16 des16 (ptr, 2);
 
-	TEST(unicodeConversion == des16);
+	CHECK1(unicodeConversion == des16);
 	
 	CleanupStack::PopAndDestroy (&outputStr);	
 	CleanupStack::PopAndDestroy (outbuffer);	
@@ -234,7 +267,7 @@ LOCAL_C void Inc051360L()
 	
 LOCAL_C void OOM051360L()
 	{
-   	theTest.Next(_L("OOM051360L"));
+   	INFO_PRINTF1(_L("OOM051360L"));
 
 	TInt tryCount=0;
  	TInt error = KErrNone;
@@ -260,20 +293,20 @@ LOCAL_C void OOM051360L()
  		TInt endThreadHandleCount;
  		RThread().HandleCount(endProcessHandleCount, endThreadHandleCount);
  
- 		TEST(startProcessHandleCount == endProcessHandleCount);
- 		TEST(startThreadHandleCount  == endThreadHandleCount);
+ 		CHECK1(startProcessHandleCount == endProcessHandleCount);
+ 		CHECK1(startThreadHandleCount  == endThreadHandleCount);
  				
  		__UHEAP_MARKEND;
  		
  		}while(error==KErrNoMemory);
  		
- 	TEST2(error, KErrNone);
- 	theTest.Printf(_L("- server succeeded at heap failure rate of %i\n"),tryCount);		
+ 	CHECK2(error, KErrNone);
+ 	INFO_PRINTF2(_L("- server succeeded at heap failure rate of %i\n"),tryCount);		
 	}
 	
 LOCAL_C void OOM056552L()
 	{
-	theTest.Next(_L("OOM056552L"));
+	INFO_PRINTF1(_L("OOM056552L"));
 
 	TInt tryCount=0;
  	TInt error = KErrNone;
@@ -305,8 +338,8 @@ LOCAL_C void OOM056552L()
  		
  		}while(error==KErrNoMemory);
  		
- 	theTest(error==KErrNone);
- 	theTest.Printf(_L("	richText->InsertL - succeeded at heap failure rate of %i\n"),tryCount);	
+ 	test(error==KErrNone);
+ 	INFO_PRINTF2(_L("	richText->InsertL - succeeded at heap failure rate of %i\n"),tryCount);	
 	}
 /////////////////////////////////////////////////////////////////////////////////////////////////
 // Testing the fix for
@@ -352,7 +385,7 @@ static void INC055971L()
 	TBuf<32> testBuf;
 	TOutputChar outputChar;
 
-   	theTest.Next(_L("INC055971L - OrganiseByParagraph test"));
+   	INFO_PRINTF1(_L("INC055971L - OrganiseByParagraph test"));
 
 		{
 		TParagraphTextWriter paragraphTextWriter(outputChar);
@@ -361,43 +394,43 @@ static void INC055971L()
 		testBuf = _L("\xD");
 		TheOutputTestBuf.Zero();
 		::TranslateToEofTestL(slbTranslator, testBuf);
-		TEST(TheOutputTestBuf.Length() == 1);
-		TEST(TheOutputTestBuf[0] == CEditableText::EParagraphDelimiter);
+		CHECK1(TheOutputTestBuf.Length() == 1);
+		CHECK1(TheOutputTestBuf[0] == CEditableText::EParagraphDelimiter);
 
 		testBuf = _L("\xA");
 		TheOutputTestBuf.Zero();
 		::TranslateToEofTestL(slbTranslator, testBuf);
-		TEST(TheOutputTestBuf.Length() == 1);
-		TEST(TheOutputTestBuf[0] == CEditableText::EParagraphDelimiter);
+		CHECK1(TheOutputTestBuf.Length() == 1);
+		CHECK1(TheOutputTestBuf[0] == CEditableText::EParagraphDelimiter);
 
 		testBuf = _L("\xD\xA");
 		TheOutputTestBuf.Zero();
 		::TranslateToEofTestL(slbTranslator, testBuf);
-		TEST(TheOutputTestBuf.Length() == 1);
-		TEST(TheOutputTestBuf[0] == CEditableText::EParagraphDelimiter);
+		CHECK1(TheOutputTestBuf.Length() == 1);
+		CHECK1(TheOutputTestBuf[0] == CEditableText::EParagraphDelimiter);
 
 		testBuf = _L("zz\xD\xA\xD\xA\xAz\xD");
 		TheOutputTestBuf.Zero();
 		::TranslateToEofTestL(slbTranslator, testBuf);
-		TEST(TheOutputTestBuf.Length() == 7);
-		TEST(TheOutputTestBuf[0] == 'z');
-		TEST(TheOutputTestBuf[1] == 'z');
-		TEST(TheOutputTestBuf[2] == CEditableText::EParagraphDelimiter);
-		TEST(TheOutputTestBuf[3] == CEditableText::EParagraphDelimiter);
-		TEST(TheOutputTestBuf[4] == CEditableText::EParagraphDelimiter);
-		TEST(TheOutputTestBuf[5] == 'z');
-		TEST(TheOutputTestBuf[6] == CEditableText::EParagraphDelimiter);
+		CHECK1(TheOutputTestBuf.Length() == 7);
+		CHECK1(TheOutputTestBuf[0] == 'z');
+		CHECK1(TheOutputTestBuf[1] == 'z');
+		CHECK1(TheOutputTestBuf[2] == CEditableText::EParagraphDelimiter);
+		CHECK1(TheOutputTestBuf[3] == CEditableText::EParagraphDelimiter);
+		CHECK1(TheOutputTestBuf[4] == CEditableText::EParagraphDelimiter);
+		CHECK1(TheOutputTestBuf[5] == 'z');
+		CHECK1(TheOutputTestBuf[6] == CEditableText::EParagraphDelimiter);
 
 		testBuf = _L("This\xDIs\xATest\xD\xAMessage");
 		TheOutputTestBuf.Zero();
 		::TranslateToEofTestL(slbTranslator, testBuf);
-		TEST(TheOutputTestBuf.Length() == 20);
-		TEST(TheOutputTestBuf[4] == CEditableText::EParagraphDelimiter);
-		TEST(TheOutputTestBuf[7] == CEditableText::EParagraphDelimiter);
-		TEST(TheOutputTestBuf[12] == CEditableText::EParagraphDelimiter);
+		CHECK1(TheOutputTestBuf.Length() == 20);
+		CHECK1(TheOutputTestBuf[4] == CEditableText::EParagraphDelimiter);
+		CHECK1(TheOutputTestBuf[7] == CEditableText::EParagraphDelimiter);
+		CHECK1(TheOutputTestBuf[12] == CEditableText::EParagraphDelimiter);
 		}
 
-   	theTest.Next(_L("INC055971L - OrganiseByLine test"));
+   	INFO_PRINTF1(_L("INC055971L - OrganiseByLine test"));
 
 		{
 		TLineTextWriter lineTextWriter(outputChar);
@@ -406,61 +439,61 @@ static void INC055971L()
 		testBuf = _L("\xD");
 		TheOutputTestBuf.Zero();
 		::TranslateToEofTestL(slbTranslator, testBuf);
-		TEST(TheOutputTestBuf.Length() == 1);
-		TEST(TheOutputTestBuf[0] == ' ');
+		CHECK1(TheOutputTestBuf.Length() == 1);
+		CHECK1(TheOutputTestBuf[0] == ' ');
 
 		testBuf = _L("\xA");
 		TheOutputTestBuf.Zero();
 		::TranslateToEofTestL(slbTranslator, testBuf);
-		TEST(TheOutputTestBuf.Length() == 1);
-		TEST(TheOutputTestBuf[0] == ' ');
+		CHECK1(TheOutputTestBuf.Length() == 1);
+		CHECK1(TheOutputTestBuf[0] == ' ');
 
 		testBuf = _L("\xD\xA");
 		TheOutputTestBuf.Zero();
 		::TranslateToEofTestL(slbTranslator, testBuf);
-		TEST(TheOutputTestBuf.Length() == 1);
-		TEST(TheOutputTestBuf[0] == ' ');
+		CHECK1(TheOutputTestBuf.Length() == 1);
+		CHECK1(TheOutputTestBuf[0] == ' ');
 
 		testBuf = _L("\xD\xA\xD\xA");
 		TheOutputTestBuf.Zero();
 		::TranslateToEofTestL(slbTranslator, testBuf);
-		TEST(TheOutputTestBuf.Length() == 1);
-		TEST(TheOutputTestBuf[0] == CEditableText::EParagraphDelimiter);
+		CHECK1(TheOutputTestBuf.Length() == 1);
+		CHECK1(TheOutputTestBuf[0] == CEditableText::EParagraphDelimiter);
 
 		testBuf = _L("\xD\xD");
 		TheOutputTestBuf.Zero();
 		::TranslateToEofTestL(slbTranslator, testBuf);
-		TEST(TheOutputTestBuf.Length() == 1);
-		TEST(TheOutputTestBuf[0] == CEditableText::EParagraphDelimiter);
+		CHECK1(TheOutputTestBuf.Length() == 1);
+		CHECK1(TheOutputTestBuf[0] == CEditableText::EParagraphDelimiter);
 
 		testBuf = _L("\xA\xA");
 		TheOutputTestBuf.Zero();
 		::TranslateToEofTestL(slbTranslator, testBuf);
-		TEST(TheOutputTestBuf.Length() == 1);
-		TEST(TheOutputTestBuf[0] == CEditableText::EParagraphDelimiter);
+		CHECK1(TheOutputTestBuf.Length() == 1);
+		CHECK1(TheOutputTestBuf[0] == CEditableText::EParagraphDelimiter);
 
 		testBuf = _L("\xA\xD");
 		TheOutputTestBuf.Zero();
 		::TranslateToEofTestL(slbTranslator, testBuf);
-		TEST(TheOutputTestBuf.Length() == 1);
-		TEST(TheOutputTestBuf[0] == CEditableText::EParagraphDelimiter);
+		CHECK1(TheOutputTestBuf.Length() == 1);
+		CHECK1(TheOutputTestBuf[0] == CEditableText::EParagraphDelimiter);
 
 		testBuf = _L("\xD\xA\xA");
 		TheOutputTestBuf.Zero();
 		::TranslateToEofTestL(slbTranslator, testBuf);
-		TEST(TheOutputTestBuf.Length() == 1);
-		TEST(TheOutputTestBuf[0] == CEditableText::EParagraphDelimiter);
+		CHECK1(TheOutputTestBuf.Length() == 1);
+		CHECK1(TheOutputTestBuf[0] == CEditableText::EParagraphDelimiter);
 
 		testBuf = _L("\xD\xAz\xAzz\xA\xD");
 		TheOutputTestBuf.Zero();
 		::TranslateToEofTestL(slbTranslator, testBuf);
-		TEST(TheOutputTestBuf.Length() == 6);
-		TEST(TheOutputTestBuf[0] == ' ');
-		TEST(TheOutputTestBuf[1] == 'z');
-		TEST(TheOutputTestBuf[2] == ' ');
-		TEST(TheOutputTestBuf[3] == 'z');
-		TEST(TheOutputTestBuf[4] == 'z');
-		TEST(TheOutputTestBuf[5] == CEditableText::EParagraphDelimiter);
+		CHECK1(TheOutputTestBuf.Length() == 6);
+		CHECK1(TheOutputTestBuf[0] == ' ');
+		CHECK1(TheOutputTestBuf[1] == 'z');
+		CHECK1(TheOutputTestBuf[2] == ' ');
+		CHECK1(TheOutputTestBuf[3] == 'z');
+		CHECK1(TheOutputTestBuf[4] == 'z');
+		CHECK1(TheOutputTestBuf[5] == CEditableText::EParagraphDelimiter);
 		}
 	}
 
@@ -479,7 +512,7 @@ the text formatting.
 */
 LOCAL_C void INC097216L()
 	{
-	theTest.Next(_L(" @SYMTestCaseID:SYSLIB-ETEXT-CT-3346 INC097216L - Test EOD character is formatted with rest of text "));
+	INFO_PRINTF1(_L(" @SYMTestCaseID:SYSLIB-ETEXT-CT-3346 INC097216L - Test EOD character is formatted with rest of text "));
 	
 	__UHEAP_MARK;
 
@@ -504,7 +537,7 @@ LOCAL_C void INC097216L()
 	richText->GetCharFormat(charFormat, formatMask, textLength, 1); // get format info for EOD character
 	TInt EodFontHeight = charFormat.iFontSpec.iHeight;	
 	
-	TEST(characterFontHeight == EodFontHeight);
+	CHECK1(characterFontHeight == EodFontHeight);
 	
 	delete paraLayer; paraLayer = NULL;
 	delete charLayer; charLayer = NULL;
@@ -526,7 +559,7 @@ LOCAL_C void INC097216L()
 */
 LOCAL_C void INC101996L()
 	{
-	theTest.Next(_L("@SYMTestCaseID:SYSLIB-ETEXT-CT-3386 INC101996 CEikRichTextEditor control don't support anti-aliasing font"));
+	INFO_PRINTF1(_L("@SYMTestCaseID:SYSLIB-ETEXT-CT-3386 INC101996 CEikRichTextEditor control don't support anti-aliasing font"));
 
 	__UHEAP_MARK;
 
@@ -565,8 +598,8 @@ LOCAL_C void INC101996L()
 	TGlyphBitmapType startBitmapType = defaultCharFormat.iFontSpec.iFontStyle.BitmapType(); 
 	
 	//Verify the formatting and the contents of the string
-	TEST2(startBitmapType, EDefaultGlyphBitmap);
-	TEST(defaultString == KDefaulFormattedText);
+	CHECK2(startBitmapType, EDefaultGlyphBitmap);
+	CHECK1(defaultString == KDefaulFormattedText);
 		
 	//Get the string portion with antialiased formatting
 	TPtrC antialiasedString;
@@ -575,8 +608,8 @@ LOCAL_C void INC101996L()
 	TGlyphBitmapType endBitmapType = antiAliasedCharFormat.iFontSpec.iFontStyle.BitmapType(); 	
 	
 	//Verify the formatting and the contents of the string
-	TEST2(endBitmapType,EAntiAliasedGlyphBitmap);
-	TEST(antialiasedString == KAntiAliasedText);
+	CHECK2(endBitmapType,EAntiAliasedGlyphBitmap);
+	CHECK1(antialiasedString == KAntiAliasedText);
 	
 	delete paraLayer; paraLayer = NULL;
 	delete charLayer; charLayer = NULL;
@@ -603,28 +636,28 @@ LOCAL_C void DoTestsL()
 	
 	__UHEAP_MARKEND;	
    	}
+
+CTEtextDefect::CTEtextDefect()
+    {
+    SetTestStepName(KTestStep_TEtextDefect);
+    pTestStep = this;
+    }
+
+TVerdict CTEtextDefect::doTestStepL()
+    {
+    SetTestStepResult(EFail);
+
+    CTrapCleanup* trapCleanup=CTrapCleanup::New();
    
-/***
-Main
-*/
-GLDEF_C TInt E32Main()
-	{
-   	CTrapCleanup* trapCleanup=CTrapCleanup::New();
-   
-   	theTest.Start(KTestName);
-	TRAPD(error, DoTestsL());
-	TEST2(error, KErrNone);
- 	
-	delete trapCleanup;
- 	
-	theTest.End();
-	theTest.Close();
+    INFO_PRINTF1(KTestName);
+    TRAPD(error, DoTestsL());
 
-   	return KErrNone;
-   	}
-   	
-   	
-   	
+    delete trapCleanup;
 
+    if (error == KErrNone)
+        {
+        SetTestStepResult(EPass);
+        }
 
-
+    return TestStepResult();
+    }

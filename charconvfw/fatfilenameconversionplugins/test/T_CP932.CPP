@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2006-2009 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 2006-2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -16,10 +16,20 @@
 */
 
 
-#include <e32test.h>
+#include "T_CP932.h"
 #include <e32des8.h>
 
-LOCAL_D RTest test(_L("T_CP932.exe"));
+#define test(cond)                                          \
+    {                                                       \
+    TBool __bb = (cond);                                    \
+    TEST(__bb);                                             \
+    if (!__bb)                                              \
+        {                                                   \
+        ERR_PRINTF1(_L("ERROR: Test Failed"));              \
+        User::Leave(1);                                     \
+        }                                                   \
+    }
+
 
 _LIT16(Uni_1, "\x0053\x0059\x004D\x3125\x6349\xAAAA\x9673\x9ED1\x3000\xFF9F");
 _LIT8(CP932_1, "\x53\x59\x4D\x5F\x91\xA8\x5F\x92\xC2\xEE\xEC\x81\x40\xDF");
@@ -41,9 +51,10 @@ const TUid KPluginUid={0x10206A92};
 @SYMTestPriority 	    High
 @SYMTestActions  	    Tests for conversions from/to Unicode, using a function pointer
 @SYMTestExpectedResults Test must not fail 
-*/void Test()
+*/
+void CT_CP932::TestL()
 	{ 
-		test.Next(_L(" @SYMTestCaseID:SYSLIB-FATCHARSETCONV-CT-1779 "));
+    INFO_PRINTF1(_L(" @SYMTestCaseID:SYSLIB-FATCHARSETCONV-CT-1779 "));
 	RLibrary lib;
 
 	const TUidType serverUid(KNullUid,KNullUid,KPluginUid);	
@@ -110,9 +121,9 @@ const TUid KPluginUid={0x10206A92};
 @SYMTestActions  	    Tests for correct character conversion on certain chinese characters 
 @SYMTestExpectedResults Test must not fail 
 */	
-void TestINC090073()
+void CT_CP932::TestINC090073L()
 	{
-		test.Next(_L(" @SYMTestCaseID:SYSLIB-FATCHARSETCONV-CT-1847 "));
+    INFO_PRINTF1(_L(" @SYMTestCaseID:SYSLIB-FATCHARSETCONV-CT-1847 "));
  	_LIT16(unicode, "\x6DFC\x715C\x9785\x7A37\x61A9\x80B1\x86A3\x7B71\x6615\x6600");
 	_LIT8(CP932Code, "\xED\xE6\xED\xF6\xE8\xD7\xE2\x6C\x8C\x65\x8D\x6E\xE5\x6E\xE2\xAA\xED\xB3\xED\xB2");
 
@@ -142,9 +153,9 @@ void TestINC090073()
 	lib.Close();
 	}	
 
-void OOMTest()
+void CT_CP932::OOMTestL()
 	{
-	test.Next(_L("OOM testing"));
+    INFO_PRINTF1(_L("OOM testing"));
 	TInt err, tryCount = 0;
 	do	
 		{
@@ -157,7 +168,7 @@ void OOMTest()
 			// Setting Heap failure for OOM test
 		__UHEAP_SETFAIL(RHeap::EDeterministic, ++tryCount);
 
-		TRAP(err,Test());
+		TRAP(err,TestL());
 			
 		__UHEAP_SETFAIL(RHeap::ENone, 0);
 		
@@ -173,37 +184,32 @@ void OOMTest()
 		}while (err == KErrNoMemory);
 		
 	test(err == KErrNone);
-	test.Printf(_L("- server succeeded at heap failure rate of %i\n"), tryCount);
+	INFO_PRINTF2(_L("- server succeeded at heap failure rate of %i\n"), tryCount);
 	}
 
 
-LOCAL_C void DoE32MainL()
-	{
-	__UHEAP_MARK;
+CT_CP932::CT_CP932()
+    {
+    SetTestStepName(KTestStep_T_CP932);
+    }
 
-	Test();
-	TestINC090073();
-	OOMTest();
 
-	__UHEAP_MARKEND;
-	}
+TVerdict CT_CP932::doTestStepL()
+    {
+    SetTestStepResult(EFail);
 
-GLDEF_C TInt E32Main()
-	{
-	__UHEAP_MARK;
+    __UHEAP_MARK;
 
-	test.Title();
-	test.Start(_L("CP932 test..."));
+    TRAPD(error1, TestL());
+    TRAPD(error2, TestINC090073L());
+    TRAPD(error3, OOMTestL());
 
-	CTrapCleanup* trapCleanup=CTrapCleanup::New();
-	TRAPD(error, DoE32MainL());
-	test(error==KErrNone);
+    __UHEAP_MARKEND;
 
-	delete trapCleanup;
+    if(error1 == KErrNone && error2 == KErrNone && error3 == KErrNone)
+        {
+        SetTestStepResult(EPass);
+        }
 
-	test.End();
-	test.Close();
-
-	__UHEAP_MARKEND;
-	return error;
-	}
+    return TestStepResult();
+    }

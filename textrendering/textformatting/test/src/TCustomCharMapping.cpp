@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 2005-2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -15,8 +15,6 @@
 *
 */
 
-
-#include "TGraphicsContext.h"
 #include <e32std.h>
 #include <e32test.h>
 #include <frmtlay.h>
@@ -25,26 +23,11 @@
 #include <txtlaydc.h>
 #include <txtetext.h>
 #include <w32std.h>
+#include "TGraphicsContext.h"
+#include "tcustomcharmapping.h"
 
-namespace LocalToFile
+namespace LocalToTCustomCharMapping
 {
-
-_LIT(KTCustomCharMapping, "TCustomCharMapping");
-const TInt KDisplayWidth = 202;
-const TInt KDisplayHeight = 100;
-const TInt KPictureCharacter = 0xFFFC;
-RTest test(KTCustomCharMapping);
-
-enum TTestNum
-	{
-	EDefaultBehaviourInvisible = 0,
-	EDefaultBehaviourVisible = 1,
-	ECustomRemappingInvisible = 2,
-	ECustomRemappingVisible = 3,
-	ENewTest = 4  //Test remapping with no custom remapper and some flags explicitly set to invisible
-	};
-
-
 class CPinkSquare : public CPicture
 	{
 public:
@@ -151,7 +134,7 @@ private:
 	CParaFormat* iParagraphFormat;
 	};
 }
-using namespace LocalToFile;
+using namespace LocalToTCustomCharMapping;
 
 class CTestTextView	// slightly naughty
 	{
@@ -265,18 +248,18 @@ private:
 		{
 		}
 
-void DoTestL(TDes& aText, CTextLayout* /*aLayout*/, CTestGraphicsDevice* aDevice, CTextView* aView, TTestNum aTestNum)
+void CTCustomCharMappingStep::DoTestL(TDes& aText, CTextLayout* /*aLayout*/, CTestGraphicsDevice* aDevice, CTextView* aView, TTestNum aTestNum)
 	{
 	aText = KTestStrings[aTestNum][0];
 	aDevice->LineArray().ResetLineArray();
 	aView->HandleGlobalChangeL();
 	const TTestGCDisplayLine* line1 = &(aDevice->LineArray().Line(0));
 	const TTestGCDisplayLine* line2 = aDevice->LineArray().Find(KTestStrings[aTestNum][1]);
-	test(0 != line1);
-	test(0 != line2);
+	TEST(0 != line1);
+	TEST(0 != line2);
 	// Can't always do a direct comparison of lines because same string
 	// may appear in more than one line, so compare contents
-	test(line1->iLineData.Compare(line2->iLineData) == 0);
+	TEST(line1->iLineData.Compare(line2->iLineData) == 0);
 	}
 
 
@@ -288,12 +271,12 @@ void DoTestL(TDes& aText, CTextLayout* /*aLayout*/, CTestGraphicsDevice* aDevice
 @SYMTestExpectedResults The test must not fail.
 @SYMPREQ 1128 Placeholders for invisible characers in rich text shall be customizable
 */
-void RunInstallationTestsL()
+void CTCustomCharMappingStep::RunInstallationTestsL()
 	{
 	// Note: If you need to move these heap checks any further "in" to focus
 	// on a specific test then you will have to move all the setup code in as
 	// well - and still preserve the two different display widths in use
-	test.Next(_L(" @SYMTestCaseID:SYSLIB-FORM-CT-0147 "));
+    INFO_PRINTF1(_L(" @SYMTestCaseID:SYSLIB-FORM-CT-0147 "));
 	__UHEAP_MARK;
 	CActiveScheduler* scheduler = new(ELeave) CActiveScheduler;
 	CleanupStack::PushL(scheduler);
@@ -317,21 +300,21 @@ void RunInstallationTestsL()
 	MFormCustomInvisibleCharacterRemapper* remapper;
 	// read what the ptr is set to - check it is null
 	remapper = layout->GetCustomInvisibleCharacterRemapper();
-	test.Next(_L("Test uninstalled"));
-	test(remapper == NULL);
+	INFO_PRINTF1(_L("Test uninstalled"));
+	TEST(remapper == NULL);
 
 	// install a custom remapper - get the ptr - check it is set
 	MFormCustomInvisibleCharacterRemapper* customRemapper = CCustomRemapper::NewL();
 	layout->SetCustomInvisibleCharacterRemapper(customRemapper);
 	remapper = layout->GetCustomInvisibleCharacterRemapper();
-	test.Next(_L("Test installed"));
-	test(remapper == customRemapper);
+	INFO_PRINTF1(_L("Test installed"));
+	TEST(remapper == customRemapper);
 
 	// set the ptr back to null (deinstall) - get the ptr - check it is null
 	layout->SetCustomInvisibleCharacterRemapper(NULL);
 	remapper = layout->GetCustomInvisibleCharacterRemapper();
-	test.Next(_L("Test uninstalled again"));
-	test(remapper == NULL);
+	INFO_PRINTF1(_L("Test uninstalled again"));
+	TEST(remapper == NULL);
 
 	delete customRemapper;
 
@@ -352,9 +335,9 @@ void RunInstallationTestsL()
 @SYMTestExpectedResults The test must not fail.
 @SYMPREQ 1128 Placeholders for invisible characers in rich text shall be customizable
 */
-void RunDefaultBehaviourTestsL()
+void CTCustomCharMappingStep::RunDefaultBehaviourTestsL()
 	{
-	test.Next(_L(" @SYMTestCaseID:SYSLIB-FORM-CT-0148 "));
+    INFO_PRINTF1(_L(" @SYMTestCaseID:SYSLIB-FORM-CT-0148 "));
 	CActiveScheduler* scheduler = new(ELeave) CActiveScheduler;
 	CleanupStack::PushL(scheduler);
 	CActiveScheduler::Install(scheduler);
@@ -376,7 +359,7 @@ void RunDefaultBehaviourTestsL()
 	// Start by making sure no custom remapper is installed
 	MFormCustomInvisibleCharacterRemapper* remapper;
 	remapper = layout->GetCustomInvisibleCharacterRemapper();
-	test(remapper == NULL);
+	TEST(remapper == NULL);
 
 	// Set all invisible characters to be invisible
 	TNonPrintingCharVisibility visibility;
@@ -384,7 +367,7 @@ void RunDefaultBehaviourTestsL()
 	layout->SetNonPrintingCharsVisibility(visibility);
 
 	// Test remapping with no custom remapper and flags set to invisible
-	test.Next(_L("Test uninstalled behaviour - flags invisible"));
+	INFO_PRINTF1(_L("Test uninstalled behaviour - flags invisible"));
 	DoTestL(text, layout, device, view, EDefaultBehaviourInvisible);
 
 	// Now set all invisible characters to be visible
@@ -392,11 +375,11 @@ void RunDefaultBehaviourTestsL()
 	layout->SetNonPrintingCharsVisibility(visibility);
 
 	// Test remapping with no custom remapper and flags set to visible
-	test.Next(_L("Test uninstalled behaviour - flags visible"));
+	INFO_PRINTF1(_L("Test uninstalled behaviour - flags visible"));
 	DoTestL(text, layout, device, view, EDefaultBehaviourVisible);
 
 	// Test remapping with no custom remapper and some flags explicitly set to invisible
-	test.Next(_L("Test uninstalled behaviour - some flags invisible"));
+	INFO_PRINTF1(_L("Test uninstalled behaviour - some flags invisible"));
 	//Set all invisible characters to be visible
 	visibility.SetAllVisible();
 	//Set some attributes explicitly to be invisible
@@ -428,12 +411,12 @@ void RunDefaultBehaviourTestsL()
 @SYMTestExpectedResults The test must not fail.
 @SYMPREQ 1128 Placeholders for invisible characers in rich text shall be customizable
 */
-void RunCustomBehaviourTestsL()
+void CTCustomCharMappingStep::RunCustomBehaviourTestsL()
 	{
 	// Note: If you need to move these heap checks any further "in" to focus
 	// on a specific test then you will have to move all the setup code in as
 	// well - and still preserve the two different display widths in use
-	test.Next(_L(" @SYMTestCaseID:SYSLIB-FORM-CT-0149 "));
+    INFO_PRINTF1(_L(" @SYMTestCaseID:SYSLIB-FORM-CT-0149 "));
 	__UHEAP_MARK;
 	CActiveScheduler* scheduler = new(ELeave) CActiveScheduler;
 	CleanupStack::PushL(scheduler);
@@ -458,7 +441,7 @@ void RunCustomBehaviourTestsL()
 	MFormCustomInvisibleCharacterRemapper* customRemapper = CCustomRemapper::NewL();
 	layout->SetCustomInvisibleCharacterRemapper(customRemapper);
 	remapper = layout->GetCustomInvisibleCharacterRemapper();
-	test(remapper == customRemapper);
+	TEST(remapper == customRemapper);
 
 	// Set all invisible characters to be invisible
 	TNonPrintingCharVisibility visibility;
@@ -466,7 +449,7 @@ void RunCustomBehaviourTestsL()
 	layout->SetNonPrintingCharsVisibility(visibility);
 
 	// Test remapping with custom remapper and flags set to invisible
-	test.Next(_L("Test installed behaviour - flags invisible"));
+	INFO_PRINTF1(_L("Test installed behaviour - flags invisible"));
 	DoTestL(text, layout, device, view, ECustomRemappingInvisible);
 
 	// Now set all invisible characters to be visible
@@ -474,13 +457,13 @@ void RunCustomBehaviourTestsL()
 	layout->SetNonPrintingCharsVisibility(visibility);
 
 	// Test remapping with custom remapper and flags set to visible
-	test.Next(_L("Test installed behaviour - flags visible"));
+	INFO_PRINTF1(_L("Test installed behaviour - flags visible"));
 	DoTestL(text, layout, device, view, ECustomRemappingVisible);
 
 	// Now we are finished deinstall and delete it
 	layout->SetCustomInvisibleCharacterRemapper(NULL);
 	remapper = layout->GetCustomInvisibleCharacterRemapper();
-	test(remapper == NULL);
+	TEST(remapper == NULL);
 	delete customRemapper;
 
 	CleanupStack::PopAndDestroy(offScreenContext);
@@ -491,39 +474,30 @@ void RunCustomBehaviourTestsL()
 	__UHEAP_MARKEND;
 	}
 
+CTCustomCharMappingStep::CTCustomCharMappingStep()
+    {
+    
+    }
 
-TInt E32Main()
-	{
-	__UHEAP_MARK;
-	test.Title();
-	static CTrapCleanup* TrapCleanup = CTrapCleanup::New();
-	test.Start(_L("Test installation/deinstallatiion"));
-	TInt error = RFbsSession::Connect();
-	if (error == KErrNotFound)
-		{
-		FbsStartup();
-		error = RFbsSession::Connect();
-		}
-	test(error == KErrNone);
-	TRAP(error, RunInstallationTestsL());
-	test(error == KErrNone);
-	test.Next(_L("Test uninstalled behaviour"));
-	TRAP(error, RunDefaultBehaviourTestsL());
-	test(error == KErrNone);
-	test.Next(_L("Test behaviour with custom remapper installed"));
-	TRAP(error, RunCustomBehaviourTestsL());
-	test(error == KErrNone);
-	RFbsSession::Disconnect();
-	test.End();
-	delete TrapCleanup;
-	test.Close();
-	__UHEAP_MARKEND;
-	User::Heap().Check();
-	return error;
-	}
-
-
-#if defined(__WINS__)
-EXPORT_C TInt EntryPoint(TAny*) {return E32Main();}
-#endif
-
+TVerdict CTCustomCharMappingStep::doTestStepL()
+    {
+    SetTestStepResult(EPass);
+    INFO_PRINTF1(_L("Test installation/deinstallatiion"));
+    TInt error = RFbsSession::Connect();
+    if (error == KErrNotFound)
+        {
+        FbsStartup();
+        error = RFbsSession::Connect();
+        }
+    TEST(error == KErrNone);
+    TRAP(error, RunInstallationTestsL());
+    TEST(error == KErrNone);
+    INFO_PRINTF1(_L("Test uninstalled behaviour"));
+    TRAP(error, RunDefaultBehaviourTestsL());
+    TEST(error == KErrNone);
+    INFO_PRINTF1(_L("Test behaviour with custom remapper installed"));
+    TRAP(error, RunCustomBehaviourTestsL());
+    TEST(error == KErrNone);
+    RFbsSession::Disconnect();
+    return TestStepResult();
+    }

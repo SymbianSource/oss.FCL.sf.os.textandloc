@@ -25,12 +25,7 @@
 ; Vendor name
 : "t_PTPipsuite"
 
-; sample from the PC Connectivity
-; "\epoc32\data\z\testdata\scripts\mtp\t_PTPipsuite.script"-"c:\mtp\testdata\scripts\mtp\t_ptpipsuite.script"
-; "\epoc32\data\z\testdata\scripts\mtp\PTPTest.ini"-"c:\mtp\testdata\scripts\mtp\ptptest.ini"
-
 ; test scripts
-; "\epoc32\data\z\fntstoretest\fntstoretest_T_All.script"-"c:\fntstoretest\fntstoretest_T_All.script"
 "\epoc32\data\z\fntstoretest\fntstoretest_T_Fnt.script"-"c:\fntstoretest\fntstoretest_T_Fnt.script"
 "\epoc32\data\z\fntstoretest\fntstoretest_T_Cache.script"-"c:\fntstoretest\fntstoretest_T_Cache.script"
 "\epoc32\data\z\fntstoretest\fntstoretest_T_FntMem.script"-"c:\fntstoretest\fntstoretest_T_FntMem.script"

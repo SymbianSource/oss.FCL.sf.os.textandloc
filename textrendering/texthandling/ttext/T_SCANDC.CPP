@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 1997-2009 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 1997-2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -16,12 +16,29 @@
 */
 
 
-#include <e32test.h>
 #include <txtetext.h>
+#include "T_SCANDC.h"
+
+LOCAL_D CTestStep *pTestStep = NULL;
+#define test(cond)											\
+	{														\
+	TBool __bb = (cond);									\
+	pTestStep->TEST(__bb);									\
+	if (!__bb)												\
+		{													\
+		pTestStep->ERR_PRINTF1(_L("ERROR: Test Failed"));	\
+		User::Leave(1);										\
+		}													\
+	}
+#undef INFO_PRINTF1
+#undef INFO_PRINTF2
+// copy from tefexportconst.h
+#define INFO_PRINTF1(p1)        pTestStep->Logger().LogExtra(((TText8*)__FILE__), __LINE__, ESevrInfo, (p1))
+#define INFO_PRINTF2(p1, p2)    pTestStep->Logger().LogExtra(((TText8*)__FILE__), __LINE__, ESevrInfo, (p1), (p2))
+
 
 #define UNUSED_VAR(a) a = a
 
-LOCAL_D RTest test(_L("SCANNING OF TEXT DOCUMENTS"));
 LOCAL_D CTrapCleanup* TheTrapCleanup;
 
 template<class S,CEditableText::TDocumentStorage D>
@@ -198,7 +215,7 @@ GLDEF_C void CTestScan<S,D>::Test2aL()
 	{
 	TBuf<64> temp;
 	
-	//test.Start(_L("0 words"));
+	//INFO_PRINTF1(_L("0 words"));
 	//iDocument->InsertL(0,buf.Ptr(),buf.Size());
 	//DoCountWords(0);
 	// This test has been removed since it is no longer feasible.
@@ -206,40 +223,40 @@ GLDEF_C void CTestScan<S,D>::Test2aL()
 	// as soon as the document is created, hence, there can not
 	// be 0 words.
 	
-	test.Start(_L("0 words, all delimiters"));
+	INFO_PRINTF1(_L("0 words, all delimiters"));
 	temp.Append(_L("   "));
 	temp.Append(iDelimiter);
 	temp.Append(_L("   "));
 	StoreTextL(temp);
 	DoCountWords(0);
 	
-	test.Next(_L("1 word, no delimiter"));
+	INFO_PRINTF1(_L("1 word, no delimiter"));
 	temp.Append(_L("This"));
 	StoreTextL(temp);
 	DoCountWords(1);
 
-	test.Next(_L("1 word, at start, no delimiter"));
+	INFO_PRINTF1(_L("1 word, at start, no delimiter"));
 	temp.Delete(0,temp.Size());
 	temp.Append(_L("THIS"));
 	StoreTextL(temp);
 	DoCountWords(1);
 
-	test.Next(_L("1 word, with delimiter"));
+	INFO_PRINTF1(_L("1 word, with delimiter"));
 	temp.Append(' ');
 	StoreTextL(temp);
 	DoCountWords(1);
 
-	test.Next(_L("Many words, no delimiter"));
+	INFO_PRINTF1(_L("Many words, no delimiter"));
 	temp.Append(_L("  is a wonderful world"));
 	StoreTextL(temp);
 	DoCountWords(5);
 
-	test.Next(_L("Many words with delimiter"));
+	INFO_PRINTF1(_L("Many words with delimiter"));
 	temp.Append(' ');
 	StoreTextL(temp);
 	DoCountWords(5);
 
-	test.End();
+	
 	}
 
 
@@ -254,16 +271,16 @@ GLDEF_C void CTestScan<S,D>::Test2bL()
 	StoreTextL(buf);  
 
 	iCharsSkipped=iUnitCount=0;
-	test.Start(_L("Forward scan"));
+	INFO_PRINTF1(_L("Forward scan"));
 
-	test.Next(_L("Stay at boundary:to unit start"));
+	INFO_PRINTF1(_L("Stay at boundary:to unit start"));
 	TUint flags=(CPlainText::EScanStayIfBoundary | CPlainText::EScanToUnitStart);
 	DoScanWords(8,flags,12,4);
 	DoScanWords(7,flags,7,0);
 	DoScanWords(6,flags,6,0);
 	DoScanWords(5,flags,6,1);
 		
-	test.Next(_L("Stay at boundary:to unit end"));
+	INFO_PRINTF1(_L("Stay at boundary:to unit end"));
 	flags |= CPlainText::EScanToUnitEnd;
 	flags &=~CPlainText::EScanToUnitStart;
 	DoScanWords(8,flags,11,3);
@@ -271,14 +288,14 @@ GLDEF_C void CTestScan<S,D>::Test2bL()
 	DoScanWords(6,flags,6,0);
 	DoScanWords(5,flags,5,0);
 
-	test.Next(_L("Stay at boundary:to unit start:join delimiters"));
+	INFO_PRINTF1(_L("Stay at boundary:to unit start:join delimiters"));
 	flags=(CPlainText::EScanStayIfBoundary|CPlainText::EScanToUnitStart|CPlainText::EScanJoinDelimiters);
 	DoScanWords(8,flags,13,5);
 	DoScanWords(7,flags,7,0);
 	DoScanWords(6,flags,7,1);
 	DoScanWords(5,flags,7,2);
 	
-	test.Next(_L("Stay at boundary:to unit end:join delimiters"));
+	INFO_PRINTF1(_L("Stay at boundary:to unit end:join delimiters"));
 	flags |= CPlainText::EScanToUnitEnd;
 	flags &=~CPlainText::EScanToUnitStart;
 	DoScanWords(8,flags,11,3);
@@ -286,14 +303,14 @@ GLDEF_C void CTestScan<S,D>::Test2bL()
 	DoScanWords(6,flags,11,5);
 	DoScanWords(5,flags,5,0);
 
-	test.Next(_L("To unit start"));
+	INFO_PRINTF1(_L("To unit start"));
 	flags=CPlainText::EScanToUnitStart;
 	DoScanWords(8,flags,12,4);
 	DoScanWords(7,flags,12,5);
 	DoScanWords(6,flags,7,1);
 	DoScanWords(5,flags,6,1);
 	
-	test.Next(_L("To unit end"));
+	INFO_PRINTF1(_L("To unit end"));
 	flags |= CPlainText::EScanToUnitEnd;
 	flags &=~CPlainText::EScanToUnitStart;
 	DoScanWords(8,flags,11,3);
@@ -301,14 +318,14 @@ GLDEF_C void CTestScan<S,D>::Test2bL()
 	DoScanWords(6,flags,11,5);
 	DoScanWords(5,flags,6,1);
 
-	test.Next(_L("To unit start:join delimiters"));
+	INFO_PRINTF1(_L("To unit start:join delimiters"));
 	flags=(CPlainText::EScanToUnitStart|CPlainText::EScanJoinDelimiters);
 	DoScanWords(8,flags,13,5);
 	DoScanWords(7,flags,13,6);
 	DoScanWords(6,flags,7,1);
 	DoScanWords(5,flags,7,2);
 
-	test.Next(_L("To unit end:join delimiters"));
+	INFO_PRINTF1(_L("To unit end:join delimiters"));
 	flags |= CPlainText::EScanToUnitEnd;
 	flags &=~CPlainText::EScanToUnitStart;
 	DoScanWords(8,flags,11,3);
@@ -316,8 +333,8 @@ GLDEF_C void CTestScan<S,D>::Test2bL()
 	DoScanWords(6,flags,11,5);
 	DoScanWords(5,flags,11,6);
 	
-	test.Next(_L("Backward scan"));
-	test.Next(_L("Stay at boundary:to unit start"));
+	INFO_PRINTF1(_L("Backward scan"));
+	INFO_PRINTF1(_L("Stay at boundary:to unit start"));
 	flags=(CPlainText::EScanBackwards|CPlainText::EScanStayIfBoundary|CPlainText::EScanToUnitStart);
 	DoScanWords(9,flags,7,2);
 	DoScanWords(10,flags,7,3);
@@ -325,7 +342,7 @@ GLDEF_C void CTestScan<S,D>::Test2bL()
 	DoScanWords(12,flags,12,0);
 	DoScanWords(13,flags,13,0);
 	
-	test.Next(_L("Stay at boundary:to unit end"));
+	INFO_PRINTF1(_L("Stay at boundary:to unit end"));
 	flags |= CPlainText::EScanToUnitEnd;
 	flags &=~CPlainText::EScanToUnitStart;
 	DoScanWords(9,flags,6,3);
@@ -334,7 +351,7 @@ GLDEF_C void CTestScan<S,D>::Test2bL()
 	DoScanWords(12,flags,12,0);
 	DoScanWords(13,flags,12,1);
 
-	test.Next(_L("Stay at boundary:to unit start:join delimiters"));
+	INFO_PRINTF1(_L("Stay at boundary:to unit start:join delimiters"));
 	flags=CPlainText::EScanBackwards|CPlainText::EScanStayIfBoundary|CPlainText::EScanToUnitStart|CPlainText::EScanJoinDelimiters;
 	DoScanWords(9,flags,7,2);
 	DoScanWords(10,flags,7,3);
@@ -342,7 +359,7 @@ GLDEF_C void CTestScan<S,D>::Test2bL()
 	DoScanWords(12,flags,7,5);
 	DoScanWords(13,flags,13,0);
 
-	test.Next(_L("Stay at boundary:to unit end:join delimiters"));
+	INFO_PRINTF1(_L("Stay at boundary:to unit end:join delimiters"));
 	flags |= CPlainText::EScanToUnitEnd;
 	flags &=~CPlainText::EScanToUnitStart;
 	DoScanWords(9,flags,5,4);
@@ -351,7 +368,7 @@ GLDEF_C void CTestScan<S,D>::Test2bL()
 	DoScanWords(12,flags,11,1);
 	DoScanWords(13,flags,11,2);
 	
-	test.Next(_L("To unit start"));
+	INFO_PRINTF1(_L("To unit start"));
 	flags=CPlainText::EScanBackwards|CPlainText::EScanToUnitStart;
 	DoScanWords(9,flags,7,2);
 	DoScanWords(10,flags,7,3);
@@ -359,7 +376,7 @@ GLDEF_C void CTestScan<S,D>::Test2bL()
 	DoScanWords(12,flags,7,5);
 	DoScanWords(13,flags,12,1);
 	
-	test.Next(_L("To unit end"));
+	INFO_PRINTF1(_L("To unit end"));
 	flags |= CPlainText::EScanToUnitEnd;
 	flags &=~CPlainText::EScanToUnitStart;
 	DoScanWords(9,flags,6,3);
@@ -368,7 +385,7 @@ GLDEF_C void CTestScan<S,D>::Test2bL()
 	DoScanWords(12,flags,11,1);
 	DoScanWords(13,flags,12,1);
 
-	test.Next(_L("To unit start:join delimiters"));
+	INFO_PRINTF1(_L("To unit start:join delimiters"));
 	flags=CPlainText::EScanBackwards|CPlainText::EScanToUnitStart|CPlainText::EScanJoinDelimiters;
 	DoScanWords(9,flags,7,2);
 	DoScanWords(10,flags,7,3);
@@ -376,14 +393,14 @@ GLDEF_C void CTestScan<S,D>::Test2bL()
 	DoScanWords(12,flags,7,5);
 	DoScanWords(13,flags,7,6);
 
-	test.Next(_L("To unit end:join delimiters"));
+	INFO_PRINTF1(_L("To unit end:join delimiters"));
 	flags=CPlainText::EScanToUnitEnd|CPlainText::EScanJoinDelimiters|CPlainText::EScanBackwards;
 	DoScanWords(9,flags,5,4);
 	DoScanWords(10,flags,5,5);
 	DoScanWords(11,flags,5,6);
 	DoScanWords(12,flags,11,1);
 	DoScanWords(13,flags,11,2);
-	test.End();
+	
 	}
 
 
@@ -395,46 +412,46 @@ GLDEF_C void CTestScan<S,D>::Test2cL()
 	{
 	TBuf<64> buf;
 	
-	//test.Start(_L("0 paras"));
+	//INFO_PRINTF1(_L("0 paras"));
 	//iDocument->InsertL(0,buf.Ptr(),buf.Size());
 	//DoCountParagraphs(0);
 	// This test no longer applies, since documents are created with
 	// an end of document character.  ie, The document can not have
 	// 0 words.
 	
-	test.Start(_L("Empty text source"));
+	INFO_PRINTF1(_L("Empty text source"));
 //	buf.Append(iDelimiter);
 //	buf.Append(iDelimiter);
 	StoreTextL(buf);
 	DoCountParas(1);
 	
-	test.Next(_L("1 para. no delimiter"));
+	INFO_PRINTF1(_L("1 para. no delimiter"));
 	buf.Append(_L("This"));
 	StoreTextL(buf);
 	DoCountParas(1);
 
-	test.Next(_L("1 para. at start, no delimiter"));
+	INFO_PRINTF1(_L("1 para. at start, no delimiter"));
 	buf.Delete(0,buf.Size());
 	buf.Append(_L(" THIS   "));
 	StoreTextL(buf);
 	DoCountParas(1);
 
-	test.Next(_L("1 para, with delimiter"));
+	INFO_PRINTF1(_L("1 para, with delimiter"));
 	buf.Append(iDelimiter);
 	StoreTextL(buf);
 	DoCountParas(2);
 
-	test.Next(_L("2 paras, no delimiter"));
+	INFO_PRINTF1(_L("2 paras, no delimiter"));
 	buf.Append(' ');
 	StoreTextL(buf);
 	DoCountParas(2);
 
-	test.Next(_L("2 paras with delimiter"));
+	INFO_PRINTF1(_L("2 paras with delimiter"));
 	buf.Append(iDelimiter);
 	StoreTextL(buf);
 	DoCountParas(3);
 
-	test.End();
+	
 	}
 
 
@@ -455,16 +472,16 @@ GLDEF_C void CTestScan<S,D>::Test2dL()
 	StoreTextL(buf);  
 
 	iCharsSkipped=iUnitCount=0;
-	test.Start(_L("Forward scan"));
+	INFO_PRINTF1(_L("Forward scan"));
 
-	test.Next(_L("Stay at boundary:to unit start"));
+	INFO_PRINTF1(_L("Stay at boundary:to unit start"));
 	TUint flags=(CPlainText::EScanStayIfBoundary|CPlainText::EScanToUnitStart);
 	DoScanParas(8,flags,12,4);
 	DoScanParas(7,flags,7,0);
 	DoScanParas(6,flags,6,0);
 	DoScanParas(5,flags,6,1);
 		
-	test.Next(_L("Stay at boundary:to unit end"));
+	INFO_PRINTF1(_L("Stay at boundary:to unit end"));
 	flags |= CPlainText::EScanToUnitEnd;
 	flags &=~CPlainText::EScanToUnitStart;
 	DoScanParas(8,flags,11,3);
@@ -472,14 +489,14 @@ GLDEF_C void CTestScan<S,D>::Test2dL()
 	DoScanParas(6,flags,6,0);
 	DoScanParas(5,flags,5,0);
 
-	test.Next(_L("Stay at boundary:to unit start:join delimiters"));
+	INFO_PRINTF1(_L("Stay at boundary:to unit start:join delimiters"));
 	flags=(CPlainText::EScanStayIfBoundary | CPlainText::EScanToUnitStart | CPlainText::EScanJoinDelimiters);
 	DoScanParas(8,flags,13,5);
 	DoScanParas(7,flags,7,0);
 	DoScanParas(6,flags,7,1);
 	DoScanParas(5,flags,7,2);
 	
-	test.Next(_L("Stay at boundary:to unit end:join delimiters"));
+	INFO_PRINTF1(_L("Stay at boundary:to unit end:join delimiters"));
 	flags |= CPlainText::EScanToUnitEnd;
 	flags &=~CPlainText::EScanToUnitStart;
 	DoScanParas(8,flags,11,3);
@@ -487,14 +504,14 @@ GLDEF_C void CTestScan<S,D>::Test2dL()
 	DoScanParas(6,flags,11,5);
 	DoScanParas(5,flags,5,0);
 
-	test.Next(_L("To unit start"));
+	INFO_PRINTF1(_L("To unit start"));
 	flags=CPlainText::EScanToUnitStart;
 	DoScanParas(8,flags,12,4);
 	DoScanParas(7,flags,12,5);
 	DoScanParas(6,flags,7,1);
 	DoScanParas(5,flags,6,1);
 	
-	test.Next(_L("To unit end"));
+	INFO_PRINTF1(_L("To unit end"));
 	flags |= CPlainText::EScanToUnitEnd;
 	flags &=~CPlainText::EScanToUnitStart;
 	DoScanParas(8,flags,11,3);
@@ -502,14 +519,14 @@ GLDEF_C void CTestScan<S,D>::Test2dL()
 	DoScanParas(6,flags,11,5);
 	DoScanParas(5,flags,6,1);
 
-	test.Next(_L("To unit start:join delimiters"));
+	INFO_PRINTF1(_L("To unit start:join delimiters"));
 	flags=(CPlainText::EScanToUnitStart | CPlainText::EScanJoinDelimiters);
 	DoScanParas(8,flags,13,5);
 	DoScanParas(7,flags,13,6);
 	DoScanParas(6,flags,7,1);
 	DoScanParas(5,flags,7,2);
 
-	test.Next(_L("To unit end:join delimiters"));
+	INFO_PRINTF1(_L("To unit end:join delimiters"));
 	flags |= CPlainText::EScanToUnitEnd;
 	flags &=~CPlainText::EScanToUnitStart;
 	DoScanParas(8,flags,11,3);
@@ -517,8 +534,8 @@ GLDEF_C void CTestScan<S,D>::Test2dL()
 	DoScanParas(6,flags,11,5);
 	DoScanParas(5,flags,11,6);
 	
-	test.Next(_L("Backward scan"));
-	test.Next(_L("Stay at boundary:to unit start"));
+	INFO_PRINTF1(_L("Backward scan"));
+	INFO_PRINTF1(_L("Stay at boundary:to unit start"));
 	flags=(CPlainText::EScanBackwards|CPlainText::EScanStayIfBoundary|CPlainText::EScanToUnitStart);
 	DoScanParas(9,flags,7,2);
 	DoScanParas(10,flags,7,3);
@@ -532,12 +549,12 @@ GLDEF_C void CTestScan<S,D>::Test2dL()
 	DoScanParas(3,flags,0,3);
 	DoScanParas(2,flags,0,2);
 	DoScanParas(1,flags,0,1);
-	test.Next(_L("Testing at buffer boundaries."));
+	INFO_PRINTF1(_L("Testing at buffer boundaries."));
 	DoScanParas(0,flags,0,0);
 	DoScanParas(16,flags,13,3);
 	
 
-	test.Next(_L("Stay at boundary:to unit end"));
+	INFO_PRINTF1(_L("Stay at boundary:to unit end"));
 	flags |= CPlainText::EScanToUnitEnd;
 	flags &=~CPlainText::EScanToUnitStart;
 	DoScanParas(9,flags,6,3);
@@ -546,7 +563,7 @@ GLDEF_C void CTestScan<S,D>::Test2dL()
 	DoScanParas(12,flags,12,0);
 	DoScanParas(13,flags,12,1);
 
-	test.Next(_L("Stay at boundary:to unit start:join delimiters"));
+	INFO_PRINTF1(_L("Stay at boundary:to unit start:join delimiters"));
 	flags=CPlainText::EScanBackwards|CPlainText::EScanStayIfBoundary|CPlainText::EScanToUnitStart|CPlainText::EScanJoinDelimiters;
 	DoScanParas(9,flags,7,2);
 	DoScanParas(10,flags,7,3);
@@ -554,7 +571,7 @@ GLDEF_C void CTestScan<S,D>::Test2dL()
 	DoScanParas(12,flags,7,5);
 	DoScanParas(13,flags,13,0);
 
-	test.Next(_L("Stay at boundary:to unit end:join delimiters"));
+	INFO_PRINTF1(_L("Stay at boundary:to unit end:join delimiters"));
 	flags |= CPlainText::EScanToUnitEnd;
 	flags &=~CPlainText::EScanToUnitStart;
 	DoScanParas(9,flags,5,4);
@@ -563,7 +580,7 @@ GLDEF_C void CTestScan<S,D>::Test2dL()
 	DoScanParas(12,flags,11,1);
 	DoScanParas(13,flags,11,2);
 	
-	test.Next(_L("To unit start"));
+	INFO_PRINTF1(_L("To unit start"));
 	flags=CPlainText::EScanBackwards|CPlainText::EScanToUnitStart;
 	DoScanParas(9,flags,7,2);
 	DoScanParas(10,flags,7,3);
@@ -571,7 +588,7 @@ GLDEF_C void CTestScan<S,D>::Test2dL()
 	DoScanParas(12,flags,7,5);
 	DoScanParas(13,flags,12,1);
 	
-	test.Next(_L("To unit end"));
+	INFO_PRINTF1(_L("To unit end"));
 	flags |= CPlainText::EScanToUnitEnd;
 	flags &=~CPlainText::EScanToUnitStart;
 	DoScanParas(9,flags,6,3);
@@ -580,7 +597,7 @@ GLDEF_C void CTestScan<S,D>::Test2dL()
 	DoScanParas(12,flags,11,1);
 	DoScanParas(13,flags,12,1);
 
-	test.Next(_L("To unit start:join delimiters"));
+	INFO_PRINTF1(_L("To unit start:join delimiters"));
 	flags=CPlainText::EScanBackwards|CPlainText::EScanToUnitStart|CPlainText::EScanJoinDelimiters;
 	DoScanParas(9,flags,7,2);
 	DoScanParas(10,flags,7,3);
@@ -588,7 +605,7 @@ GLDEF_C void CTestScan<S,D>::Test2dL()
 	DoScanParas(12,flags,7,5);
 	DoScanParas(13,flags,7,6);
 
-	test.Next(_L("To unit end:join delimiters"));
+	INFO_PRINTF1(_L("To unit end:join delimiters"));
 	flags |= CPlainText::EScanToUnitEnd;
 	flags &=~CPlainText::EScanToUnitStart;
 	DoScanParas(9,flags,5,4);
@@ -597,7 +614,7 @@ GLDEF_C void CTestScan<S,D>::Test2dL()
 	DoScanParas(12,flags,11,1);
 	DoScanParas(13,flags,11,2);
 	
-	test.End();
+	
 	}
 
 
@@ -607,76 +624,72 @@ GLDEF_C void CTestScan<S,D>::Test2L()
 // Test all the methods of the class
 //
 	{
-	test.Start(_L("CountWords"));
+	INFO_PRINTF1(_L("CountWords"));
 	Test2aL();
 
-	test.Next(_L("ScanWord"));
+	INFO_PRINTF1(_L("ScanWord"));
 	Test2bL();
 
-	test.Next(_L("Count Paragraphs"));
+	INFO_PRINTF1(_L("Count Paragraphs"));
 	Test2cL();
 
-	test.Next(_L("Scan Paragraph"));
+	INFO_PRINTF1(_L("Scan Paragraph"));
 	Test2dL();
 
-	test.End();
+	
 	}
 
+CT_SCANDC::CT_SCANDC()
+    {
+    SetTestStepName(KTestStep_T_SCANDC);
+    pTestStep = this;
+    }
 
-GLDEF_C TInt E32Main()
-//
-// Test the OLIB Varray types.
-//
-	{
-	TheTrapCleanup=CTrapCleanup::New();
+TVerdict CT_SCANDC::doTestStepL()
+    {
+    SetTestStepResult(EFail);
 
-	test.Title();
-	test.Start(_L(" @SYMTestCaseID:SYSLIB-TTEXT-LEGACY-T_SCANDC-0001 CPlainText - Flat "));	
-	typedef CTestScan<TText,CEditableText::EFlatStorage> instance1;
-	typedef CTestScan<TText,CEditableText::ESegmentedStorage> instance2;
-	
-	instance1* aa=NULL;
-	TRAPD(ret, aa=instance1::NewL());
-    test(ret == KErrNone);
+    TheTrapCleanup=CTrapCleanup::New();
 
-	test.Start(_L("Registering all methods"));
+    INFO_PRINTF1(_L("SCANNING OF TEXT DOCUMENTS"));
+    INFO_PRINTF1(_L(" @SYMTestCaseID:SYSLIB-TTEXT-LEGACY-T_SCANDC-0001 CPlainText - Flat ")); 
+    typedef CTestScan<TText,CEditableText::EFlatStorage> instance1;
+    typedef CTestScan<TText,CEditableText::ESegmentedStorage> instance2;
+    
+    instance1* aa=NULL;
+    TRAPD(ret1, aa=instance1::NewL());
 
-	TRAP(ret,aa->Test1L());
-    test(ret == KErrNone);
+    INFO_PRINTF1(_L("Registering all methods"));
 
-	test.Next(_L("Testing all methods"));
+    TRAPD(ret2,aa->Test1L());
 
-	TRAP(ret,aa->Test2L());
-    test(ret == KErrNone);
+    INFO_PRINTF1(_L("Testing all methods"));
 
-	__UHEAP_MARK;
-	delete aa;
-	__UHEAP_MARKEND;
+    TRAPD(ret3,aa->Test2L());
 
-	test.End();
+    __UHEAP_MARK;
+    delete aa;
+    __UHEAP_MARKEND;
 
-	test.Next(_L("CPlainText - Segmented"));
+    INFO_PRINTF1(_L("CPlainText - Segmented"));
 
-	instance2* bb=NULL;
-	TRAP(ret, bb=instance2::NewL());
-    test(ret == KErrNone);
+    instance2* bb=NULL;
+    TRAPD(ret4, bb=instance2::NewL());
 
-	__UHEAP_MARK;
-	test.Start(_L("Registering all methods"));
-	TRAP(ret,bb->Test1L());
-    test(ret == KErrNone);
-	test.Next(_L("Testing all methods"));
-	TRAP(ret,bb->Test2L());
-    test(ret == KErrNone);
-	delete bb;
-	__UHEAP_MARKEND;
-	test.End();
+    __UHEAP_MARK;
+    INFO_PRINTF1(_L("Registering all methods"));
+    TRAPD(ret5,bb->Test1L());
+    INFO_PRINTF1(_L("Testing all methods"));
+    TRAPD(ret6,bb->Test2L());
+    delete bb;
+    __UHEAP_MARKEND;
+    
+    delete TheTrapCleanup;
 
-	test.End();
-	test.Close();
-	
-	delete TheTrapCleanup;
+    if (ret1 == KErrNone && ret2 == KErrNone && ret3 == KErrNone && ret4 == KErrNone && ret5 == KErrNone && ret6 == KErrNone)
+        {
+        SetTestStepResult(EPass);
+        }
 
-	return(0);
-	}
-
+    return TestStepResult();
+    }

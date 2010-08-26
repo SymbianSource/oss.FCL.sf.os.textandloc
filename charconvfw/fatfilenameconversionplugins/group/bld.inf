@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2004-2009 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 2004-2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -55,23 +55,10 @@ PRJ_MMPFILES
 
 PRJ_TESTEXPORTS
 ../group/FATCharsetConvTests.iby 	/epoc32/rom/include/fatcharsetconvtests.iby
-../group/FATCharsetConvTests.bat	/epoc32/data/z/system/test/fatcharsetconvtests.bat
+../group/FATCharsetConvTests.bat	z:/FATCharsetConv/fatcharsetconvtests.bat
+../test/T_All_FatCharsetConv.script	z:/FATCharsetConv/T_All_FatCharsetConv.script
 
 
 PRJ_TESTMMPFILES
-../test/T_CP950.mmp
-../test/T_CP949.mmp
-../test/T_CP936.mmp
-../test/T_CP54936.mmp
-../test/T_CP932.mmp
-../test/T_CP874.mmp
-../test/T_CP1258.mmp
-../test/T_CP1257.mmp
-../test/T_CP1256.mmp
-../test/T_CP1255.mmp
-../test/T_CP1254.mmp
-../test/T_CP1253.mmp
-../test/T_CP1252.mmp
-../test/T_CP1251.mmp
-../test/T_CP1250.mmp
 
+../test/T_FatCharsetConvServer.mmp

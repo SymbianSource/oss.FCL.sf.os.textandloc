@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 2008-2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -16,27 +16,43 @@
 */
 
 
-#include <e32test.h>
+#include "T_CP54936.h"
 #include <e32des8.h>
 #include <hal.h>
 
-LOCAL_D RTest test(_L("T_CP54936.exe"));
+#define test(cond)                                          \
+    {                                                       \
+    TBool __bb = (cond);                                    \
+    TEST(__bb);                                             \
+    if (!__bb)                                              \
+        {                                                   \
+        ERR_PRINTF1(_L("ERROR: Test Failed"));              \
+        User::Leave(1);                                     \
+        }                                                   \
+    }
+
+
+const TInt MaxCount = 10000;    // iteration number for performance tests
+
+// cp54936 should be faster than cp936
+_LIT(KName936,"CP936");
+const TUid KPluginUid936={0x10206A91};
 
 
 _LIT(KName,"CP54936");
 const TUid KPluginUid={0x1028703b};
 
 
-void TestOut(const TDesC16 &des)
+void CT_CP54936::TestOut(const TDesC16 &des)
 	{
 	for (TInt i=0; i<des.Length(); i++)
-		test.Printf(_L("%04X "), des[i]);
+	    INFO_PRINTF2(_L("%04X "), des[i]);
 	}
 
-void TestOut(const TDesC8 &des)
+void CT_CP54936::TestOut(const TDesC8 &des)
 	{
 	for (TInt i=0; i<des.Length(); i++)
-		test.Printf(_L("%02X "), des[i]);
+	    INFO_PRINTF2(_L("%02X "), des[i]);
 	}
 
 // Used for supressing warning in OOM tests
@@ -49,9 +65,9 @@ void TestOut(const TDesC8 &des)
 @SYMTestActions  	    Tests for conversions from/to Unicode, using a function pointer
 @SYMTestExpectedResults Test must not fail 
 */
-void Test()
+void CT_CP54936::TestL()
 	{ 
-	test.Next(_L(" @SYMTestCaseID:SYSLIB-FATCHARSETCONV-CT-1778 "));
+    INFO_PRINTF1(_L(" @SYMTestCaseID:SYSLIB-FATCHARSETCONV-CT-1778 "));
 	RLibrary lib;
 
 	const TUidType serverUid(KNullUid,KNullUid,KPluginUid);	
@@ -94,11 +110,11 @@ void Test()
 	TBuf16<200> unicode2;
 	
 	const TDesC16& unicode1(Uni_1);
-	test.Printf(_L("source: "));	TestOut(unicode1);	test.Printf(_L("\n"));
-	test.Printf(_L("expect: "));	TestOut(CP54936_1);	test.Printf(_L("\n"));
+	INFO_PRINTF1(_L("source: "));	TestOut(unicode1);	INFO_PRINTF1(_L("\n"));
+	INFO_PRINTF1(_L("expect: "));	TestOut(CP54936_1);	INFO_PRINTF1(_L("\n"));
 	//TRAPD(err, (*aConvertFromUnicodeL)(foreign1, unicode1));
 	(*aConvertFromUnicodeL)(foreign1, unicode1); 	//testing conversion from Unicode
-	test.Printf(_L("result: "));	TestOut(foreign1);	test.Printf(_L("\n"));
+	INFO_PRINTF1(_L("result: "));	TestOut(foreign1);	INFO_PRINTF1(_L("\n"));
 	TInt error = foreign1.Compare(CP54936_1);
 	test(error==0);
 	foreign1.Zero();
@@ -123,11 +139,11 @@ void Test()
 	_LIT8(CP54936_2, "\x40\x24\xEC\xE1\x81\x81\xA2\xE3\x82\x30\xA7\x30\x81\x31\x81\x32\x95\x32\xAD\x35\xA1\xA0\xA0\x7F\x95\x32\x82\x30\x81\x30\x81\x3A");
 
 	const TDesC8& foreign2(CP54936_2);
-	test.Printf(_L("source: "));	TestOut(foreign2);	test.Printf(_L("\n"));
-	test.Printf(_L("expect: "));	TestOut(Uni_2);		test.Printf(_L("\n"));
+	INFO_PRINTF1(_L("source: "));	TestOut(foreign2);	INFO_PRINTF1(_L("\n"));
+	INFO_PRINTF1(_L("expect: "));	TestOut(Uni_2);		INFO_PRINTF1(_L("\n"));
 	//TRAP(err, (*aConvertToUnicodeL)(unicode2,foreign2));
 	(*aConvertToUnicodeL)(unicode2,foreign2);//); 	//testing conversion to Unicode
-	test.Printf(_L("result: "));	TestOut(unicode2);	test.Printf(_L("\n"));
+	INFO_PRINTF1(_L("result: "));	TestOut(unicode2);	INFO_PRINTF1(_L("\n"));
 	error = unicode2.Compare(Uni_2);
 	test(error==0);
 	unicode2.Zero();
@@ -153,9 +169,10 @@ void Test()
 @SYMTestActions  	    Tests for correct character conversion on certain chinese characters for CP936 
 @SYMTestExpectedResults Test must not fail 
 */	
-void TestINC090073()
+void CT_CP54936::TestINC090073L()
 	{
-	test.Next(_L(" @SYMTestCaseID:SYSLIB-FATCHARSETCONV-CT-1847-0001 ")); 
+    INFO_PRINTF1(_L(" @SYMTestCaseID:SYSLIB-FATCHARSETCONV-CT-1847-0001 ")); 
+	
  	_LIT16(unicode, "\x7CCD\x74EF\x8026\x8F8F\x94F3\x7633\x6DFC\x9785\x7F81\x7A37\x61A9\x80B1\x86A3\x89E5\x80F2\x9B48\x9E47\x6C19\x7B71\x946B\x6B46\x6615");
 	_LIT8(CP932Code, "\xF4\xD9\xEA\xB1\xF1\xEE\xEA\xA3\xEF\xA5\xF1\xAC\xED\xB5\xF7\xB1\xEE\xBF\xF0\xA2\xED\xAC\xEB\xC5\xF2\xBC\xF6\xA1\xEB\xDC\xF7\xCC\xF0\xC2\xEB\xAF\xF3\xE3\xF6\xCE\xEC\xA7\xEA\xBF");
 
@@ -187,9 +204,9 @@ void TestINC090073()
 	lib.Close();
 	}	
 
-void OOMTest()
+void CT_CP54936::OOMTestL()
 	{
-	test.Next(_L("OOM testing"));
+    INFO_PRINTF1(_L("OOM testing"));
 	TInt err, tryCount = 0;
 	do	
 		{
@@ -202,7 +219,7 @@ void OOMTest()
 			// Setting Heap failure for OOM test
 		__UHEAP_SETFAIL(RHeap::EDeterministic, ++tryCount);
 
-		TRAP(err,Test());
+		TRAP(err,TestL());
 			
 		__UHEAP_SETFAIL(RHeap::ENone, 0);
 		
@@ -218,18 +235,13 @@ void OOMTest()
 		}while (err == KErrNoMemory);
 		
 	test(err == KErrNone);
-	test.Printf(_L("- server succeeded at heap failure rate of %i\n"), tryCount);
+	INFO_PRINTF2(_L("- server succeeded at heap failure rate of %i\n"), tryCount);
 	}
 
 
-const TInt MaxCount = 10000;	// iteration number for performance tests
-
-// cp54936 should be faster than cp936
-_LIT(KName936,"CP936");
-const TUid KPluginUid936={0x10206A91};
-void PerformanceTest1()
+void CT_CP54936::PerformanceTest1L()
 	{
-	test.Next(_L("Performance test 1 (comparing with cp936)"));
+    INFO_PRINTF1(_L("Performance test 1 (comparing with cp936)"));
 	RLibrary lib936;
 	RLibrary lib54936;
 
@@ -281,9 +293,9 @@ void PerformanceTest1()
 //////////////////////////////////////////////////////////////////////////////
 	// 1, unicode -> 936
 	// test result: 1448 ms for 100000 iterations
-	test.Printf(_L("unicode --> 936:\n"));
-	test.Printf(_L("        source: "));	TestOut(unicode1);	test.Printf(_L("\n"));
-	test.Printf(_L("        expect: "));	TestOut(CP54936_1);	test.Printf(_L("\n"));
+	INFO_PRINTF1(_L("unicode --> 936:\n"));
+	INFO_PRINTF1(_L("        source: "));	TestOut(unicode1);	INFO_PRINTF1(_L("\n"));
+	INFO_PRINTF1(_L("        expect: "));	TestOut(CP54936_1);	INFO_PRINTF1(_L("\n"));
 	prevTime = User::FastCounter();
 	for (count=0; count<MaxCount; count++)
 		{
@@ -293,18 +305,18 @@ void PerformanceTest1()
 	timeDiff = User::FastCounter() - prevTime;
 	fsSessionMicroSecs = timeDiff / (ticksPerMicroSec);
 	msg.Format(_L("                    %10.2lf us, "), fsSessionMicroSecs);
-	test.Printf(_L("        result: "));	TestOut(foreign1);	test.Printf(_L("\n"));
-	test.Printf(msg);
+	INFO_PRINTF1(_L("        result: "));	TestOut(foreign1);	INFO_PRINTF1(_L("\n"));
+	INFO_PRINTF1(msg);
 	error = foreign1.Compare(CP54936_1);
 	test(error==0);
 	foreign1.Zero();
-	test.Printf(_L("\n"));
+	INFO_PRINTF1(_L("\n"));
 	
 	// 2, unicode -> 54936
 	// test result: 44 ms for 100000 iterations
-	test.Printf(_L("unicode --> 54936:\n"));
-	test.Printf(_L("        source: "));	TestOut(unicode1);	test.Printf(_L("\n"));
-	test.Printf(_L("        expect: "));	TestOut(CP54936_1);	test.Printf(_L("\n"));
+	INFO_PRINTF1(_L("unicode --> 54936:\n"));
+	INFO_PRINTF1(_L("        source: "));	TestOut(unicode1);	INFO_PRINTF1(_L("\n"));
+	INFO_PRINTF1(_L("        expect: "));	TestOut(CP54936_1);	INFO_PRINTF1(_L("\n"));
 	prevTime = User::FastCounter();
 	for (count=0; count<MaxCount; count++)
 		{
@@ -314,12 +326,12 @@ void PerformanceTest1()
 	timeDiff = User::FastCounter() - prevTime;
 	fsSessionMicroSecs = timeDiff / (ticksPerMicroSec);
 	msg.Format(_L("                    %10.2lf us, "), fsSessionMicroSecs);
-	test.Printf(_L("        result: "));	TestOut(foreign1);	test.Printf(_L("\n"));
-	test.Printf(msg);
+	INFO_PRINTF1(_L("        result: "));	TestOut(foreign1);	INFO_PRINTF1(_L("\n"));
+	INFO_PRINTF1(msg);
 	error = foreign1.Compare(CP54936_1);
 	test(error==0);
 	foreign1.Zero();
-	test.Printf(_L("\n"));
+	INFO_PRINTF1(_L("\n"));
 
 //////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
@@ -329,9 +341,9 @@ void PerformanceTest1()
 
 	// 3, 936 -> unicode
 	// test result: 89 ms for 100000 iterations
-	test.Printf(_L("936 ---> unicode:\n"));
-	test.Printf(_L("        source: "));	TestOut(foreign2);	test.Printf(_L("\n"));
-	test.Printf(_L("        expect: "));	TestOut(Uni_2);		test.Printf(_L("\n"));
+	INFO_PRINTF1(_L("936 ---> unicode:\n"));
+	INFO_PRINTF1(_L("        source: "));	TestOut(foreign2);	INFO_PRINTF1(_L("\n"));
+	INFO_PRINTF1(_L("        expect: "));	TestOut(Uni_2);		INFO_PRINTF1(_L("\n"));
 	prevTime = User::FastCounter();
 	for (count=0; count<MaxCount; count++)
 		{
@@ -341,18 +353,18 @@ void PerformanceTest1()
 	timeDiff = User::FastCounter() - prevTime;
 	fsSessionMicroSecs = timeDiff / (ticksPerMicroSec);
 	msg.Format(_L("                    %10.2lf us, "), fsSessionMicroSecs);
-	test.Printf(_L("        result: "));	TestOut(unicode2);	test.Printf(_L("\n"));
-	test.Printf(msg);
+	INFO_PRINTF1(_L("        result: "));	TestOut(unicode2);	INFO_PRINTF1(_L("\n"));
+	INFO_PRINTF1(msg);
 	error = unicode2.Compare(Uni_2);
 	test(error==0);
 	unicode2.Zero();
-	test.Printf(_L("\n"));
+	INFO_PRINTF1(_L("\n"));
 
 	// 4, 54936 -> unicode
 	// test result: 36 ms for 100000 iterations
-	test.Printf(_L("54936 ---> unicode:\n"));
-	test.Printf(_L("        source: "));	TestOut(foreign2);	test.Printf(_L("\n"));
-	test.Printf(_L("        expect: "));	TestOut(Uni_2);		test.Printf(_L("\n"));
+	INFO_PRINTF1(_L("54936 ---> unicode:\n"));
+	INFO_PRINTF1(_L("        source: "));	TestOut(foreign2);	INFO_PRINTF1(_L("\n"));
+	INFO_PRINTF1(_L("        expect: "));	TestOut(Uni_2);		INFO_PRINTF1(_L("\n"));
 	prevTime = User::FastCounter();
 	for (count=0; count<MaxCount; count++)
 		{
@@ -362,17 +374,17 @@ void PerformanceTest1()
 	timeDiff = User::FastCounter() - prevTime;
 	fsSessionMicroSecs = timeDiff / (ticksPerMicroSec);
 	msg.Format(_L("                    %10.2lf us, "), fsSessionMicroSecs);
-	test.Printf(_L("        result: "));	TestOut(unicode2);	test.Printf(_L("\n"));
-	test.Printf(msg);
+	INFO_PRINTF1(_L("        result: "));	TestOut(unicode2);	INFO_PRINTF1(_L("\n"));
+	INFO_PRINTF1(msg);
 	error = unicode2.Compare(Uni_2);
 	test(error==0);
 	unicode2.Zero();
-	test.Printf(_L("\n"));
+	INFO_PRINTF1(_L("\n"));
 	
 	lib936.Close();
 	lib54936.Close();
 	
-//	test.Printf(_L("Press any key...\n"));
+//	INFO_PRINTF1(_L("Press any key...\n"));
 //	test.Getch();
 	}
 
@@ -380,9 +392,9 @@ void PerformanceTest1()
 // performance when converting mixed data.
 // just for reference.
 // ideally, the test result should be similar to that in PerformanceTest1()
-void PerformanceTest2()
+void CT_CP54936::PerformanceTest2L()
 	{
-	test.Next(_L("Performance test 2 (reference)"));
+    INFO_PRINTF1(_L("Performance test 2 (reference)"));
 	RLibrary lib54936;
 	const TUidType serverUid54936(KNullUid,KNullUid,KPluginUid);
 	
@@ -423,9 +435,9 @@ void PerformanceTest2()
 
 	// 2, unicode -> 54936
 	// test result: 130 ms for 100000 iterations (44 ms if one huge table for BMP characters)
-	test.Printf(_L("unicode --> 54936:\n"));
-	test.Printf(_L("        source: "));	TestOut(unicode1);	test.Printf(_L("\n"));
-	test.Printf(_L("        expect: "));	TestOut(CP54936_1);	test.Printf(_L("\n"));
+	INFO_PRINTF1(_L("unicode --> 54936:\n"));
+	INFO_PRINTF1(_L("        source: "));	TestOut(unicode1);	INFO_PRINTF1(_L("\n"));
+	INFO_PRINTF1(_L("        expect: "));	TestOut(CP54936_1);	INFO_PRINTF1(_L("\n"));
 	prevTime = User::FastCounter();
 	for (count=0; count<MaxCount; count++)
 		{
@@ -435,12 +447,12 @@ void PerformanceTest2()
 	timeDiff = User::FastCounter() - prevTime;
 	fsSessionMicroSecs = timeDiff / (ticksPerMicroSec);
 	msg.Format(_L("                    %10.2lf us, "), fsSessionMicroSecs);
-	test.Printf(_L("        result: "));	TestOut(foreign1);	test.Printf(_L("\n"));
-	test.Printf(msg);
+	INFO_PRINTF1(_L("        result: "));	TestOut(foreign1);	INFO_PRINTF1(_L("\n"));
+	INFO_PRINTF1(msg);
 	error = foreign1.Compare(CP54936_1);
 	test(error==0);
 	foreign1.Zero();
-	test.Printf(_L("\n"));
+	INFO_PRINTF1(_L("\n"));
 
 //////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
@@ -450,9 +462,9 @@ void PerformanceTest2()
 
 	// 4, 54936 -> unicode
 	// test result: 36 ms for 100000 iterations
-	test.Printf(_L("54936 ---> unicode:\n"));
-	test.Printf(_L("        source: "));	TestOut(foreign2);	test.Printf(_L("\n"));
-	test.Printf(_L("        expect: "));	TestOut(Uni_2);		test.Printf(_L("\n"));
+	INFO_PRINTF1(_L("54936 ---> unicode:\n"));
+	INFO_PRINTF1(_L("        source: "));	TestOut(foreign2);	INFO_PRINTF1(_L("\n"));
+	INFO_PRINTF1(_L("        expect: "));	TestOut(Uni_2);		INFO_PRINTF1(_L("\n"));
 	prevTime = User::FastCounter();
 	for (count=0; count<MaxCount; count++)
 		{
@@ -462,16 +474,16 @@ void PerformanceTest2()
 	timeDiff = User::FastCounter() - prevTime;
 	fsSessionMicroSecs = timeDiff / (ticksPerMicroSec);
 	msg.Format(_L("                    %10.2lf us, "), fsSessionMicroSecs);
-	test.Printf(_L("        result: "));	TestOut(unicode2);	test.Printf(_L("\n"));
-	test.Printf(msg);
+	INFO_PRINTF1(_L("        result: "));	TestOut(unicode2);	INFO_PRINTF1(_L("\n"));
+	INFO_PRINTF1(msg);
 	error = unicode2.Compare(Uni_2);
 	test(error==0);
 	unicode2.Zero();
-	test.Printf(_L("\n"));
+	INFO_PRINTF1(_L("\n"));
 	
 	lib54936.Close();
 	
-//	test.Printf(_L("Press any key...\n"));
+//	INFO_PRINTF1(_L("Press any key...\n"));
 //	test.Getch();
 	}
 
@@ -488,9 +500,9 @@ void PerformanceTest2()
 @SYMTestExpectedResults No side effect
 @SYMREQ                 REQ12067
 */
-LOCAL_C void TestConversion( const TDesC16& aUnicode, const TDesC8& a54936, TBool aZero1=ETrue, TBool aZero2=ETrue )
+void CT_CP54936::TestConversionL( const TDesC16& aUnicode, const TDesC8& a54936, TBool aZero1, TBool aZero2)
 {
-	test.Next(_L(" @SYMTestCaseID:SYSLIB-FATCHARSETCONV-CT-1778 "));
+    INFO_PRINTF1(_L(" @SYMTestCaseID:SYSLIB-FATCHARSETCONV-CT-1778 "));
 	RLibrary lib;
 
 	const TUidType serverUid(KNullUid,KNullUid,KPluginUid);	
@@ -512,16 +524,16 @@ LOCAL_C void TestConversion( const TDesC16& aUnicode, const TDesC8& a54936, TBoo
 	
 	//	testing conversion from Unicode
 	TBuf8<200> generated54936;
-	test.Printf(_L("source: "));	
+	INFO_PRINTF1(_L("source: "));	
 	TestOut(aUnicode);	
-	test.Printf(_L("\n"));
-	test.Printf(_L("expect: "));	
+	INFO_PRINTF1(_L("\n"));
+	INFO_PRINTF1(_L("expect: "));	
 	TestOut(a54936);	
-	test.Printf(_L("\n"));
+	INFO_PRINTF1(_L("\n"));
 	(*aConvertFromUnicodeL)(generated54936, aUnicode); 	
-	test.Printf(_L("result: "));	
+	INFO_PRINTF1(_L("result: "));	
 	TestOut(generated54936);	
-	test.Printf(_L("\n"));
+	INFO_PRINTF1(_L("\n"));
 	TInt error = generated54936.Compare(a54936);
 	if ( aZero1 )
 	{
@@ -534,16 +546,16 @@ LOCAL_C void TestConversion( const TDesC16& aUnicode, const TDesC8& a54936, TBoo
 
 	//	testing conversion to Unicode
 	TBuf16<200> generatedUnicode;
-	test.Printf(_L("source: "));	
+	INFO_PRINTF1(_L("source: "));	
 	TestOut(a54936);	
-	test.Printf(_L("\n"));
-	test.Printf(_L("expect: "));	
+	INFO_PRINTF1(_L("\n"));
+	INFO_PRINTF1(_L("expect: "));	
 	TestOut(aUnicode);		
-	test.Printf(_L("\n"));
+	INFO_PRINTF1(_L("\n"));
 	(*aConvertToUnicodeL)(generatedUnicode,a54936);
-	test.Printf(_L("result: "));	
+	INFO_PRINTF1(_L("result: "));	
 	TestOut(generatedUnicode);	
-	test.Printf(_L("\n"));
+	INFO_PRINTF1(_L("\n"));
 	error = generatedUnicode.Compare(aUnicode);
 	if ( aZero2 )
 	{
@@ -571,93 +583,93 @@ LOCAL_C void TestConversion( const TDesC16& aUnicode, const TDesC8& a54936, TBoo
 @SYMTestExpectedResults No side effect
 @SYMREQ                 REQ12067
 */
-LOCAL_C void TestGbConversion()
+void CT_CP54936::TestGbConversionL()
 {
-	//	Test() function covers GB 1,2,4 bytes
+	//	TestL() function covers GB 1,2,4 bytes
 	//	one-byte
 	//	border 0x80
 	_LIT16(Uni_0, "\x0000");
 	_LIT8(CP54936_0, "\x00");
-	TestConversion( Uni_0, CP54936_0 );		
+	TestConversionL( Uni_0, CP54936_0 );		
 
 	_LIT16(Uni_1, "\x0079");
 	_LIT8(CP54936_1, "\x79");
-	TestConversion( Uni_1, CP54936_1 );		
+	TestConversionL( Uni_1, CP54936_1 );		
 
 	_LIT16(Uni_2, "\x0080");
 	_LIT8(CP54936_2, "\x81\x30\x81\x30");
-	TestConversion( Uni_2, CP54936_2 );		
+	TestConversionL( Uni_2, CP54936_2 );		
 
 	_LIT16(Uni_3, "\x0081");
 	_LIT8(CP54936_3, "\x81\x30\x81\x31");
-	TestConversion( Uni_3, CP54936_3 );		
+	TestConversionL( Uni_3, CP54936_3 );		
 	
 	_LIT16(Uni_4, "\x00fe");
 	_LIT8(CP54936_4, "\x81\x30\x8B\x36");
-	TestConversion( Uni_4, CP54936_4 );		
+	TestConversionL( Uni_4, CP54936_4 );		
 
 	_LIT16(Uni_5, "\x00ff");
 	_LIT8(CP54936_5, "\x81\x30\x8B\x37");
-	TestConversion( Uni_5, CP54936_5 );		
+	TestConversionL( Uni_5, CP54936_5 );		
 
 	//	two-byte
 	_LIT16(Uni_6, "\x0100");
 	_LIT8(CP54936_6, "\x81\x30\x8B\x38");
-	TestConversion( Uni_6, CP54936_6 );	
+	TestConversionL( Uni_6, CP54936_6 );	
 
 	_LIT16(Uni_7, "\x0101");
 	_LIT8(CP54936_7, "\xA8\xA1");
-	TestConversion( Uni_7, CP54936_7 );	
+	TestConversionL( Uni_7, CP54936_7 );	
 
 	_LIT16(Uni_8, "\x0ffe");
 	_LIT8(CP54936_8, "\x81\x33\x83\x38");
-	TestConversion( Uni_8, CP54936_8 );	
+	TestConversionL( Uni_8, CP54936_8 );	
 
 	_LIT16(Uni_9, "\x0fff");
 	_LIT8(CP54936_9, "\x81\x33\x83\x39");
-	TestConversion( Uni_9, CP54936_9 );	
+	TestConversionL( Uni_9, CP54936_9 );	
 
 	_LIT16(Uni_10, "\x1000");
 	_LIT8(CP54936_10, "\x81\x33\x84\x30");
-	TestConversion( Uni_10, CP54936_10 );	
+	TestConversionL( Uni_10, CP54936_10 );	
 
 	_LIT16(Uni_11, "\x1001");
 	_LIT8(CP54936_11, "\x81\x33\x84\x31");
-	TestConversion( Uni_11, CP54936_11 );	
+	TestConversionL( Uni_11, CP54936_11 );	
 
 	_LIT16(Uni_12, "\xfffe");
 	_LIT8(CP54936_12, "\x84\x31\xA4\x38");
-	TestConversion( Uni_12, CP54936_12 );	
+	TestConversionL( Uni_12, CP54936_12 );	
 
 	_LIT16(Uni_13, "\xffff");
 	_LIT8(CP54936_13, "\x84\x31\xA4\x39");
-	TestConversion( Uni_13, CP54936_13 );	
+	TestConversionL( Uni_13, CP54936_13 );	
 
 	//	four-byte
 	_LIT16(Uni_14, "\xd840\xdc00");
 	_LIT8(CP54936_14, "\x95\x32\x82\x36");
-	TestConversion( Uni_14, CP54936_14 );	
+	TestConversionL( Uni_14, CP54936_14 );	
 
 	_LIT16(Uni_15, "\xd840\xdc01");
 	_LIT8(CP54936_15, "\x95\x32\x82\x37");
-	TestConversion( Uni_15, CP54936_15 );	
+	TestConversionL( Uni_15, CP54936_15 );	
 	
 	_LIT16(Uni_16, "\xD87F\xdffe");
 	_LIT8(CP54936_16, "\x9a\x34\x84\x30");
-	TestConversion( Uni_16, CP54936_16 );	
+	TestConversionL( Uni_16, CP54936_16 );	
 
 	_LIT16(Uni_17, "\xD87F\xdfff");
 	_LIT8(CP54936_17, "\x9a\x34\x84\x31");
-	TestConversion( Uni_17, CP54936_17 );	
+	TestConversionL( Uni_17, CP54936_17 );	
 
 	//	4-byte gb
 	_LIT16(Uni_18, "\xd840\xddad");
 	_LIT8(CP54936_18, "\x95\x32\xAD\x35");
-	TestConversion( Uni_18, CP54936_18 );	
+	TestConversionL( Uni_18, CP54936_18 );	
 	
 	_LIT16(Uni_19, "\xd801\xdd00");
 	_LIT8(CP54936_19, "\x90\x31\x83\x30");
-	TestConversion( Uni_19, CP54936_19 );	
+	TestConversionL( Uni_19, CP54936_19 );	
 }
 
 
@@ -674,9 +686,9 @@ LOCAL_C void TestGbConversion()
 @SYMTestExpectedResults No side effect
 @SYMREQ                 REQ12067
 */
-LOCAL_C void TestShortNameCharacter()
+void CT_CP54936::TestShortNameCharacterL()
 {
-	test.Next(_L(" @SYMTestCaseID:SYSLIB-FATCHARSETCONV-CT-1778 "));
+    INFO_PRINTF1(_L(" @SYMTestCaseID:SYSLIB-FATCHARSETCONV-CT-1778 "));
 	RLibrary lib;
 
 	const TUidType serverUid(KNullUid,KNullUid,KPluginUid);	
@@ -815,37 +827,34 @@ LOCAL_C void TestShortNameCharacter()
 }
 
 
-LOCAL_C void DoE32MainL()
-	{
-	__UHEAP_MARK;
-	
-	TestGbConversion();
-	TestShortNameCharacter();
-	Test();
-	TestINC090073();
-	OOMTest();
-	PerformanceTest1();
-	PerformanceTest2();
-	
-	__UHEAP_MARKEND;
-	}
+CT_CP54936::CT_CP54936()
+    {
+    SetTestStepName(KTestStep_T_CP54936);
+    }
 
-GLDEF_C TInt E32Main()
-	{
-	__UHEAP_MARK;
 
-	test.Title();
-	test.Start(_L("CP54936 test..."));
+TVerdict CT_CP54936::doTestStepL()
+    {
+    SetTestStepResult(EFail);
 
-	CTrapCleanup* trapCleanup=CTrapCleanup::New();
-	TRAPD(error, DoE32MainL());
-	test(error==KErrNone);
-	
-	delete trapCleanup;
-	
-	test.End();
-	test.Close();
+    __UHEAP_MARK;
 
-	__UHEAP_MARKEND;
-	return error;
-	}
+    TRAPD(error1, TestGbConversionL());
+    TRAPD(error2, TestShortNameCharacterL());
+    TRAPD(error3, TestL());
+    TRAPD(error4, TestINC090073L());
+    TRAPD(error5, OOMTestL());
+    TRAPD(error6, PerformanceTest1L());
+    TRAPD(error7, PerformanceTest2L());
+
+    __UHEAP_MARKEND;
+
+    if(error1 == KErrNone && error2 == KErrNone && error3 == KErrNone
+            && error4 == KErrNone && error5 == KErrNone 
+            && error6 == KErrNone && error7 == KErrNone)
+        {
+        SetTestStepResult(EPass);
+        }
+
+    return TestStepResult();
+    }

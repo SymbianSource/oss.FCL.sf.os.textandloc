@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 1997-2009 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 1997-2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -22,15 +22,34 @@
 #include <gdi.h>
 #include <conpics.h>
 #include <s32file.h>
-#include <e32test.h>
 
 #include <txtrich.h>
 #include <txtfmlyr.h>
 #include "TXTMRTSR.H"
 
 #include "../incp/T_PMLPAR.H"
-#include "../spml/T_PMLPAR.CPP"
+//#include "../spml/T_PMLPAR.CPP"
+#include "T_TRAN.h"
 
+LOCAL_D CTestStep *pTestStep = NULL;
+#define test(cond)											\
+	{														\
+	TBool __bb = (cond);									\
+	pTestStep->TEST(__bb);									\
+	if (!__bb)												\
+		{													\
+		pTestStep->ERR_PRINTF1(_L("ERROR: Test Failed"));	\
+		User::Leave(1);										\
+		}													\
+	}
+#undef INFO_PRINTF1
+#undef INFO_PRINTF2
+// copy from tefexportconst.h
+#define INFO_PRINTF1(p1)        pTestStep->Logger().LogExtra(((TText8*)__FILE__), __LINE__, ESevrInfo, (p1))
+#define INFO_PRINTF2(p1, p2)    pTestStep->Logger().LogExtra(((TText8*)__FILE__), __LINE__, ESevrInfo, (p1), (p2))
+
+// included in a namespace, to avoid confliction
+namespace T_TRAN {
 /* this fixes a MSVC link warning */
 #ifdef __VC32__
 #pragma comment (linker, "/opt:noref") 
@@ -75,8 +94,6 @@ public:
 	const CCharFormatLayer* iGlobalCharFormatLayer;
 	};
 
-
-LOCAL_D RTest test(_L("Testing Picture Restorer mechanism"));
 LOCAL_D CTrapCleanup* TheTrapCleanup;
 LOCAL_D RFs TheFs;  // the file server
 LOCAL_D RFile TheFile;  // the data file
@@ -375,7 +392,7 @@ LOCAL_C void testPictureRestorer2(TBool aAlwaysFailToLoad=EFalse)
 //  Now store the stuff again
 	TInt error=TheContainer->iText->LoadAllPicturesNowL();
 	if (error==KErrNotFound)
-		test.Printf(_L("   SIMULATION: Some picture data has been removed as no app could be found."));
+		INFO_PRINTF1(_L("   SIMULATION: Some picture data has been removed as no app could be found."));
 //	if (aAlwaysFailToLoad)
 //		test(error==KErrNotFound);
 //	else
@@ -405,22 +422,22 @@ LOCAL_C void testPictureRestorer2(TBool aAlwaysFailToLoad=EFalse)
 LOCAL_C void CompareRichTextL(CRichText *aDoc1,CRichText *aDoc2)
 //
 	{
-	test.Start(_L("Comparing Documents"));
+	INFO_PRINTF1(_L("Comparing Documents"));
 	TInt length;
 	TInt num1,num2;
  	TInt ii=0,len1,len2,pos1,pos2,oldPos;
 
-	test.Next(_L("Document Length"));
+	INFO_PRINTF1(_L("Document Length"));
 	length=aDoc1->LdDocumentLength();
 	num2=aDoc2->LdDocumentLength();
 	test(length==num2);
 
-	test.Next(_L("Paragraph Count"));
+	INFO_PRINTF1(_L("Paragraph Count"));
 	num1=aDoc1->ParagraphCount();
 	num2=aDoc2->ParagraphCount();
 	test(num1==num2);
 
-	test.Next(_L("Paragraph Lengths"));
+	INFO_PRINTF1(_L("Paragraph Lengths"));
 	pos1=-1;
 	oldPos=-2;
 	while (pos1>oldPos)
@@ -433,12 +450,12 @@ LOCAL_C void CompareRichTextL(CRichText *aDoc1,CRichText *aDoc2)
 		ii++;
 		}
  
-	test.Next(_L("Word Count"));
+	INFO_PRINTF1(_L("Word Count"));
 	num1=aDoc1->WordCount();
 	num2=aDoc2->WordCount();
 	test(num1==num2);
 
-	test.Next(_L("Characters"));
+	INFO_PRINTF1(_L("Characters"));
 	TCharFormat format1,format2;
 	TPtrC chars1,chars2;
 	len1=1;
@@ -454,7 +471,7 @@ LOCAL_C void CompareRichTextL(CRichText *aDoc1,CRichText *aDoc2)
 		ii+=len1;
 		}
 	
-	test.End();
+	
 	}
 
 
@@ -467,20 +484,20 @@ LOCAL_C  void GoL()
 	CRichText *document=CRichText::NewL(pLayer,cLayer);
 	TInt err;
 	
-	test.Start(_L("Document with single Paragraph"));
-	test.Next(_L(" @SYMTestCaseID:SYSLIB-TTEXT-LEGACY-T_TRAN-0001 "));
+	INFO_PRINTF1(_L("Document with single Paragraph"));
+	INFO_PRINTF1(_L(" @SYMTestCaseID:SYSLIB-TTEXT-LEGACY-T_TRAN-0001 "));
 	{	
 	TheContainer=CContainer::NewL(_L("z:\\test\\app-framework\\etext\\t_para.pml"));
-	test.Start(_L("Exporting a file by Para"));
+	INFO_PRINTF1(_L("Exporting a file by Para"));
 	TFileName exportFile=KExportFileName1();
 	EnsureFileExists(exportFile);
 	TRAP(err,TheContainer->iText->ExportAsTextL(exportFile,CPlainText::EOrganiseByParagraph,0));
 	test(err==KErrNone);
-	test.Next(_L("Importing a file by Para"));
+	INFO_PRINTF1(_L("Importing a file by Para"));
 	document->Reset();
 	TInt charsImported=document->ImportTextFileL(0,exportFile,CPlainText::EOrganiseByParagraph);
 	test(charsImported>0);
-	test.Next(_L("Comparing Result"));
+	INFO_PRINTF1(_L("Comparing Result"));
 	TRAP(err,CompareRichTextL(TheContainer->iText,document));
  	test(err==KErrNone);
 	delete TheContainer;
@@ -488,13 +505,13 @@ LOCAL_C  void GoL()
 	
 	{
 	TheContainer=CContainer::NewL(_L("z:\\test\\app-framework\\etext\\t_para.pml"));
-	test.Next(_L("Exporting and Importing a file by Line"));
-	test.Start(_L("Line Lengths 25,30,...,95"));
+	INFO_PRINTF1(_L("Exporting and Importing a file by Line"));
+	INFO_PRINTF1(_L("Line Lengths 25,30,...,95"));
 	TFileName exportFile=KExportFileName1();
 	TInt ii;
 	for(ii=25;ii<100;ii+=5)
 		{
-		test.Next(_L("With next line length"));
+		INFO_PRINTF1(_L("With next line length"));
 		EnsureFileExists(exportFile);
 		TRAP(err,TheContainer->iText->ExportAsTextL(exportFile,CPlainText::EOrganiseByLine,ii));
 		test(err==KErrNone);
@@ -505,24 +522,24 @@ LOCAL_C  void GoL()
  		test(err==KErrNone);
 		}
 	delete TheContainer;
-	test.End();
+	
 	}
 
-	test.End();
-	test.Next(_L("Document with two Paragraphs"));
+	
+	INFO_PRINTF1(_L("Document with two Paragraphs"));
 	
 	{	
 	TheContainer=CContainer::NewL(_L("z:\\test\\app-framework\\etext\\t_para2.pml"));
-	test.Start(_L("Exporting a file by Para"));
+	INFO_PRINTF1(_L("Exporting a file by Para"));
 	TFileName exportFile=KExportFileName2();
 	EnsureFileExists(exportFile);
 	TRAP(err,TheContainer->iText->ExportAsTextL(exportFile,CPlainText::EOrganiseByParagraph,0));
 	test(err==KErrNone);
-	test.Next(_L("Importing a file by Para"));
+	INFO_PRINTF1(_L("Importing a file by Para"));
 	document->Reset();
 	TInt charsImported=document->ImportTextFileL(0,exportFile,CPlainText::EOrganiseByParagraph);
 	test(charsImported>0);
-	test.Next(_L("Comparing Result"));
+	INFO_PRINTF1(_L("Comparing Result"));
 	TRAP(err,CompareRichTextL(TheContainer->iText,document));
  	test(err==KErrNone);
 	delete TheContainer;
@@ -530,13 +547,13 @@ LOCAL_C  void GoL()
 	
 	{
 	TheContainer=CContainer::NewL(_L("z:\\test\\app-framework\\etext\\t_para.pml"));
-	test.Next(_L("Exporting and Importing a file by Line"));
-	test.Start(_L("Line Lengths 30,40,...,100"));
+	INFO_PRINTF1(_L("Exporting and Importing a file by Line"));
+	INFO_PRINTF1(_L("Line Lengths 30,40,...,100"));
 	TFileName exportFile=KExportFileName1();
 	TInt ii;
 	for(ii=30;ii<105;ii+=10)
 		{
-		test.Next(_L("With next line length"));
+		INFO_PRINTF1(_L("With next line length"));
 		EnsureFileExists(exportFile);
 		TRAP(err,TheContainer->iText->ExportAsTextL(exportFile,CPlainText::EOrganiseByLine,ii));
 		test(err==KErrNone);
@@ -547,14 +564,14 @@ LOCAL_C  void GoL()
  		test(err==KErrNone);
 		}
 	delete TheContainer;
-	test.End();
+	
 	}
 
 	delete document;
 	delete cLayer;
 	delete pLayer;
 
-	test.End();
+	
 	}
 
 
@@ -603,29 +620,35 @@ LOCAL_C void DeleteDataFile(const TDesC& aFullName)
 		RDebug::Print(_L("Error %d connecting file session. File: %S.\n"), err, &aFullName);
 		}
 	}
+}
 
-GLDEF_C TInt E32Main()
-//
-// Test the streaming framework.
-//
+CT_TRAN::CT_TRAN()
     {
+    SetTestStepName(KTestStep_T_TRAN);
+    pTestStep = this;
+    }
 
-	test.Title();
-	
-	__UHEAP_MARK;
-	setupCleanup();
-	TRAPD(r,GoL());
-    test(r == KErrNone);
+TVerdict CT_TRAN::doTestStepL()
+    {
+    SetTestStepResult(EFail);
 
-	delete TheTrapCleanup;
-	
-	__UHEAP_MARKEND;
-	
-	::DeleteDataFile(KExportFileName1);		//deletion of data files must be before call to End() - DEF047652
-	::DeleteDataFile(KExportFileName2);	
-	
-	test.End();
-	test.Close();
+    INFO_PRINTF1(_L("Testing Picture Restorer mechanism"));
+    
+    __UHEAP_MARK;
+    T_TRAN::setupCleanup();
+    TRAPD(r, T_TRAN::GoL());
 
-	return 0;
+    delete T_TRAN::TheTrapCleanup;
+    
+    __UHEAP_MARKEND;
+    
+    T_TRAN::DeleteDataFile(T_TRAN::KExportFileName1);     //deletion of data files must be before call to End() - DEF047652
+    T_TRAN::DeleteDataFile(T_TRAN::KExportFileName2); 
+    
+    if (r == KErrNone)
+        {
+        SetTestStepResult(EPass);
+        }
+
+    return TestStepResult();
     }
