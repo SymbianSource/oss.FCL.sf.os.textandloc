@@ -34,7 +34,7 @@ VENDORID		0x70000001
 OS_LAYER_SYSTEMINCLUDE_SYMBIAN
 OS_LAYER_ESTLIB_SYSTEMINCLUDE
 
-USERINCLUDE		../src/charconv
+USERINCLUDE		../src/charconv ../traces
 
 SOURCEPATH		../src/charconv
 SOURCE			charconv.cpp

@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 1997-2009 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 1997-2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -16,11 +16,29 @@
 */
 
 
-#include <e32test.h>
 #include <e32svr.h>
 
 #include <txtrich.h>
 #include <txtglobl.h>
+#include "T_TIMES.h"
+
+LOCAL_D CTestStep *pTestStep = NULL;
+#define test(cond)											\
+	{														\
+	TBool __bb = (cond);									\
+	pTestStep->TEST(__bb);									\
+	if (!__bb)												\
+		{													\
+		pTestStep->ERR_PRINTF1(_L("ERROR: Test Failed"));	\
+		User::Leave(1);										\
+		}													\
+	}
+#undef INFO_PRINTF1
+#undef INFO_PRINTF2
+// copy from tefexportconst.h
+#define INFO_PRINTF1(p1)        pTestStep->Logger().LogExtra(((TText8*)__FILE__), __LINE__, ESevrInfo, (p1))
+#define INFO_PRINTF2(p1, p2)    pTestStep->Logger().LogExtra(((TText8*)__FILE__), __LINE__, ESevrInfo, (p1), (p2))
+
 
 /* this fixes a MSVC link warning */
 #ifdef __VC32__
@@ -55,7 +73,6 @@ const TInt KCharFormatLayerTest=100000;
 
 
 LOCAL_D CTrapCleanup* TheTrapCleanup;
-LOCAL_D RTest test(_L("CRichText Document"));
 LOCAL_D CGlobalText* TheText;
 LOCAL_D CParaFormatLayer* TheParaFormatLayer;
 LOCAL_D CCharFormatLayer* TheCharFormatLayer;
@@ -156,23 +173,23 @@ LOCAL_C void DoLongDocumentTestL(TInt aTest1Count,TInt aTest2Count,TInt aTest3Co
 	TInt wordCount=TheText->WordCount();
 	TBuf<80> stats;
 	stats.Format(_L("Document Stats:\nChars: %d\nWords: %d\nParas: %d\n"),documentLength,wordCount,paraCount);
-	test.Printf(stats);
+	INFO_PRINTF1(stats);
 	RDebug::Print(_L("%S"),&stats);
 	TBuf<80> testTitle;
 	//
 	testTitle.Format(_L("Pos: 0-100  %d times"),aTest1Count);
-	test.Start(testTitle);
+	INFO_PRINTF1(testTitle);
 	GetTimesForGetChars(aTest1Count,0,100,50);
 	//
 	testTitle.Format(_L("Pos: 18200-18300 %d times"),aTest2Count);
-	test.Next(testTitle);
+	INFO_PRINTF1(testTitle);
 	GetTimesForGetChars(aTest2Count,18200,100,50);
 	//
 	testTitle.Format(_L("Pos: all %d times"),aTest3Count);
-	test.Next(testTitle);
+	INFO_PRINTF1(testTitle);
 	GetTimesForGetChars(aTest3Count,0,documentLength,50);
 	//
-	test.End();
+	
 	}
 
 
@@ -193,7 +210,7 @@ LOCAL_C void DoGetCharFormatLayerReadTimesL(TInt aLoopCount)
 	// Display the metric
 	TBuf<60> context;
 	context.Format(_L("10 att X %d loops=%d atts\n"),aLoopCount,10*aLoopCount);
-	test.Printf(context);
+	INFO_PRINTF1(context);
 	RDebug::Print(_L("%S"),&context);
 	}
 
@@ -222,21 +239,21 @@ LOCAL_C void FormatLayerTestL()
 // Time tests on format layer access.
 //
 	{
-	test.Start(_L("CCharFormatLayer - Attribute reads"));
+	INFO_PRINTF1(_L("CCharFormatLayer - Attribute reads"));
 	GenerateGlobalLayersL();
 	//
 	TBuf<80> testTitle;
 	testTitle.Format(_L("Reading empty char format layer %d times"),KCharFormatLayerTest);
-	test.Next(testTitle);
+	INFO_PRINTF1(testTitle);
 	DoEmptyCharFormatLayerReadL(KCharFormatLayerTest);
 	//
 	testTitle.Format(_L("Read 10 attributes from layer %d times"),KCharFormatLayerTest);
-	test.Next(testTitle);
+	INFO_PRINTF1(testTitle);
 	TRAPD(ret, DoCharFormatLayerReadL(KCharFormatLayerTest));
 	test(ret==KErrNone);
 	//
 	KillGlobalLayers();
-	test.End();
+	
 	}
 
 
@@ -244,18 +261,18 @@ LOCAL_C void LongDocumentTestL()
 //
 	{
 	//
-	test.Start(_L("Global text - Empty layers"));
+	INFO_PRINTF1(_L("Global text - Empty layers"));
 	GenerateGlobalTextL();
 	DoLongDocumentTestL(KGlobalTextATest1,KGlobalTextATest2,KGlobalTextATest3);
 	KillText();
 	//
-	test.Next(_L("Rich text - Empty layers"));
+	INFO_PRINTF1(_L("Rich text - Empty layers"));
 	GenerateBasicRichTextL();
 	DoLongDocumentTestL(KRichTextTest1,KRichTextTest2,KRichTextTest3);
 	KillText();
 	KillGlobalLayers();
 	//
-	test.Next(_L("Global text - 2 character attributes stored"));
+	INFO_PRINTF1(_L("Global text - 2 character attributes stored"));
 	GenerateGlobalTextL();
 	TBuf<5> name=_L("SWiss");
 	TCharFormat charFormat(name,178);
@@ -268,23 +285,23 @@ LOCAL_C void LongDocumentTestL()
 	DoLongDocumentTestL(KGlobalTextBTest1,KGlobalTextBTest2,KGlobalTextBTest3);
 	KillText();
 	//
-	test.Next(_L("Rich text - 2 charcter attributes stored"));
+	INFO_PRINTF1(_L("Rich text - 2 charcter attributes stored"));
 	GenerateBasicRichTextL();
 	DoLongDocumentTestL(KRichTextTest1,KRichTextTest2,KRichTextTest3);
 	KillText();
 	//
 	KillGlobalLayers();
-	test.End();
+	
 	}
 	
 
 LOCAL_C void DoTestsL()
 //
 	{
-	test.Start(_L(" @SYMTestCaseID:SYSLIB-TTEXT-LEGACY-T_TIMES-0001 Long document tests "));
+	INFO_PRINTF1(_L(" @SYMTestCaseID:SYSLIB-TTEXT-LEGACY-T_TIMES-0001 Long document tests "));
 	LongDocumentTestL();
 	//
-	test.Next(_L("Format layer tests"));
+	INFO_PRINTF1(_L("Format layer tests"));
 	FormatLayerTestL();
 	//
 	}
@@ -306,23 +323,29 @@ LOCAL_C void setupCleanup()
 		});
 	}
 
-
-
-GLDEF_C TInt E32Main()
-//
-// Test the Document Model Services.
-//
+CT_TIMES::CT_TIMES()
     {
-	setupCleanup();
-	test.Title();	
-	__UHEAP_MARK;
-	
-	TRAPD(ret,DoTestsL());
-    test(ret == KErrNone);
-	
-	test.End();
-	test.Close();
-	__UHEAP_MARKEND;
-	delete TheTrapCleanup;
-	return(0);
+    SetTestStepName(KTestStep_T_TIMES);
+    pTestStep = this;
+    }
+
+TVerdict CT_TIMES::doTestStepL()
+    {
+    SetTestStepResult(EFail);
+
+    setupCleanup();
+    INFO_PRINTF1(_L("CRichText Document"));   
+    __UHEAP_MARK;
+    
+    TRAPD(ret,DoTestsL());
+    
+    __UHEAP_MARKEND;
+    delete TheTrapCleanup;
+    
+    if (ret == KErrNone)
+        {
+        SetTestStepResult(EPass);
+        }
+
+    return TestStepResult();
     }

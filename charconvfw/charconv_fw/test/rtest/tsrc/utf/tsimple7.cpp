@@ -17,27 +17,20 @@
 
 
 #include <e32std.h>
-#include <e32test.h>
 #include <utf.h>
 
 ///////////////////////////////////////////////////////////////////////////////////////
 
-RTest TheTest(_L("TSimple7"));
+#include "t_simple7.h"
 
-///////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////
-//Tests macroses and functions.
-static void Check(TInt aValue, TInt aLine)
-	{
-	if(!aValue)
-		{
-		TheTest(EFalse, aLine);
-		}
-	}
-#define TEST(arg) ::Check((arg), __LINE__)
+#define test(cond)                                  \
+    TEST((cond));                                   \
+    if (!(cond))                                    \
+        {                                           \
+        ERR_PRINTF1(_L("ERROR: Test Failed"));      \
+        User::Leave(1);                             \
+        }
 
-///////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////
 /**
 @SYMTestCaseID          SYSLIB-CHARCONV-CT-0562
 @SYMTestCaseDesc        Conversion tests from Unicode to UTF-7 character set
@@ -47,136 +40,155 @@ static void Check(TInt aValue, TInt aLine)
 @SYMTestExpectedResults Test must not fail
 @SYMREQ                 REQ0000
 */
-GLDEF_C TInt E32Main()
+void CT_SIMPLE7::TestSIMPLE7()
 	{
-	TheTest.Title();
-	TheTest.Start(_L(" @SYMTestCaseID:SYSLIB-CHARCONV-CT-0562 Testing simple UTF-7 round trips "));
+	INFO_PRINTF1(_L(" @SYMTestCaseID:SYSLIB-CHARCONV-CT-0562 Testing simple UTF-7 round trips "));
 	TBuf16<256> originalUnicode;
 	TBuf8<256> generatedUtf7;
 	TBuf16<256> generatedUnicode;
 	TInt state=CnvUtfConverter::KStateDefault;
 	//
-	TheTest.Next(_L("Empty descriptor"));
+	INFO_PRINTF1(_L("Empty descriptor"));
 	originalUnicode=_L16("");
-	TEST(CnvUtfConverter::ConvertFromUnicodeToUtf7(generatedUtf7, originalUnicode, ETrue)==0);
-	TEST(generatedUtf7==_L8(""));
-	TEST(CnvUtfConverter::ConvertToUnicodeFromUtf7(generatedUnicode, generatedUtf7, state)==0);
-	TEST(state==CnvUtfConverter::KStateDefault);
-	TEST(generatedUnicode==originalUnicode);
-	TEST(CnvUtfConverter::ConvertFromUnicodeToUtf7(generatedUtf7, originalUnicode, EFalse)==0);
-	TEST(generatedUtf7==_L8(""));
-	TEST(CnvUtfConverter::ConvertToUnicodeFromUtf7(generatedUnicode, generatedUtf7, state)==0);
-	TEST(state==CnvUtfConverter::KStateDefault);
-	TEST(generatedUnicode==originalUnicode);
-	TheTest.Next(_L("English \"Hello!\""));
+	test(CnvUtfConverter::ConvertFromUnicodeToUtf7(generatedUtf7, originalUnicode, ETrue)==0);
+	test(generatedUtf7==_L8(""));
+	test(CnvUtfConverter::ConvertToUnicodeFromUtf7(generatedUnicode, generatedUtf7, state)==0);
+	test(state==CnvUtfConverter::KStateDefault);
+	test(generatedUnicode==originalUnicode);
+	test(CnvUtfConverter::ConvertFromUnicodeToUtf7(generatedUtf7, originalUnicode, EFalse)==0);
+	test(generatedUtf7==_L8(""));
+	test(CnvUtfConverter::ConvertToUnicodeFromUtf7(generatedUnicode, generatedUtf7, state)==0);
+	test(state==CnvUtfConverter::KStateDefault);
+	test(generatedUnicode==originalUnicode);
+	INFO_PRINTF1(_L("English \"Hello!\""));
 	originalUnicode=_L16("Hello!");
-	TEST(CnvUtfConverter::ConvertFromUnicodeToUtf7(generatedUtf7, originalUnicode, ETrue)==0);
-	TEST(generatedUtf7==_L8("Hello+ACE-"));
-	TEST(CnvUtfConverter::ConvertToUnicodeFromUtf7(generatedUnicode, generatedUtf7, state)==0);
-	TEST(state==CnvUtfConverter::KStateDefault);
-	TEST(generatedUnicode==originalUnicode);
-	TEST(CnvUtfConverter::ConvertFromUnicodeToUtf7(generatedUtf7, originalUnicode, EFalse)==0);
-	TEST(generatedUtf7==_L8("Hello!"));
-	TEST(CnvUtfConverter::ConvertToUnicodeFromUtf7(generatedUnicode, generatedUtf7, state)==0);
-	TEST(state==CnvUtfConverter::KStateDefault);
-	TEST(generatedUnicode==originalUnicode);
-	TheTest.Next(_L("Russian \"Hello!\""));
+	test(CnvUtfConverter::ConvertFromUnicodeToUtf7(generatedUtf7, originalUnicode, ETrue)==0);
+	test(generatedUtf7==_L8("Hello+ACE-"));
+	test(CnvUtfConverter::ConvertToUnicodeFromUtf7(generatedUnicode, generatedUtf7, state)==0);
+	test(state==CnvUtfConverter::KStateDefault);
+	test(generatedUnicode==originalUnicode);
+	test(CnvUtfConverter::ConvertFromUnicodeToUtf7(generatedUtf7, originalUnicode, EFalse)==0);
+	test(generatedUtf7==_L8("Hello!"));
+	test(CnvUtfConverter::ConvertToUnicodeFromUtf7(generatedUnicode, generatedUtf7, state)==0);
+	test(state==CnvUtfConverter::KStateDefault);
+	test(generatedUnicode==originalUnicode);
+	INFO_PRINTF1(_L("Russian \"Hello!\""));
 	originalUnicode.Format(_L16("%c%c%c%c%c%c%c%c%c%c%c%c!"), 0x0417, 0x0434, 0x0440, 0x0430, 0x0432, 0x0441, 0x0442, 0x0432, 0x0443, 0x0439, 0x0442, 0x0435);
-	TEST(CnvUtfConverter::ConvertFromUnicodeToUtf7(generatedUtf7, originalUnicode, ETrue)==0);
-	TEST(generatedUtf7==_L8("+BBcENARABDAEMgRBBEIEMgRDBDkEQgQ1ACE-"));
-	TEST(CnvUtfConverter::ConvertToUnicodeFromUtf7(generatedUnicode, generatedUtf7, state)==0);
-	TEST(state==CnvUtfConverter::KStateDefault);
-	TEST(generatedUnicode==originalUnicode);
-	TEST(CnvUtfConverter::ConvertFromUnicodeToUtf7(generatedUtf7, originalUnicode, EFalse)==0);
-	TEST(generatedUtf7==_L8("+BBcENARABDAEMgRBBEIEMgRDBDkEQgQ1-!"));
-	TEST(CnvUtfConverter::ConvertToUnicodeFromUtf7(generatedUnicode, generatedUtf7, state)==0);
-	TEST(state==CnvUtfConverter::KStateDefault);
-	TEST(generatedUnicode==originalUnicode);
-	TheTest.Next(_L("Greek \"Hello!\""));
+	test(CnvUtfConverter::ConvertFromUnicodeToUtf7(generatedUtf7, originalUnicode, ETrue)==0);
+	test(generatedUtf7==_L8("+BBcENARABDAEMgRBBEIEMgRDBDkEQgQ1ACE-"));
+	test(CnvUtfConverter::ConvertToUnicodeFromUtf7(generatedUnicode, generatedUtf7, state)==0);
+	test(state==CnvUtfConverter::KStateDefault);
+	test(generatedUnicode==originalUnicode);
+	test(CnvUtfConverter::ConvertFromUnicodeToUtf7(generatedUtf7, originalUnicode, EFalse)==0);
+	test(generatedUtf7==_L8("+BBcENARABDAEMgRBBEIEMgRDBDkEQgQ1-!"));
+	test(CnvUtfConverter::ConvertToUnicodeFromUtf7(generatedUnicode, generatedUtf7, state)==0);
+	test(state==CnvUtfConverter::KStateDefault);
+	test(generatedUnicode==originalUnicode);
+	INFO_PRINTF1(_L("Greek \"Hello!\""));
 	originalUnicode.Format(_L16("%c%c%c%c%c!"), 0x0393, 0x03b1, 0x03c3, 0x03bf, 0x03c5);
-	TEST(CnvUtfConverter::ConvertFromUnicodeToUtf7(generatedUtf7, originalUnicode, ETrue)==0);
-	TEST(generatedUtf7==_L8("+A5MDsQPDA78DxQAh-"));
-	TEST(CnvUtfConverter::ConvertToUnicodeFromUtf7(generatedUnicode, generatedUtf7, state)==0);
-	TEST(state==CnvUtfConverter::KStateDefault);
-	TEST(generatedUnicode==originalUnicode);
-	TEST(CnvUtfConverter::ConvertFromUnicodeToUtf7(generatedUtf7, originalUnicode, EFalse)==0);
-	TEST(generatedUtf7==_L8("+A5MDsQPDA78DxQ-!"));
-	TEST(CnvUtfConverter::ConvertToUnicodeFromUtf7(generatedUnicode, generatedUtf7, state)==0);
-	TEST(state==CnvUtfConverter::KStateDefault);
-	TEST(generatedUnicode==originalUnicode);
-	TheTest.Next(_L("Chinese \"Hello!\""));
+	test(CnvUtfConverter::ConvertFromUnicodeToUtf7(generatedUtf7, originalUnicode, ETrue)==0);
+	test(generatedUtf7==_L8("+A5MDsQPDA78DxQAh-"));
+	test(CnvUtfConverter::ConvertToUnicodeFromUtf7(generatedUnicode, generatedUtf7, state)==0);
+	test(state==CnvUtfConverter::KStateDefault);
+	test(generatedUnicode==originalUnicode);
+	test(CnvUtfConverter::ConvertFromUnicodeToUtf7(generatedUtf7, originalUnicode, EFalse)==0);
+	test(generatedUtf7==_L8("+A5MDsQPDA78DxQ-!"));
+	test(CnvUtfConverter::ConvertToUnicodeFromUtf7(generatedUnicode, generatedUtf7, state)==0);
+	test(state==CnvUtfConverter::KStateDefault);
+	test(generatedUnicode==originalUnicode);
+	INFO_PRINTF1(_L("Chinese \"Hello!\""));
 	originalUnicode.Format(_L16("%c%c!"), 0x4f60, 0x597d);
-	TEST(CnvUtfConverter::ConvertFromUnicodeToUtf7(generatedUtf7, originalUnicode, ETrue)==0);
-	TEST(generatedUtf7==_L8("+T2BZfQAh-"));
-	TEST(CnvUtfConverter::ConvertToUnicodeFromUtf7(generatedUnicode, generatedUtf7, state)==0);
-	TEST(state==CnvUtfConverter::KStateDefault);
-	TEST(generatedUnicode==originalUnicode);
-	TEST(CnvUtfConverter::ConvertFromUnicodeToUtf7(generatedUtf7, originalUnicode, EFalse)==0);
-	TEST(generatedUtf7==_L8("+T2BZfQ-!"));
-	TEST(CnvUtfConverter::ConvertToUnicodeFromUtf7(generatedUnicode, generatedUtf7, state)==0);
-	TEST(state==CnvUtfConverter::KStateDefault);
-	TEST(generatedUnicode==originalUnicode);
-	TheTest.Next(_L("Japanese \"Hello!\""));
+	test(CnvUtfConverter::ConvertFromUnicodeToUtf7(generatedUtf7, originalUnicode, ETrue)==0);
+	test(generatedUtf7==_L8("+T2BZfQAh-"));
+	test(CnvUtfConverter::ConvertToUnicodeFromUtf7(generatedUnicode, generatedUtf7, state)==0);
+	test(state==CnvUtfConverter::KStateDefault);
+	test(generatedUnicode==originalUnicode);
+	test(CnvUtfConverter::ConvertFromUnicodeToUtf7(generatedUtf7, originalUnicode, EFalse)==0);
+	test(generatedUtf7==_L8("+T2BZfQ-!"));
+	test(CnvUtfConverter::ConvertToUnicodeFromUtf7(generatedUnicode, generatedUtf7, state)==0);
+	test(state==CnvUtfConverter::KStateDefault);
+	test(generatedUnicode==originalUnicode);
+	INFO_PRINTF1(_L("Japanese \"Hello!\""));
 	originalUnicode.Format(_L16("%c%c%c!"), 0x4eca, 0x65e5, 0x306f);
-	TEST(CnvUtfConverter::ConvertFromUnicodeToUtf7(generatedUtf7, originalUnicode, ETrue)==0);
-	TEST(generatedUtf7==_L8("+Tspl5TBvACE-"));
-	TEST(CnvUtfConverter::ConvertToUnicodeFromUtf7(generatedUnicode, generatedUtf7, state)==0);
-	TEST(state==CnvUtfConverter::KStateDefault);
-	TEST(generatedUnicode==originalUnicode);
-	TEST(CnvUtfConverter::ConvertFromUnicodeToUtf7(generatedUtf7, originalUnicode, EFalse)==0);
-	TEST(generatedUtf7==_L8("+Tspl5TBv-!"));
-	TEST(CnvUtfConverter::ConvertToUnicodeFromUtf7(generatedUnicode, generatedUtf7, state)==0);
-	TEST(state==CnvUtfConverter::KStateDefault);
-	TEST(generatedUnicode==originalUnicode);
-	TheTest.Next(_L("Trailing \"-\" character"));
+	test(CnvUtfConverter::ConvertFromUnicodeToUtf7(generatedUtf7, originalUnicode, ETrue)==0);
+	test(generatedUtf7==_L8("+Tspl5TBvACE-"));
+	test(CnvUtfConverter::ConvertToUnicodeFromUtf7(generatedUnicode, generatedUtf7, state)==0);
+	test(state==CnvUtfConverter::KStateDefault);
+	test(generatedUnicode==originalUnicode);
+	test(CnvUtfConverter::ConvertFromUnicodeToUtf7(generatedUtf7, originalUnicode, EFalse)==0);
+	test(generatedUtf7==_L8("+Tspl5TBv-!"));
+	test(CnvUtfConverter::ConvertToUnicodeFromUtf7(generatedUnicode, generatedUtf7, state)==0);
+	test(state==CnvUtfConverter::KStateDefault);
+	test(generatedUnicode==originalUnicode);
+	INFO_PRINTF1(_L("Trailing \"-\" character"));
 	originalUnicode=_L16(":-");
-	TEST(CnvUtfConverter::ConvertFromUnicodeToUtf7(generatedUtf7, originalUnicode, ETrue)==0);
-	TEST(generatedUtf7==_L8(":-"));
-	TEST(CnvUtfConverter::ConvertToUnicodeFromUtf7(generatedUnicode, generatedUtf7, state)==0);
-	TEST(state==CnvUtfConverter::KStateDefault);
-	TEST(generatedUnicode==originalUnicode);
-	TEST(CnvUtfConverter::ConvertFromUnicodeToUtf7(generatedUtf7, originalUnicode, EFalse)==0);
-	TEST(generatedUtf7==_L8(":-"));
-	TEST(CnvUtfConverter::ConvertToUnicodeFromUtf7(generatedUnicode, generatedUtf7, state)==0);
-	TEST(state==CnvUtfConverter::KStateDefault);
-	TEST(generatedUnicode==originalUnicode);
+	test(CnvUtfConverter::ConvertFromUnicodeToUtf7(generatedUtf7, originalUnicode, ETrue)==0);
+	test(generatedUtf7==_L8(":-"));
+	test(CnvUtfConverter::ConvertToUnicodeFromUtf7(generatedUnicode, generatedUtf7, state)==0);
+	test(state==CnvUtfConverter::KStateDefault);
+	test(generatedUnicode==originalUnicode);
+	test(CnvUtfConverter::ConvertFromUnicodeToUtf7(generatedUtf7, originalUnicode, EFalse)==0);
+	test(generatedUtf7==_L8(":-"));
+	test(CnvUtfConverter::ConvertToUnicodeFromUtf7(generatedUnicode, generatedUtf7, state)==0);
+	test(state==CnvUtfConverter::KStateDefault);
+	test(generatedUnicode==originalUnicode);
 	originalUnicode=_L16("=-");
-	TEST(CnvUtfConverter::ConvertFromUnicodeToUtf7(generatedUtf7, originalUnicode, ETrue)==0);
-	TEST(generatedUtf7==_L8("+AD0--"));
-	TEST(CnvUtfConverter::ConvertToUnicodeFromUtf7(generatedUnicode, generatedUtf7, state)==0);
-	TEST(state==CnvUtfConverter::KStateDefault);
-	TEST(generatedUnicode==originalUnicode);
-	TEST(CnvUtfConverter::ConvertFromUnicodeToUtf7(generatedUtf7, originalUnicode, EFalse)==0);
-	TEST(generatedUtf7==_L8("=-"));
-	TEST(CnvUtfConverter::ConvertToUnicodeFromUtf7(generatedUnicode, generatedUtf7, state)==0);
-	TEST(state==CnvUtfConverter::KStateDefault);
-	TEST(generatedUnicode==originalUnicode);
+	test(CnvUtfConverter::ConvertFromUnicodeToUtf7(generatedUtf7, originalUnicode, ETrue)==0);
+	test(generatedUtf7==_L8("+AD0--"));
+	test(CnvUtfConverter::ConvertToUnicodeFromUtf7(generatedUnicode, generatedUtf7, state)==0);
+	test(state==CnvUtfConverter::KStateDefault);
+	test(generatedUnicode==originalUnicode);
+	test(CnvUtfConverter::ConvertFromUnicodeToUtf7(generatedUtf7, originalUnicode, EFalse)==0);
+	test(generatedUtf7==_L8("=-"));
+	test(CnvUtfConverter::ConvertToUnicodeFromUtf7(generatedUnicode, generatedUtf7, state)==0);
+	test(state==CnvUtfConverter::KStateDefault);
+	test(generatedUnicode==originalUnicode);
 	originalUnicode.Format(_L16("%c-"), 0x1e77);
-	TEST(CnvUtfConverter::ConvertFromUnicodeToUtf7(generatedUtf7, originalUnicode, ETrue)==0);
-	TEST(generatedUtf7==_L8("+Hnc--"));
-	TEST(CnvUtfConverter::ConvertToUnicodeFromUtf7(generatedUnicode, generatedUtf7, state)==0);
-	TEST(state==CnvUtfConverter::KStateDefault);
-	TEST(generatedUnicode==originalUnicode);
-	TEST(CnvUtfConverter::ConvertFromUnicodeToUtf7(generatedUtf7, originalUnicode, EFalse)==0);
-	TEST(generatedUtf7==_L8("+Hnc--"));
-	TEST(CnvUtfConverter::ConvertToUnicodeFromUtf7(generatedUnicode, generatedUtf7, state)==0);
-	TEST(state==CnvUtfConverter::KStateDefault);
-	TEST(generatedUnicode==originalUnicode);
-	TheTest.Next(_L("Interspersed \"+\" characters"));
+	test(CnvUtfConverter::ConvertFromUnicodeToUtf7(generatedUtf7, originalUnicode, ETrue)==0);
+	test(generatedUtf7==_L8("+Hnc--"));
+	test(CnvUtfConverter::ConvertToUnicodeFromUtf7(generatedUnicode, generatedUtf7, state)==0);
+	test(state==CnvUtfConverter::KStateDefault);
+	test(generatedUnicode==originalUnicode);
+	test(CnvUtfConverter::ConvertFromUnicodeToUtf7(generatedUtf7, originalUnicode, EFalse)==0);
+	test(generatedUtf7==_L8("+Hnc--"));
+	test(CnvUtfConverter::ConvertToUnicodeFromUtf7(generatedUnicode, generatedUtf7, state)==0);
+	test(state==CnvUtfConverter::KStateDefault);
+	test(generatedUnicode==originalUnicode);
+	INFO_PRINTF1(_L("Interspersed \"+\" characters"));
 	originalUnicode.Format(_L16("+%c+&+a+"), 0x52ff);
-	TEST(CnvUtfConverter::ConvertFromUnicodeToUtf7(generatedUtf7, originalUnicode, ETrue)==0);
-	TEST(generatedUtf7==_L8("+-+Uv8-+-+ACY-+-a+-"));
-	TEST(CnvUtfConverter::ConvertToUnicodeFromUtf7(generatedUnicode, generatedUtf7, state)==0);
-	TEST(state==CnvUtfConverter::KStateDefault);
-	TEST(generatedUnicode==originalUnicode);
-	TEST(CnvUtfConverter::ConvertFromUnicodeToUtf7(generatedUtf7, originalUnicode, EFalse)==0);
-	TEST(generatedUtf7==_L8("+-+Uv8-+-&+-a+-"));
-	TEST(CnvUtfConverter::ConvertToUnicodeFromUtf7(generatedUnicode, generatedUtf7, state)==0);
-	TEST(state==CnvUtfConverter::KStateDefault);
-	TEST(generatedUnicode==originalUnicode);
+	test(CnvUtfConverter::ConvertFromUnicodeToUtf7(generatedUtf7, originalUnicode, ETrue)==0);
+	test(generatedUtf7==_L8("+-+Uv8-+-+ACY-+-a+-"));
+	test(CnvUtfConverter::ConvertToUnicodeFromUtf7(generatedUnicode, generatedUtf7, state)==0);
+	test(state==CnvUtfConverter::KStateDefault);
+	test(generatedUnicode==originalUnicode);
+	test(CnvUtfConverter::ConvertFromUnicodeToUtf7(generatedUtf7, originalUnicode, EFalse)==0);
+	test(generatedUtf7==_L8("+-+Uv8-+-&+-a+-"));
+	test(CnvUtfConverter::ConvertToUnicodeFromUtf7(generatedUnicode, generatedUtf7, state)==0);
+	test(state==CnvUtfConverter::KStateDefault);
+	test(generatedUnicode==originalUnicode);
 
-	TheTest.End();
-	TheTest.Close();
-	return KErrNone;
 	}
 
+CT_SIMPLE7::CT_SIMPLE7()
+    {
+    SetTestStepName(KTestStep_T_SIMPLE7);
+    }
+
+TVerdict CT_SIMPLE7::doTestStepL()
+    {
+    SetTestStepResult(EFail);
+
+    __UHEAP_MARK;
+
+    TRAPD(error1, TestSIMPLE7());
+
+
+    __UHEAP_MARKEND;
+
+    if(error1 == KErrNone)
+        {
+        SetTestStepResult(EPass);
+        }
+
+    return TestStepResult();
+    }

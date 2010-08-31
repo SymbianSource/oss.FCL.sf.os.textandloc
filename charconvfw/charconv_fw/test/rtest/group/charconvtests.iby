@@ -20,28 +20,16 @@
 #define __CHARCONVTESTS_IBY__
 
 // Batch file that runs all automatic charconv tests.
-data=ZSYSTEM\test\charconvtests.bat						test\charconvtests.bat
 
 #include <charconv.iby>
 
 data=EPOCROOT##epoc32\wins\c\system\data\ethiopic.ut8	system\data\ethiopic.ut8
 data=EPOCROOT##epoc32\wins\c\system\data\daxue.uni		system\data\daxue.uni
 
+
+file=ABI_DIR\BUILD_DIR\t_charconvfwserver.exe			sys\bin\t_charconvfwserver.exe
 file=ABI_DIR\BUILD_DIR\utf7.dll				system\libs\utf7.dll
 file=ABI_DIR\BUILD_DIR\utf8.dll				system\libs\utf8.dll
 
-file=ABI_DIR\BUILD_DIR\t_memory.exe			test\t_memory.exe
-file=ABI_DIR\BUILD_DIR\tsimple7.exe			test\tsimple7.exe
-file=ABI_DIR\BUILD_DIR\tsimple8.exe			test\tsimple8.exe
-file=ABI_DIR\BUILD_DIR\trfc1642.exe			test\trfc1642.exe
-file=ABI_DIR\BUILD_DIR\tcomp7.exe			test\tcomp7.exe
-file=ABI_DIR\BUILD_DIR\tcomp8.exe			test\tcomp8.exe
-file=ABI_DIR\BUILD_DIR\trealut8.exe			test\trealut8.exe
-file=ABI_DIR\BUILD_DIR\trealuni.exe			test\trealuni.exe
-file=ABI_DIR\BUILD_DIR\terror.exe			test\terror.exe
-file=ABI_DIR\BUILD_DIR\tnewlin7.exe			test\tnewlin7.exe
-file=ABI_DIR\BUILD_DIR\tjava.exe			test\tjava.exe
-file=ABI_DIR\BUILD_DIR\tpartial.exe			test\tpartial.exe
-file=ABI_DIR\BUILD_DIR\timap.exe			test\timap.exe
 
 #endif

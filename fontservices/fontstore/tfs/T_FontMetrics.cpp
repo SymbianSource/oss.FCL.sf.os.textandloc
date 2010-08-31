@@ -300,26 +300,33 @@ void CTFontMetrics::TLanguage2GlyphSample()
 */
 void CTFontMetrics::GetNearestFontToDesignHeightInPixels()
 	{
+    INFO_PRINTF3(_L("iKPixelWidthInTwips = %d; iKPixelHeightInTwips = %d"), 
+                iFontStore->iKPixelWidthInTwips, iFontStore->iKPixelHeightInTwips);
+    
 	TOpenFontSpec openFontSpec = GetTOpenFontSpec();
 
+	INFO_PRINTF1(_L("GetNearestFontToDesignHeightInPixels().ELangNone"));
 	CFont* font = NULL;
 	openFontSpec.SetScriptTypeForMetrics(ELangNone);
 	iFontStore->GetNearestFontToDesignHeightInPixels(font, openFontSpec);
 	Verify_GetNearestFontToDesignHeightInPixels(*font, openFontSpec.ScriptTypeForMetrics());
 	iFontStore->ReleaseFont(font);
 
+	INFO_PRINTF1(_L("GetNearestFontToDesignHeightInPixels().ELangFinnish"));
 	font = NULL;
 	openFontSpec.SetScriptTypeForMetrics(ELangFinnish);
 	iFontStore->GetNearestFontToDesignHeightInPixels(font, openFontSpec);
 	Verify_GetNearestFontToDesignHeightInPixels(*font, openFontSpec.ScriptTypeForMetrics());
 	iFontStore->ReleaseFont(font);
 
+	INFO_PRINTF1(_L("GetNearestFontToDesignHeightInPixels().ELangGreek"));
 	font = NULL;
 	openFontSpec.SetScriptTypeForMetrics(ELangGreek);
 	iFontStore->GetNearestFontToDesignHeightInPixels(font, openFontSpec);
 	Verify_GetNearestFontToDesignHeightInPixels(*font, openFontSpec.ScriptTypeForMetrics());
 	iFontStore->ReleaseFont(font);
 
+	INFO_PRINTF1(_L("GetNearestFontToDesignHeightInPixels().ELangRussian"));
 	font = NULL;
 	openFontSpec.SetScriptTypeForMetrics(ELangRussian);
 	iFontStore->GetNearestFontToDesignHeightInPixels(font, openFontSpec);
@@ -330,6 +337,12 @@ void CTFontMetrics::GetNearestFontToDesignHeightInPixels()
 void CTFontMetrics::Verify_GetNearestFontToDesignHeightInPixels(const CFont& aFont, TInt aScript)
 	{
 	VerifyTypefaceNameAndID(aFont);
+    INFO_PRINTF4(_L("HeightInPixels() = %d; AscentInPixels() = %d; DescentInPixels() = %d"), 
+            aFont.HeightInPixels(), aFont.AscentInPixels(), aFont.DescentInPixels());
+    INFO_PRINTF4(_L("FontCapitalAscent() = %d; FontStandardDescent() = %d; FontMaxAscent() = %d"), 
+            aFont.FontCapitalAscent(), aFont.FontStandardDescent(), aFont.FontMaxAscent());
+    INFO_PRINTF4(_L("FontMaxDescent() = %d; FontMaxHeight() = %d; FontLineGap() = %d"), 
+            aFont.FontMaxDescent(), aFont.FontMaxHeight(), aFont.FontLineGap());
 	// Old metrics
 	TEST(KRequiredHeight == aFont.HeightInPixels());
 	TEST(19 == aFont.AscentInPixels());
@@ -337,29 +350,14 @@ void CTFontMetrics::Verify_GetNearestFontToDesignHeightInPixels(const CFont& aFo
 	// New metrics
 	TEST(18 == aFont.FontCapitalAscent());
 	TEST(5  == aFont.FontStandardDescent());
-	if (GlyphSample::EScriptNone == aScript)
+	if (GlyphSample::EScriptNone == aScript ||
+	        GlyphSample::EScriptLatin == aScript ||
+	        GlyphSample::EScriptGreek == aScript ||
+	        GlyphSample::EScriptCyrillic == aScript)	
 		{
 		TEST(28 == aFont.FontMaxAscent());
 		TEST(8 	== aFont.FontMaxDescent());
 		TEST(42 == aFont.FontLineGap());
-		}
-	else if (GlyphSample::EScriptLatin == aScript)
-		{
-		TEST(24 == aFont.FontMaxAscent());
-		TEST(5 	== aFont.FontMaxDescent());
-		TEST(35 == aFont.FontLineGap());
-		}
-	else if (GlyphSample::EScriptGreek == aScript)
-		{
-		TEST(22 == aFont.FontMaxAscent());
-		TEST(5 	== aFont.FontMaxDescent());
-		TEST(33 == aFont.FontLineGap());
-		}
-	else if (GlyphSample::EScriptCyrillic == aScript)
-		{
-		TEST(23 == aFont.FontMaxAscent());
-		TEST(5 	== aFont.FontMaxDescent());
-		TEST(34 == aFont.FontLineGap());
 		}
 	else TEST(1 == 0);
 	TEST(aFont.FontMaxAscent() + aFont.FontMaxDescent() == aFont.FontMaxHeight());
@@ -393,24 +391,28 @@ void CTFontMetrics::GetNearestFontToMaxHeightInPixels()
 	{
 	TOpenFontSpec openFontSpec = GetTOpenFontSpec();
 
+	INFO_PRINTF1(_L("GetNearestFontToMaxHeightInPixels().ELangNone"));
 	CFont* font = NULL;
 	openFontSpec.SetScriptTypeForMetrics(ELangNone);
 	iFontStore->GetNearestFontToMaxHeightInPixels(font, openFontSpec, KRequiredHeight);
 	Verify_GetNearestFontToMaxHeightInPixels(*font, openFontSpec.ScriptTypeForMetrics());
 	iFontStore->ReleaseFont(font);
 
+	INFO_PRINTF1(_L("GetNearestFontToMaxHeightInPixels().ELangFinnish"));
 	font = NULL;
 	openFontSpec.SetScriptTypeForMetrics(ELangFinnish);
 	iFontStore->GetNearestFontToMaxHeightInPixels(font, openFontSpec, KRequiredHeight);
 	Verify_GetNearestFontToMaxHeightInPixels(*font, openFontSpec.ScriptTypeForMetrics());
 	iFontStore->ReleaseFont(font);
 
+	INFO_PRINTF1(_L("GetNearestFontToMaxHeightInPixels().ELangGreek"));
 	font = NULL;
 	openFontSpec.SetScriptTypeForMetrics(ELangGreek);
 	iFontStore->GetNearestFontToMaxHeightInPixels(font, openFontSpec, KRequiredHeight);
 	Verify_GetNearestFontToMaxHeightInPixels(*font, openFontSpec.ScriptTypeForMetrics());
 	iFontStore->ReleaseFont(font);
 
+	INFO_PRINTF1(_L("GetNearestFontToMaxHeightInPixels().ELangRussian"));
 	font = NULL;
 	openFontSpec.SetScriptTypeForMetrics(ELangRussian);
 	iFontStore->GetNearestFontToMaxHeightInPixels(font, openFontSpec, KRequiredHeight);
@@ -421,62 +423,42 @@ void CTFontMetrics::GetNearestFontToMaxHeightInPixels()
 void CTFontMetrics::Verify_GetNearestFontToMaxHeightInPixels(const CFont& aFont, TInt aScript)
 	{
 	VerifyTypefaceNameAndID(aFont);
+    INFO_PRINTF4(_L("HeightInPixels() = %d; AscentInPixels() = %d; DescentInPixels() = %d"), 
+            aFont.HeightInPixels(), aFont.AscentInPixels(), aFont.DescentInPixels());
+    INFO_PRINTF4(_L("FontCapitalAscent() = %d; FontStandardDescent() = %d; FontMaxAscent() = %d"), 
+            aFont.FontCapitalAscent(), aFont.FontStandardDescent(), aFont.FontMaxAscent());
+    INFO_PRINTF4(_L("FontMaxDescent() = %d; FontMaxHeight() = %d; FontLineGap() = %d"), 
+            aFont.FontMaxDescent(), aFont.FontMaxHeight(), aFont.FontLineGap());
 	if (GlyphSample::EScriptNone == aScript)
 		{
 		// Old metrics
-		TEST(15 == aFont.HeightInPixels());
-		TEST(12 == aFont.AscentInPixels());
-		TEST(15 - 12 == aFont.DescentInPixels());
-		// New metrics
-		TEST(11 == aFont.FontCapitalAscent());
-		TEST(3  == aFont.FontStandardDescent());
-		TEST(18 == aFont.FontMaxAscent());
-		TEST(5 	== aFont.FontMaxDescent());
-		TEST(KRequiredHeight - 1 == aFont.FontMaxHeight());
-		TEST(29 == aFont.FontLineGap());
+        TEST(16 == aFont.HeightInPixels());
+        TEST(13 == aFont.AscentInPixels());
+        TEST(16 - 13 == aFont.DescentInPixels());
+        // New metrics
+        TEST(12 == aFont.FontCapitalAscent());
+        TEST(3  == aFont.FontStandardDescent());
+        TEST(19 == aFont.FontMaxAscent());
+        TEST(6  == aFont.FontMaxDescent());
+        TEST(KRequiredHeight + 1 == aFont.FontMaxHeight());
+        TEST(31 == aFont.FontLineGap());
 		}
-	else if (GlyphSample::EScriptLatin == aScript)
-		{
-		// Old metrics
-		TEST(20 == aFont.HeightInPixels());
-		TEST(16 == aFont.AscentInPixels());
-		TEST(20 - 16 == aFont.DescentInPixels());
-		// New metrics
-		TEST(15 == aFont.FontCapitalAscent());
-		TEST(4  == aFont.FontStandardDescent());
-		TEST(20 == aFont.FontMaxAscent());
-		TEST(4 	== aFont.FontMaxDescent());
-		TEST(KRequiredHeight == aFont.FontMaxHeight());
-		TEST(30 == aFont.FontLineGap());
-		}
-	else if (GlyphSample::EScriptGreek == aScript)
-		{
-		// Old metrics
-		TEST(20 == aFont.HeightInPixels());
-		TEST(16 == aFont.AscentInPixels());
-		TEST(20 - 16 == aFont.DescentInPixels());
-		// New metrics
-		TEST(15 == aFont.FontCapitalAscent());
-		TEST(4  == aFont.FontStandardDescent());
-		TEST(18 == aFont.FontMaxAscent());
-		TEST(5 	== aFont.FontMaxDescent());
-		TEST(KRequiredHeight - 1 == aFont.FontMaxHeight());
-		TEST(29 == aFont.FontLineGap());
-		}
-	else if (GlyphSample::EScriptCyrillic == aScript)
-		{
-		// Old metrics
-		TEST(21 == aFont.HeightInPixels());
-		TEST(16 == aFont.AscentInPixels());
-		TEST(21 - 16 == aFont.DescentInPixels());
-		// New metrics
-		TEST(16 == aFont.FontCapitalAscent());
-		TEST(4  == aFont.FontStandardDescent());
-		TEST(20 == aFont.FontMaxAscent());
-		TEST(4 	== aFont.FontMaxDescent());
-		TEST(KRequiredHeight == aFont.FontMaxHeight());
-		TEST(30 == aFont.FontLineGap());
-		}
+	else if (GlyphSample::EScriptLatin == aScript ||
+	        GlyphSample::EScriptGreek == aScript ||
+	        GlyphSample::EScriptCyrillic == aScript)
+	    {
+        // Old metrics
+        TEST(24 == aFont.HeightInPixels());
+        TEST(19 == aFont.AscentInPixels());
+        TEST(24 - 19 == aFont.DescentInPixels());
+        // New metrics
+        TEST(18 == aFont.FontCapitalAscent());
+        TEST(5  == aFont.FontStandardDescent());
+        TEST(28 == aFont.FontMaxAscent());
+        TEST(8  == aFont.FontMaxDescent());
+        TEST(KRequiredHeight + 12 == aFont.FontMaxHeight());
+        TEST(42 == aFont.FontLineGap());
+	    }
 	else TEST(1 == 0);
 	INFO_PRINTF2(_L("MaxCharWidthInPixels() returns %d"), aFont.MaxCharWidthInPixels());
 	}

@@ -74,25 +74,28 @@ PRJ_TESTEXPORTS
 	../test/data/ethiopic.ut8					/epoc32/winscw/c/system/data/ethiopic.ut8
 	../test/data/daxue.uni						/epoc32/winscw/c/system/data/daxue.uni
 
-	../test/rtest/group/charconvtests.bat		/epoc32/data/z/system/test/charconvtests.bat
+	../test/T_All_charcovfw.bat				z:/test/T_All_charcovfw.bat
+	../test/T_All_charcovfw.script			z:/test/T_All_charcovfw.script
+	../test/T_MEMORY.script			     	z:/test/T_MEMORY.script
+	../test/T_SIMPLE7.script				z:/test/T_SIMPLE7.script
+	../test/T_SIMPLE8.script				z:/test/T_SIMPLE8.script
+	../test/T_RFC1642.script				z:/test/T_RFC1642.script	
+	../test/T_COMP7.script					z:/test/T_COMP7.script
+	../test/T_COMP8.script					z:/test/T_COMP8.script
+	../test/T_REALUT8.script				z:/test/T_REALUT8.script
+	../test/T_REALUNI.script				z:/test/T_REALUNI.script
+	../test/T_ERROR.script					z:/test/T_ERROR.script
+	../test/T_NEWLIN7.script				z:/test/T_NEWLIN7.script
+	../test/T_JAVA.script					z:/test/T_JAVA.script
+	../test/T_PARTIAL.script				z:/test/T_PARTIAL.script
+	../test/T_IMAP.script					z:/test/T_IMAP.script
+
 	../test/rtest/group/charconvtests.iby		/epoc32/rom/include/charconvtests.iby
 
 PRJ_TESTMMPFILES
 
 	../test/rtest/group/utf7.mmp				support			// used by tcomp7
 	../test/rtest/group/utf8.mmp				support			// used by tcomp8
-	../test/rtest/group/t_memory.mmp
-	../test/rtest/group/tsimple7.mmp
-	../test/rtest/group/tsimple8.mmp
-	../test/rtest/group/trfc1642.mmp
-	../test/rtest/group/tcomp7.mmp
-	../test/rtest/group/tcomp8.mmp
-	../test/rtest/group/trealut8.mmp
-	../test/rtest/group/trealuni.mmp
-	../test/rtest/group/terror.mmp
-	../test/rtest/group/tnewlin7.mmp
-	../test/rtest/group/tjava.mmp
-	../test/rtest/group/tpartial.mmp
-	../test/rtest/group/timap.mmp
+	../group/T_CharConvFWServer.mmp
 
 #endif

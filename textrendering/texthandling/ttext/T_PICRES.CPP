@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 1997-2009 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 1997-2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -22,13 +22,31 @@
 #include <gdi.h>
 #include <conpics.h>
 #include <s32file.h>
-#include <e32test.h>
 
 #include <txtrich.h>
 #include <txtfmlyr.h>
 #include "TXTMRTSR.H"
 
 #include "../incp/T_PMLPAR.H"
+#include "T_PICRES.h"
+
+LOCAL_D CTestStep *pTestStep = NULL;
+#define test(cond)											\
+	{														\
+	TBool __bb = (cond);									\
+	pTestStep->TEST(__bb);									\
+	if (!__bb)												\
+		{													\
+		pTestStep->ERR_PRINTF1(_L("ERROR: Test Failed"));	\
+		User::Leave(1);										\
+		}													\
+	}
+#undef INFO_PRINTF1
+#undef INFO_PRINTF2
+// copy from tefexportconst.h
+#define INFO_PRINTF1(p1)        pTestStep->Logger().LogExtra(((TText8*)__FILE__), __LINE__, ESevrInfo, (p1))
+#define INFO_PRINTF2(p1, p2)    pTestStep->Logger().LogExtra(((TText8*)__FILE__), __LINE__, ESevrInfo, (p1), (p2))
+
 
 #define UNUSED_VAR(a) a = a
 
@@ -55,8 +73,6 @@ public:
 	const CCharFormatLayer* iGlobalCharFormatLayer;
 	};
 
-
-LOCAL_D RTest test(_L("Testing Picture Restorer mechanism"));
 LOCAL_D CTrapCleanup* TheTrapCleanup;
 LOCAL_D RFs TheFs;  // the file server
 LOCAL_D RFile TheFile;  // the data file
@@ -362,7 +378,7 @@ LOCAL_C void testPictureRestorer2(TBool aAlwaysFailToLoad=EFalse)
 	TRAPD(ret,
 	TheContainer->iText->DetachFromStoreL(CPicture::EDetachFull));
 	if (ret==KErrNotSupported)
-		test.Printf(_L("   SIMULATION: Some picture data is not supported by the current factory."));
+	    INFO_PRINTF1(_L("   SIMULATION: Some picture data is not supported by the current factory."));
 //	if (aAlwaysFailToLoad)
 //		test(error==KErrNotFound);
 //	else
@@ -379,9 +395,13 @@ LOCAL_C void testPictureRestorer2(TBool aAlwaysFailToLoad=EFalse)
     TheContainer->RestoreL(*TheStore,id,factory);
 	TInt pictureCount=TheContainer->iText->PictureCount();
 	if (aAlwaysFailToLoad)
+	    {
 		test(pictureCount==1);
+	    }
 	else
+	    {
 		test(pictureCount==3);
+	    }
 //
 	delete factory;
 	CleanupStack::PopAndDestroy();  // TheStore
@@ -393,7 +413,7 @@ LOCAL_C  void GoL()
 // Run the tests
 //
 	{
-	test.Start(_L(" @SYMTestCaseID:SYSLIB-TTEXT-LEGACY-T_PICRES-0001 RichText Storing - with pictures deferred loading "));
+	INFO_PRINTF1(_L(" @SYMTestCaseID:SYSLIB-TTEXT-LEGACY-T_PICRES-0001 RichText Storing - with pictures deferred loading "));
 	TheContainer=CContainer::NewL();
 	TRAPD(r,
 	testPictureRestorer());
@@ -401,7 +421,7 @@ LOCAL_C  void GoL()
 	delete TheContainer;  // deletes the rich text, which deletes the contained pictures.
 	//
 	//
-	test.Next(_L("RichText Storing - with pictures auto loading"));
+	INFO_PRINTF1(_L("RichText Storing - with pictures auto loading"));
 	TheContainer=CContainer::NewL();
 	TRAP(r,
 	testPictureRestorer(EFalse));  // DO NOT DEFER PICTURE LOADING
@@ -410,7 +430,7 @@ LOCAL_C  void GoL()
 //
 //
 //
-	test.Next(_L("Testing no missing picture app's"));
+	INFO_PRINTF1(_L("Testing no missing picture app's"));
 	TheContainer=CContainer::NewL();
 	TRAP(r,
 	testPictureRestorer2());
@@ -421,7 +441,7 @@ LOCAL_C  void GoL()
 /*
 	TEST NOW REDUNDANT AS OF NEW PICTURE CONTAINMENT MECHANISM AS AT RELEASE 073
 
-	test.Next(_L("Testing missing picture app's"));
+	INFO_PRINTF1(_L("Testing missing picture app's"));
 	TheContainer=CContainer::NewL();
 	TRAP(r,
 	testPictureRestorer2(ETrue));  // ALWAYS FAIL TO DETACH FROM STORE
@@ -477,27 +497,32 @@ LOCAL_C void DeleteDataFile(const TDesC& aFullName)
 		}
 	}
 
-GLDEF_C TInt E32Main()
-//
-// Test the streaming framework.
-//
+CT_PICRES::CT_PICRES()
     {
+    SetTestStepName(KTestStep_T_PICRES);
+    pTestStep = this;
+    }
 
-	test.Title();
+TVerdict CT_PICRES::doTestStepL()
+    {
+    SetTestStepResult(EFail);
+
+    INFO_PRINTF1(_L("Testing Picture Restorer mechanism"));
     __UHEAP_MARK;
-	setupCleanup();
-	TRAPD(r,GoL());
-    test(r == KErrNone);
+    setupCleanup();
+    TRAPD(r,GoL());
 
-	delete TheTrapCleanup;
-	
-	__UHEAP_MARKEND;
-	
-	::DeleteDataFile(KOutputFile);		//deletion of data files must be before call to End() - DEF047652
-	::DeleteDataFile(KOutputFile1);	
-	
-	test.End();
-	test.Close();
+    delete TheTrapCleanup;
+    
+    __UHEAP_MARKEND;
+    
+    ::DeleteDataFile(KOutputFile);      //deletion of data files must be before call to End() - DEF047652
+    ::DeleteDataFile(KOutputFile1); 
 
-	return 0;
+    if (r == KErrNone)
+        {
+        SetTestStepResult(EPass);
+        }
+
+    return TestStepResult();
     }

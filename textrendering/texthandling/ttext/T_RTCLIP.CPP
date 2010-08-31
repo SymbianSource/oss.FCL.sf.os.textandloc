@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 1997-2009 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 1997-2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -23,15 +23,31 @@
 #include <s32file.h>
 #include <gdi.h>
 #include <conpics.h>
-#include <e32test.h>
 #include "../incp/T_PMLPAR.H"
+#include "T_RTCLIP.h"
+
+LOCAL_D CTestStep *pTestStep = NULL;
+#define test(cond)											\
+	{														\
+	TBool __bb = (cond);									\
+	pTestStep->TEST(__bb);									\
+	if (!__bb)												\
+		{													\
+		pTestStep->ERR_PRINTF1(_L("ERROR: Test Failed"));	\
+		User::Leave(1);										\
+		}													\
+	}
+#undef INFO_PRINTF1
+#undef INFO_PRINTF2
+// copy from tefexportconst.h
+#define INFO_PRINTF1(p1)        pTestStep->Logger().LogExtra(((TText8*)__FILE__), __LINE__, ESevrInfo, (p1))
+#define INFO_PRINTF2(p1, p2)    pTestStep->Logger().LogExtra(((TText8*)__FILE__), __LINE__, ESevrInfo, (p1), (p2))
+
 
 #define UNUSED_VAR(a) a = a
 
 const TInt KTestCleanupStack=0x80;
 
-
-LOCAL_D RTest test(_L("Cut & Paste"));
 LOCAL_D CTrapCleanup* TheTrapCleanup=NULL;
 LOCAL_D CRichText* TheText=NULL;
 LOCAL_D CParaFormatLayer* TheGlobalParaLayer=NULL;
@@ -112,7 +128,7 @@ LOCAL_C void testRichTextCutPaste1a()
 //
 //
 	{
-	test.Next(_L("Cut & paste, preserving formatting into non-empty document"));
+	INFO_PRINTF1(_L("Cut & paste, preserving formatting into non-empty document"));
 	TheFileName=_L("z:\\test\\app-framework\\etext\\rtclipb2.pml");
 	ParseRichTextDocumentLC();
 	TheText->DeleteL(0,TheText->DocumentLength());
@@ -141,7 +157,7 @@ LOCAL_C void testRichTextCutPaste1b()
 	{
 	TheReadBoard=NULL;
 	TheWriteBoard=NULL;
-	test.Next(_L("Copy to Clipboard with pictures, with missing host applications."));
+	INFO_PRINTF1(_L("Copy to Clipboard with pictures, with missing host applications."));
 	TheFileName=_L("z:\\test\\app-framework\\etext\\rtclipb2.pml");  // dummy - just to get global layers
 	ParseRichTextDocumentLC();
 	TheText->Reset();
@@ -196,7 +212,7 @@ LOCAL_C void testRichTextCutPaste1b()
 	TRAP(r,
 	TheText->DetachFromStoreL(CPicture::EDetachFull,0,documentLength));
 	if (r==KErrNotSupported)
-		test.Printf(_L("    SIMULATION: Some picture data has been removed\n"));
+	    INFO_PRINTF1(_L("    SIMULATION: Some picture data has been removed\n"));
 	else if (r!=KErrNone)
 		User::Leave(r);
 	TheText->CopyToStoreL(TheWriteBoard->Store(),TheWriteBoard->StreamDictionary(),0,documentLength);
@@ -225,7 +241,7 @@ LOCAL_C void testRichTextCutPaste1b()
 //
 //
 	{
-	test.Next(_L("Cut&Paste - preserving formatting"));
+	INFO_PRINTF1(_L("Cut&Paste - preserving formatting"));
 	TheFileName=_L("z:\\test\\app-framework\\etext\\rtclipb2.pml");
 	ParseRichTextDocumentLC();
 	//
@@ -235,7 +251,7 @@ LOCAL_C void testRichTextCutPaste1b()
 	TheWriteBoard=NULL;
 	//
 	// Scenario 1
-	test.Start(_L("multiple partial phrases"));
+	INFO_PRINTF1(_L("multiple partial phrases"));
 	OpenWriteClipboardLC();
 	TheText->CopyToStoreL(TheWriteBoard->Store(),TheWriteBoard->StreamDictionary(),36,73);
 	OpenReadClipboardLC();
@@ -249,7 +265,7 @@ LOCAL_C void testRichTextCutPaste1b()
 	test(copiedText->ParagraphCount()==3);
 	//
 	// Scenario 2
-	test.Next(_L("multiple whole phrases"));
+	INFO_PRINTF1(_L("multiple whole phrases"));
 	OpenWriteClipboardLC();
 	TheText->CopyToStoreL(TheWriteBoard->Store(),TheWriteBoard->StreamDictionary(),51,60);
 	copiedText->Reset();
@@ -260,7 +276,7 @@ LOCAL_C void testRichTextCutPaste1b()
 	test(copiedText->ParagraphCount()==3);
 	//
 	// Scenario 3
-	test.Next(_L("single middle portion of a phrase"));
+	INFO_PRINTF1(_L("single middle portion of a phrase"));
 	OpenWriteClipboardLC();
 	TheText->CopyToStoreL(TheWriteBoard->Store(),TheWriteBoard->StreamDictionary(),53,2);
 	copiedText->Reset();
@@ -271,7 +287,7 @@ LOCAL_C void testRichTextCutPaste1b()
 	test(copiedText->ParagraphCount()==1);
 	//
 	// Scenario 4
-	test.Next(_L("multiple phrases, starting/ending on shared paragraphs"));
+	INFO_PRINTF1(_L("multiple phrases, starting/ending on shared paragraphs"));
 	OpenWriteClipboardLC();
 	TheText->CopyToStoreL(TheWriteBoard->Store(),TheWriteBoard->StreamDictionary(),0,140);
 	copiedText->Reset();
@@ -283,7 +299,7 @@ LOCAL_C void testRichTextCutPaste1b()
 
 	//
 	// Scenario 5
-	test.Next(_L("zero phrases"));
+	INFO_PRINTF1(_L("zero phrases"));
 	OpenWriteClipboardLC();
 	TheText->CopyToStoreL(TheWriteBoard->Store(),TheWriteBoard->StreamDictionary(),70,10);
 	copiedText->Reset();
@@ -299,7 +315,7 @@ LOCAL_C void testRichTextCutPaste1b()
 	delete copiedText;
 	delete TheGlobalParaLayer;
 	delete TheGlobalCharLayer;
-	test.End();
+	
 	}
 
 
@@ -317,7 +333,7 @@ LOCAL_C void testRichTextCutPaste1b()
 */
 LOCAL_C void testRichTextCutPaste2()
 	{
-	test.Next(_L(" @SYMTestCaseID:SYSLIB-ETEXT-CT-4001 Pasted final paragraph format should match copied final paragraph format "));	
+	INFO_PRINTF1(_L(" @SYMTestCaseID:SYSLIB-ETEXT-CT-4001 Pasted final paragraph format should match copied final paragraph format "));	
 	TheReadBoard=NULL;
 	TheWriteBoard=NULL;
 	TheFileName=_L("z:\\test\\app-framework\\etext\\rtclipb2.pml");  // dummy - just to get global layers
@@ -363,14 +379,14 @@ LOCAL_C void testRichTextCutPaste3()
 // 
 //
     {
-	test.Next(_L("Cutting paragraph of constant character formatting"));
+	INFO_PRINTF1(_L("Cutting paragraph of constant character formatting"));
 	TheFileName=_L("z:\\test\\app-framework\\etext\\rtclipb3.pml");
 	ParseRichTextDocumentLC();
 	//
 	TheReadBoard=NULL;
 	TheWriteBoard=NULL;
 	//
-	test.Start(_L("Copying to clipboard"));
+	INFO_PRINTF1(_L("Copying to clipboard"));
 	OpenWriteClipboardLC();
 	TheText->CopyToStoreL(TheWriteBoard->Store(),TheWriteBoard->StreamDictionary(),4,3);
 	//
@@ -378,7 +394,7 @@ LOCAL_C void testRichTextCutPaste3()
 	CleanupStack::PopAndDestroy();  // TheTextObject
 	delete TheGlobalParaLayer;
 	delete TheGlobalCharLayer;
-	test.End();
+	
 	}
 
 
@@ -387,24 +403,24 @@ LOCAL_C void testRichTextCutPaste()
 // 
 //
     {
-	test.Start(_L("Cut&Paste - with Rich Text"));
+	INFO_PRINTF1(_L("Cut&Paste - with Rich Text"));
 	ParseRichTextDocumentLC();
 	OpenWriteClipboardLC();
-	test.Next(_L("Copy zero-length text to the clipboard"));
+	INFO_PRINTF1(_L("Copy zero-length text to the clipboard"));
 	TheText->CopyToStoreL(TheWriteBoard->Store(),TheWriteBoard->StreamDictionary(),0,0);
 
 	OpenReadClipboardLC();
-	test.Next(_L("Paste from empty clipboard"));
+	INFO_PRINTF1(_L("Paste from empty clipboard"));
 	TInt err=0;
 	TRAPD(ret,
 	err=TheText->PasteFromStoreL(TheReadBoard->Store(),TheReadBoard->StreamDictionary(),TheText->DocumentLength()));
     UNUSED_VAR(ret);
 	if (err==KErrNotFound)
-		test.Printf(_L("        No recognised data to paste or clipboard empty\n\r"));
+	    INFO_PRINTF1(_L("        No recognised data to paste or clipboard empty\n\r"));
 	TInt fieldCount=TheText->FieldCount();
 	test(fieldCount==0);
 	////////////////////////////////////////////////////////////////////////////
-	test.Next(_L("Paste into empty RichText"));
+	INFO_PRINTF1(_L("Paste into empty RichText"));
 	TheText->Reset();
 	TheText->InsertL(TheText->DocumentLength(),_L("SomeData"));
 	OpenWriteClipboardLC();
@@ -418,13 +434,13 @@ LOCAL_C void testRichTextCutPaste()
 		fieldCount=TheText->FieldCount();
 		test(fieldCount==0);
 	/////////////////////////////////////////////////////////////////////////////
-	test.Next(_L("Pasting text only - no paragraph delimiter"));
+	INFO_PRINTF1(_L("Pasting text only - no paragraph delimiter"));
 	TheText->Reset();
 	TheText->InsertL(0,_L("the  end"));
 	TheText->PasteFromStoreL(TheReadBoard->Store(),TheReadBoard->StreamDictionary(),4);
 	test(TheText->DocumentLength()==16);
 	//////////////////////////////////////////////////////////////////////////
-	test.Next(_L("Paste @ start (pos=0)"));
+	INFO_PRINTF1(_L("Paste @ start (pos=0)"));
 	TheText->Reset();
 	TheText->InsertL(TheText->DocumentLength(),_L("SomeData"));
 	TheText->PasteFromStoreL(TheReadBoard->Store(),TheReadBoard->StreamDictionary(),0);
@@ -433,14 +449,14 @@ LOCAL_C void testRichTextCutPaste()
 		fieldCount=TheText->FieldCount();
 		test(fieldCount==0);
 	////////////////////////////////////////////////////////////////////////////
-	test.Next(_L("Paste @ end   (DocumentLength())"));
+	INFO_PRINTF1(_L("Paste @ end   (DocumentLength())"));
 	TheText->PasteFromStoreL(TheReadBoard->Store(),TheReadBoard->StreamDictionary(),TheText->DocumentLength());
 		test(TheText->DocumentLength()==_L("SomeDataSomeDataSomeData").Length());
 		test(TheText->ParagraphCount()==1);
 		fieldCount=TheText->FieldCount();
 		test(fieldCount==0);
 	////////////////////////////////////////////////////////////////////////////
-	test.Next(_L("Paste @ middle"));
+	INFO_PRINTF1(_L("Paste @ middle"));
 	TheText->PasteFromStoreL(TheReadBoard->Store(),TheReadBoard->StreamDictionary(),4);
 	fieldCount=TheText->FieldCount();
 		test(fieldCount==0);
@@ -452,7 +468,7 @@ LOCAL_C void testRichTextCutPaste()
 	/////////////////////////////////////////////////////////////////////////////
 
 	/////////////////////////////////////////////////////////////////////////////
-	test.Next(_L("Pasting rich text inbetween 2 pictures"));
+	INFO_PRINTF1(_L("Pasting rich text inbetween 2 pictures"));
 	TheText->Reset();
 	//
 	CXzePicture* pic1=CXzePicture::NewL('1');
@@ -479,7 +495,7 @@ LOCAL_C void testRichTextCutPaste()
 		test(TheText->DocumentLength()==4);
 		test(TheText->ParagraphCount()==1);
 	/////////////////////////////////////////////////////////////////////////////
-	test.Next(_L("Pasting rich text with para delimiters"));
+	INFO_PRINTF1(_L("Pasting rich text with para delimiters"));
 	TheText->InsertL(1,CEditableText::EParagraphDelimiter);
 	//
 	OpenWriteClipboardLC();
@@ -544,43 +560,38 @@ LOCAL_C void DeleteDataFile(const TDesC& aFullName)
 		}
 	}
 
-GLDEF_C TInt E32Main()
-//
-// Test the streaming framework.
-//
+CT_RTCLIP::CT_RTCLIP()
     {
+    SetTestStepName(KTestStep_T_RTCLIP);
+    pTestStep = this;
+    }
 
-	test.Title();
-	
-	__UHEAP_MARK;
-	setupCleanup();
+TVerdict CT_RTCLIP::doTestStepL()
+    {
+    SetTestStepResult(EFail);
 
-	TRAPD(r, testRichTextCutPaste());
-    test(r == KErrNone);
+    INFO_PRINTF1(_L("Cut & Paste"));
+    
+    __UHEAP_MARK;
+    setupCleanup();
 
-	TRAP(r, testRichTextCutPaste1());
-    test(r == KErrNone);
+    TRAPD(r1, testRichTextCutPaste());
+    TRAPD(r2, testRichTextCutPaste1());
+    TRAPD(r3, testRichTextCutPaste1a());
+    TRAPD(r4, testRichTextCutPaste1b());
+    TRAPD(r5, testRichTextCutPaste2());
+    TRAPD(r6, testRichTextCutPaste3());
 
-	TRAP(r, testRichTextCutPaste1a());
-    test(r == KErrNone);
+    delete TheTrapCleanup;
+    
+    __UHEAP_MARKEND;
+    
+    ::DeleteDataFile(KOutputFile);      //deletion of data files must be before call to End() - DEF047652
 
-	TRAP(r, testRichTextCutPaste1b());
-    test(r == KErrNone);
+    if (r1 == KErrNone && r2 == KErrNone && r3 == KErrNone && r4 == KErrNone && r5 == KErrNone && r6 == KErrNone)
+        {
+        SetTestStepResult(EPass);
+        }
 
-	TRAP(r, testRichTextCutPaste2());
-    test(r == KErrNone);
-
-	TRAP(r, testRichTextCutPaste3());
-    test(r == KErrNone);
-
-	delete TheTrapCleanup;
-	
-	__UHEAP_MARKEND;
-	
-	::DeleteDataFile(KOutputFile);		//deletion of data files must be before call to End() - DEF047652
-	
-	test.End();
-	test.Close();
-
-	return 0;
+    return TestStepResult();
     }

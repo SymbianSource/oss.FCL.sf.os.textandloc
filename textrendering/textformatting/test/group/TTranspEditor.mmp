@@ -25,6 +25,7 @@ CAPABILITY              None
 UID                     0x100039CE 0x13579ACE
 
 APP_LAYER_SYSTEMINCLUDE_SYMBIAN
+
 USERINCLUDE             ../../inc
 userinclude				../data
 

@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2006-2009 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 2006-2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -16,10 +16,20 @@
 */
 
 
-#include <e32test.h>
+#include "T_CP1258.h"
 #include <e32des8.h>
 
-LOCAL_D RTest test(_L("T_CP1258.exe"));
+#define test(cond)                                          \
+    {                                                       \
+    TBool __bb = (cond);                                    \
+    TEST(__bb);                                             \
+    if (!__bb)                                              \
+        {                                                   \
+        ERR_PRINTF1(_L("ERROR: Test Failed"));              \
+        User::Leave(1);                                     \
+        }                                                   \
+    }
+
 
 _LIT16(Uni_1, "\x006D\xAAAA\x00DC\x0111\x20AC\xFFFF\x0070");
 _LIT8(CP1258_1, "\x6D\x5F\xDC\xF0\x80\x5F\x70");
@@ -41,7 +51,7 @@ const TUid KPluginUid={0x10206A94};
 @SYMTestActions  	    Tests for conversions from/to Unicode, using a function pointer
 @SYMTestExpectedResults Test must not fail
 */
-void Test()
+void CT_CP1258::TestL()
 	{
 	RLibrary lib;
 
@@ -93,9 +103,9 @@ void Test()
 	lib.Close();
 	}
 
-void OOMTest()
+void CT_CP1258::OOMTestL()
 	{
-	test.Next(_L("OOM testing"));
+    INFO_PRINTF1(_L("OOM testing"));
 	TInt err, tryCount = 0;
 	do
 		{
@@ -108,7 +118,7 @@ void OOMTest()
 			// Setting Heap failure for OOM test
 		__UHEAP_SETFAIL(RHeap::EDeterministic, ++tryCount);
 
-		TRAP(err,Test());
+		TRAP(err,TestL());
 
 		__UHEAP_SETFAIL(RHeap::ENone, 0);
 
@@ -124,30 +134,31 @@ void OOMTest()
 		}while (err == KErrNoMemory);
 
 	test(err == KErrNone);
-	test.Printf(_L("- server succeeded at heap failure rate of %i\n"), tryCount);
+	INFO_PRINTF2(_L("- server succeeded at heap failure rate of %i\n"), tryCount);
 	}
 
 
-LOCAL_C void DoE32MainL()
-	{
-	Test();
-	OOMTest();
-	}
+CT_CP1258::CT_CP1258()
+    {
+    SetTestStepName(KTestStep_T_CP1258);
+    }
 
-GLDEF_C TInt E32Main()
-	{
-	__UHEAP_MARK;
 
-	test.Title();
-	test.Start(_L(" @SYMTestCaseID:SYSLIB-FATCHARSETCONV-CT-1781 CP1258 test... "));
+TVerdict CT_CP1258::doTestStepL()
+    {
+    SetTestStepResult(EFail);
 
-	CTrapCleanup* trapCleanup=CTrapCleanup::New();
-	TRAPD(error, DoE32MainL());
-	delete trapCleanup;
+    __UHEAP_MARK;
 
-	test.End();
-	test.Close();
+    TRAPD(error1, TestL());
+    TRAPD(error2, OOMTestL());
 
-	__UHEAP_MARKEND;
-	return error;
-	}
+    __UHEAP_MARKEND;
+
+    if(error1 == KErrNone && error2 == KErrNone)
+        {
+        SetTestStepResult(EPass);
+        }
+
+    return TestStepResult();
+    }

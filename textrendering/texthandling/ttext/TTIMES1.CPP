@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 1997-2009 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 1997-2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -16,7 +16,6 @@
 */
 
 
-#include <e32test.h>
 #include <e32svr.h>
 
 #include <s32mem.h>
@@ -25,11 +24,22 @@
 #include <txtglobl.h>
 
 #include "../incp/T_PMLPAR.H"
+#include "TTIMES1.h"
+
+#define test(cond)											\
+	{														\
+	TBool __bb = (cond);									\
+	TEST(__bb);												\
+	if (!__bb)												\
+		{													\
+		ERR_PRINTF1(_L("ERROR: Test Failed"));				\
+		User::Leave(1);										\
+		}													\
+	}
 
 #define UNUSED_VAR(a) a = a
 
 LOCAL_D CTrapCleanup* TheTrapCleanup;
-LOCAL_D RTest test(_L("CRichText Document"));
 LOCAL_D CParaFormatLayer* TheGlobalParaFormatLayer;
 LOCAL_D CCharFormatLayer* TheGlobalCharFormatLayer;
 LOCAL_D CParser* TheParser;
@@ -39,7 +49,7 @@ LOCAL_D const TInt KCreateRichTextCount=1000;
 
 LOCAL_D CRichText* TheText[KCreateRichTextCount];
 
-LOCAL_C void GenerateGlobalLayersL()
+void CT_TTIMES1::GenerateGlobalLayersL()
 // Provides the base layers for globl text and below
 //
 	{
@@ -51,7 +61,7 @@ LOCAL_C void GenerateGlobalLayersL()
 	}
 
 
-LOCAL_C void KillGlobalLayers()
+void CT_TTIMES1::KillGlobalLayers()
 // Destroy the base layers for global text and below
 //
 	{
@@ -61,7 +71,7 @@ LOCAL_C void KillGlobalLayers()
 	TheGlobalCharFormatLayer=NULL;
 	}
 
-LOCAL_C void KillText()
+void CT_TTIMES1::KillText()
 	{
 	for (TInt ii=0; ii<KCreateRichTextCount;ii++)
 		{
@@ -76,7 +86,7 @@ struct TNow : public TTime
 	TNow() { HomeTime(); }
 	};
 
-LOCAL_C void CreationTestsL()
+void CT_TTIMES1::CreationTestsL()
 //
 	{
 	GenerateGlobalLayersL();
@@ -94,7 +104,7 @@ LOCAL_C void CreationTestsL()
 	// Display the metric
 	TBuf<60> context;
 	context.Format(_L("        Create rich text %d times: %d\n"),KCreateRichTextCount,finish.MicroSecondsFrom(start).Int64());
-	test.Printf(context);
+	INFO_PRINTF1(context);
 	//
 	// Tidy up
 	KillText();
@@ -102,7 +112,7 @@ LOCAL_C void CreationTestsL()
 	}
 
 
-LOCAL_C CRichText* LoadIntoTextL(TFileName& aFileName)
+CRichText* CT_TTIMES1::LoadIntoTextL(TFileName& aFileName)
 //
 	{
 	TRAPD(ret,
@@ -118,7 +128,7 @@ LOCAL_C CRichText* LoadIntoTextL(TFileName& aFileName)
 	}
 
 
-LOCAL_C void GetAppendTestTimeL(const CRichText* aSource,TInt aTestLoopCount)
+void CT_TTIMES1::GetAppendTestTimeL(const CRichText* aSource,TInt aTestLoopCount)
 	{
 	CRichText* target=CRichText::NewL(TheGlobalParaFormatLayer,TheGlobalCharFormatLayer);
 	test(target->DocumentLength()==0);
@@ -138,12 +148,12 @@ LOCAL_C void GetAppendTestTimeL(const CRichText* aSource,TInt aTestLoopCount)
 	test(ii==aTestLoopCount);
 	TBuf<60> context;
 	context.Format(_L("        Append %d rich text's: %d\n"),aTestLoopCount,finish.MicroSecondsFrom(start).Int64());
-	test.Printf(context);
+	INFO_PRINTF1(context);
 	delete target;
 	}
 
 
-LOCAL_C void GetBenchmarkAppendTestTimeL(const CRichText* aSource,TInt aTestLoopCount)
+void CT_TTIMES1::GetBenchmarkAppendTestTimeL(const CRichText* aSource,TInt aTestLoopCount)
 	{
 	CRichText** target=new CRichText*[aTestLoopCount];
 	CBufStore** store=new CBufStore*[aTestLoopCount];	
@@ -175,11 +185,11 @@ LOCAL_C void GetBenchmarkAppendTestTimeL(const CRichText* aSource,TInt aTestLoop
 	test(ii==aTestLoopCount);
 	TBuf<70> context2;
 	context2.Format(_L("        Benchmark              : %d\n"),finish.MicroSecondsFrom(start).Int64());
-	test.Printf(context2);
+	INFO_PRINTF1(context2);
 	}
 
 
-LOCAL_C void AppendTest1L()
+void CT_TTIMES1::AppendTest1L()
 //
 	{
 	TInt testLoopCount=900;
@@ -196,7 +206,7 @@ LOCAL_C void AppendTest1L()
 	}
 
 
-LOCAL_C void AppendTest2L()
+void CT_TTIMES1::AppendTest2L()
 //
 	{
 	KillGlobalLayers();  // they are replaced by the ones read in from the PML file.
@@ -214,38 +224,37 @@ LOCAL_C void AppendTest2L()
 	}
 
 
-LOCAL_C void AppendTestsL()
+void CT_TTIMES1::AppendTestsL()
 //
 	{
 	GenerateGlobalLayersL();
 	//
-	test.Start(_L("Plain Text Component Only"));
+	INFO_PRINTF1(_L("Plain Text Component Only"));
 	TRAPD(ret,
 	AppendTest1L());
 	test(ret==KErrNone);
 	//
-	test.Next(_L("Plain Text with limited Markup - no pictures"));
+	INFO_PRINTF1(_L("Plain Text with limited Markup - no pictures"));
 	TRAP(ret,
 	AppendTest2L());
 	test(ret==KErrNone);
 	//
 	KillGlobalLayers();
-	test.End();
 	}
 	
 	
-LOCAL_C void DoTestsL()
+void CT_TTIMES1::DoTestsL()
 //
 	{
-	test.Start(_L(" @SYMTestCaseID:SYSLIB-TTEXT-LEGACY-T_TTIMES1-0001 Creation Tests "));
+	INFO_PRINTF1(_L(" @SYMTestCaseID:SYSLIB-TTEXT-LEGACY-T_TTIMES1-0001 Creation Tests "));
 	CreationTestsL();
-	test.Next(_L("Appending Tests"));
+	INFO_PRINTF1(_L("Appending Tests"));
 	AppendTestsL();
 	//
 	}
 
 
-LOCAL_C void setupCleanup()
+void CT_TTIMES1::setupCleanup()
 //
 // Initialise the cleanup stack.
 //
@@ -261,23 +270,30 @@ LOCAL_C void setupCleanup()
 		});
 	}
 
-
-
-GLDEF_C TInt E32Main()
-//
-// Test the Document Model Services.
-//
+CT_TTIMES1::CT_TTIMES1()
     {
-	setupCleanup();
-	test.Title();	
-	__UHEAP_MARK;
-	
-	TRAPD(ret,DoTestsL());
-    test(ret == KErrNone);
-	
-	test.End();
-	test.Close();
-	__UHEAP_MARKEND;
-	delete TheTrapCleanup;
-	return(0);
+    SetTestStepName(KTestStep_T_TTIMES1);
+    }
+
+TVerdict CT_TTIMES1::doTestStepL()
+    {
+    SetTestStepResult(EFail);
+
+    __UHEAP_MARK;
+
+    setupCleanup();
+    
+    INFO_PRINTF1(_L("CRichText Document"));
+    TRAPD(error1, DoTestsL());
+
+    delete TheTrapCleanup;
+
+    __UHEAP_MARKEND;
+
+    if(error1 == KErrNone)
+        {
+        SetTestStepResult(EPass);
+        }
+
+    return TestStepResult();
     }

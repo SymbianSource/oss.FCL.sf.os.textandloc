@@ -20,7 +20,7 @@ NAME TFRM
 
 CHARACTER_SET UTF8
 
-#include <techview/eikon.rh>
+#include <eikon.rh>
 #include <eikcore.rsg>
 #include <appinfo.rh>
 

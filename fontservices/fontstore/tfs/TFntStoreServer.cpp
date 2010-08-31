@@ -43,6 +43,7 @@
 #include "t_linkedfontscomparison.h"
 #include "t_linkedfontscapability.h"
 #include "T_LinkedFontUpdateTests.h"
+#include "T_CACHE.H" 
 #include "T_FontSessionCache.h"
 
 CTFntStoreServer* CTFntStoreServer::NewL()
@@ -201,6 +202,10 @@ CTestStep* CTFntStoreServer::CreateTestStep(const TDesC& aStepName)
     else if (aStepName == KTLinkedFontsUpdateStage2Step)
         {
         return new CTLinkedFontsUpdateStage2Step();
+        }
+    else if (aStepName == KTCacheStep)
+        {
+        return new CTCacheStep();
         }
     else if (aStepName == KTFontSessionCacheStep)
         {

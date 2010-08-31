@@ -24,7 +24,7 @@
 #include <coecntrl.h>
 #include <coeccntx.h>
 #include <coemain.h>
-#include <techview/eikon.hrh>
+#include <eikon.hrh>
 #include <eikappui.h>
 #include <eikapp.h>
 #include <eikdoc.h>

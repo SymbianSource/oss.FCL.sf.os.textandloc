@@ -25,6 +25,11 @@
 #include "TXTINDEX.H"
 #include "ParseLst.h"
 
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "TXTRTFLDTraces.h"
+#endif
+
 #ifdef SYMBIAN_ENABLE_SPLIT_HEADERS
 #include "TXTETEXT_INTERNAL.H"
 #endif 
@@ -47,6 +52,10 @@ at which the field was inserted
 position, or a panic occurs. */
 	{
 	__TEST_INVARIANT;
+	if (aPos < 0 || aPos > DocumentLength())
+	    {
+	    OstTrace0( TRACE_DUMP, CRICHTEXT_UPDATEFIELDL, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos >= 0 && aPos <= DocumentLength(), Panic(ECharPosBeyondDocument));
 
  	TFindFieldInfo fieldInfo;

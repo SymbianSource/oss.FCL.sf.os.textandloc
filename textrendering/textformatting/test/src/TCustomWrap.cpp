@@ -22,13 +22,13 @@
 #include <coeccntx.h>
 #include <coemain.h>
 #include <e32keys.h>
-#include <techview/eikon.hrh>
+#include <eikon.hrh>
 #include <eikappui.h>
 #include <eikapp.h>
 #include <eikdoc.h>
 #include <eikenv.h>
-#include <techview/eikrted.h>
-#include <techview/eikedwin.h>
+#include <eikrted.h>
+#include <eikedwin.h>
 #include <eikdef.h>
 #include <eikstart.h>
 #include <txtrich.h>
@@ -116,7 +116,7 @@ void CCustomWrapAppControl::CreateEdwinL()
 	const TSize screenSize(iCoeEnv->ScreenDevice()->SizeInPixels());
 	// Rich text editor.
 	iEdwin=new(ELeave) CEikRichTextEditor;
-	STATIC_CAST(CEikRichTextEditor*,iEdwin)->ConstructL(this,0,0,EEikEdwinCustomWrap);
+	STATIC_CAST(CEikRichTextEditor*,iEdwin)->ConstructL(this,0,0,0);
 	//STATIC_CAST(CEikRichTextEditor*,iEdwin)->ConstructL(this,0,0,EEikEdwinInclusiveSizeFixed);
 	iEdwin->SetObserver(this);
 	iEdwin->CreateScrollBarFrameL();

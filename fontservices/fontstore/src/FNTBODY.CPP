@@ -21,6 +21,12 @@
 #include "FNTBODY.H"
 #include <graphics/openfontconstants.h>
 
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "FNTBODYTraces.h"
+#endif
+
+
 CFontStoreFile::CFontStoreFile()
  :	iCollectionUid(KNullUid),
 	iUsageCount(1),
@@ -272,7 +278,11 @@ void TCharacterMetricsTable::Delete()
 
 const TBitmapFontCharacterMetrics* TCharacterMetricsTable::Metric(TInt aIndex) const
 	{
-	__ASSERT_DEBUG((aIndex >= 0) && (aIndex <= iNumberOfMetrics), Panic(EFntMetricsIndexOutOfBounds));
+	if ((aIndex < 0) || (aIndex > iNumberOfMetrics))
+	    {
+	    OstTraceExt2( TRACE_FATAL, TCHARACTERMETRICSTABLE_METRIC, "TCharacterMetricsTable::Metric, aIndex=%d, iNumberOfMetrics=%d, Panic(EFntMetricsIndexOutOfBounds)", aIndex, iNumberOfMetrics);
+	    __ASSERT_DEBUG(0, Panic(EFntMetricsIndexOutOfBounds));
+	    }
     // Sometimes the start ptr is to a metrics heap item and sometimes it points into a ROM file
     if (iMetricsOnHeap)
         {

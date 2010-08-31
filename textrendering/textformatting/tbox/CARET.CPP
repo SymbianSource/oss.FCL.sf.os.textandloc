@@ -20,6 +20,11 @@
 #include "FRMLAYDT.H"
 #include "FRMCONST.H"
 
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "CARETTraces.h"
+#endif
+
 #ifdef SYMBIAN_ENABLE_SPLIT_HEADERS
 #include "FRMCONST_INTERNAL.H"
 #include "FRMCONST_PARTNER.H"
@@ -37,6 +42,11 @@ TInt TCursorPosition::ViewTopOfLineL(const TTmDocPos& aDocPos,TInt& aYPos)
 
 void TCursorPosition::CheckSelection(TBool aSelect)
 	{
+	if (IsSelection() && iDocPos.iPos == iAnchor)
+	    {
+	    OstTrace0( TRACE_DUMP, TCURSORPOSITION_CHECKSELECTION, "EFSelectedRangeZeroLen" );
+	    }
+	    
 	__ASSERT_DEBUG(!IsSelection() || iDocPos.iPos != iAnchor,FormPanic(EFSelectedRangeZeroLen));
 	CheckNullSelection();
 	TUint drawSelectionFlags = 0;
@@ -107,6 +117,10 @@ TInt TCursorPosition::SetSelectionL(const TCursorSelection& aSelection)
 	TInt extraScroll;
 	TBool cursorVisible = EFalse;
 
+	if (aSelection.iCursorPos<0 || aSelection.iCursorPos>iLayout->DocumentLength())
+	    {
+	    OstTrace0( TRACE_DUMP, TCURSORPOSITION_SETSELECTIONL, "EFInvalidDocPos" );
+	    }
 	__ASSERT_DEBUG(aSelection.iCursorPos>=0 && aSelection.iCursorPos<=iLayout->DocumentLength()
 																		,FormPanic(EFInvalidDocPos));
 	iLayout->PosRangeInBand(firstVisChar);
@@ -287,6 +301,10 @@ TInt TCursorPosition::SetXyPosL(TBool aDragSelectOn,TPoint aPos,TBool aAllowPict
 	CheckSelection(aDragSelectOn);
 	DoSetXyPos(aPos);
 	TRAPD(ret,pixels=CheckCursorOnScreenL(aPos.iY));
+	if (ret)
+	    {
+	    OstTrace0( TRACE_FATAL, TCURSORPOSITION_SETXYPOSL, "EFShouldNotLeave" );
+	    }
 	__ASSERT_ALWAYS(!ret,FormPanic(EFShouldNotLeave));
 	UpdateLatentX(aPos.iX);
 	UpdateLatentY(aPos.iY);
@@ -548,6 +566,10 @@ course, be different to the local direction of the text.
 TBool TCursorPosition::LeftRightL(TTmPosInfo2& aPos, TTmLineInfo& aLine, TMovementType& aMove)
 	{
 	TTmPosInfo2 posInfo;
+	if (!(aMove == EFLeft || aMove == EFRight))
+	    {
+	    OstTrace0( TRACE_DUMP, TCURSORPOSITION_LEFTRIGHTL, "EFIncorrectCursorMovement" );
+	    }
 	__ASSERT_DEBUG(aMove == EFLeft || aMove == EFRight,
 		FormPanic(EFIncorrectCursorMovement));
 	TBool found = EFalse;
@@ -613,6 +635,10 @@ TBool TCursorPosition::LeftRightL(TTmPosInfo2& aPos, TTmLineInfo& aLine, TMoveme
 @param aLine Returns details of the line containing aPos.*/
 void TCursorPosition::StartEnd(TTmPosInfo2& aPos, TTmLineInfo& aLine, TMovementType& aMove)
 	{
+	if (aMove != EFLineBeg && aMove != EFLineEnd)
+	    {
+	    OstTrace0( TRACE_DUMP, TCURSORPOSITION_STARTEND, "EFIncorrectCursorMovement" );
+	    }
 	__ASSERT_DEBUG(aMove == EFLineBeg || aMove == EFLineEnd,
 		FormPanic(EFIncorrectCursorMovement));
 	iLayout->FindDocPos(iDocPos, aPos, &aLine);
@@ -632,6 +658,10 @@ position.
 @param aLine returns details of the line containing aPos. */
 void TCursorPosition::UpDownL(TTmPosInfo2& aPos, TTmLineInfo& aLine, TMovementType& aMove)
 	{
+	if (aMove != EFLineUp && aMove != EFLineDown)
+	    {
+	    OstTrace0( TRACE_DUMP, TCURSORPOSITION_UPDOWNL, "EFIncorrectCursorMovement" );
+	    }
 	__ASSERT_DEBUG(aMove == EFLineUp || aMove == EFLineDown,
 		FormPanic(EFIncorrectCursorMovement));
 	iLayout->FindDocPos(iDocPos, aPos, &aLine);
@@ -677,6 +707,10 @@ void TCursorPosition::UpDownL(TTmPosInfo2& aPos, TTmLineInfo& aLine, TMovementTy
 // Move the display one page and put the cursor back in the same place (as far as possible).
 TInt TCursorPosition::PageScrollL(TMovementType& aMove)
 	{
+	if (aMove!=EFPageUp && aMove!=EFPageDown)
+	    {
+	    OstTrace0( TRACE_DUMP, TCURSORPOSITION_PAGESCROLLL, "EFIncorrectCursorMovement" );
+	    }
 	__ASSERT_DEBUG(aMove==EFPageUp || aMove==EFPageDown,FormPanic(EFIncorrectCursorMovement));
 	TPoint scrPos;
 	TInt pixelsScrolled;
@@ -725,6 +759,10 @@ TInt TCursorPosition::CheckCursorOnScreenL(TInt& aY)
 	TInt pixels=0;
 
 	iLayout->GetLineRect(aY,cursorLine);
+	if (cursorLine.iTl.iY>aY || cursorLine.iBr.iY<aY)
+	    {
+	    OstTrace0( TRACE_DUMP, TCURSORPOSITION_CHECKCURSORONSCREENL, "EFPixelNotInFormattedLine" );
+	    }
 	__ASSERT_DEBUG(cursorLine.iTl.iY<=aY && cursorLine.iBr.iY>=aY,FormPanic(EFPixelNotInFormattedLine));
 	if (cursorLine.iTl.iY<0 && cursorLine.iBr.iY<botRow)
 		linesToScroll=1;
@@ -736,7 +774,16 @@ TInt TCursorPosition::CheckCursorOnScreenL(TInt& aY)
 
 		aY+=pixels;
 		}
+	if (aY<0 && aY>=botRow)
+	    {
+	    OstTrace0( TRACE_DUMP, DUP1_TCURSORPOSITION_CHECKCURSORONSCREENL, "EFCursorOffDisplay" );
+	    }
 	__ASSERT_DEBUG(aY>=0 || aY<botRow,FormPanic(EFCursorOffDisplay));
+	if (!(cursorLine.Height()>=botRow || cursorLine.iBr.iY>=botRow 
+	        || (cursorLine.iTl.iY+pixels>=0 && cursorLine.iBr.iY+pixels<=botRow)) )
+	    {
+	    OstTrace0( TRACE_DUMP, DUP2_TCURSORPOSITION_CHECKCURSORONSCREENL, "EFCursorOffDisplay" );
+	    }
 	__ASSERT_DEBUG(cursorLine.Height()>=botRow || cursorLine.iBr.iY>=botRow 
 		|| (cursorLine.iTl.iY+pixels>=0 && cursorLine.iBr.iY+pixels<=botRow),FormPanic(EFCursorOffDisplay));
 	return pixels;

@@ -28,7 +28,9 @@ DEFAULT TOOLS
 PRJ_EXPORTS
 
 eon_font.iby			/epoc32/rom/include/eon_font.iby
+reffonts_for_sirocco.iby    /epoc32/rom/include/reffonts_for_sirocco.iby
 ../group/ttf2bdf.ipr	/epoc32/engdoc/tools/ttf2bdf.ipr
+
 
 ../inc/FONTIDS.H SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(fontids.h)
 

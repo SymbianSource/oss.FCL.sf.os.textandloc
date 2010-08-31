@@ -16,17 +16,26 @@
 */
 
 
-#include <e32test.h>
-//#include /**/ <s32mem.h>
 #include <s32file.h>
 #include <flddef.h>
 #include <fldbase.h>
 #include <fldset.h>
 #include "TESTFAC.H"
+#include "T_STREAM.h"
+
+#define test(cond)											\
+	{														\
+	TBool __bb = (cond);									\
+	TEST(__bb);												\
+	if (!__bb)												\
+		{													\
+		ERR_PRINTF1(_L("ERROR: Test Failed"));				\
+		User::Leave(1);										\
+		}													\
+	}
 
 const TInt KTestCleanupStack=0x20;
 
-LOCAL_D RTest test(_L("T_STREAM - Fields Persistence"));
 LOCAL_D CTrapCleanup* TheTrapCleanup;
 LOCAL_D CTextFieldSet* TheFieldSetOriginal;
 LOCAL_D CTextFieldSet* TheFieldSetCopy;
@@ -34,7 +43,7 @@ LOCAL_D TTestFieldFactory* TheFactory;
 
 _LIT(KTFieldOutputFile, "c:\\etext\\tfield.tst");
 // Test Picture persistance.
-LOCAL_C void testStoreRestore(CTextFieldSet* aCopy,const CTextFieldSet* aOriginal)
+void CT_STREAM::testStoreRestore(CTextFieldSet* aCopy,const CTextFieldSet* aOriginal)
     {
 	// set up the store
 	RFs	theFs;
@@ -62,7 +71,7 @@ LOCAL_C void testStoreRestore(CTextFieldSet* aCopy,const CTextFieldSet* aOrigina
 
 
 template <class T>
-void testCopyPaste(T* aCopy, T* aOriginal,TInt aCopyPos,TInt aLen,TInt aPastePos,TInt aPasteLen=-1)
+void CT_STREAM::testCopyPaste(T* aCopy, T* aOriginal,TInt aCopyPos,TInt aLen,TInt aPastePos,TInt aPasteLen)
 // Copy part of anOriginal to aCopy using memory-based streams.
 //
 	{
@@ -89,7 +98,7 @@ void testCopyPaste(T* aCopy, T* aOriginal,TInt aCopyPos,TInt aLen,TInt aPastePos
 	}
 
 
-LOCAL_C TBool IsEqual(const CTextFieldSet* aCopy,const CTextFieldSet* anOriginal)
+TBool CT_STREAM::IsEqual(const CTextFieldSet* aCopy,const CTextFieldSet* anOriginal)
 //
 // Returns true if aCopy contents matches anOriginal contents.
 //
@@ -116,7 +125,7 @@ LOCAL_C TBool IsEqual(const CTextFieldSet* aCopy,const CTextFieldSet* anOriginal
 	}
 
 
-LOCAL_C TBool UpdateField(TInt aPos,CTextFieldSet* aSet)
+TBool CT_STREAM::UpdateField(TInt aPos,CTextFieldSet* aSet)
 	{
 	// find out which field aPos is in
 	TFindFieldInfo info;
@@ -136,11 +145,11 @@ LOCAL_C TBool UpdateField(TInt aPos,CTextFieldSet* aSet)
 	}
 
 
-LOCAL_C void test2()
+void CT_STREAM::test2()
 // Streams an empty field set
 //
 	{
-	test.Next(_L("- streaming of a default FieldSet (no fields)"));
+	INFO_PRINTF1(_L("- streaming of a default FieldSet (no fields)"));
 	testStoreRestore(TheFieldSetCopy,TheFieldSetOriginal);
 	test(IsEqual(TheFieldSetCopy,TheFieldSetOriginal));
 	TheFieldSetOriginal->Reset();
@@ -148,11 +157,11 @@ LOCAL_C void test2()
 	}
 
 
-LOCAL_C void test3()
+void CT_STREAM::test3()
 // Streams a field set containing 100 chars & 1 field
 //
 	{
-	test.Next(_L("- streaming with a field"));
+	INFO_PRINTF1(_L("- streaming with a field"));
 
 	// insert a block of text into the original
 	TheFieldSetOriginal->NotifyInsertion(0,100); // pos=0, len=100
@@ -172,11 +181,11 @@ LOCAL_C void test3()
 	}
 
 
-LOCAL_C void test4()
+void CT_STREAM::test4()
 // Streams a field set into a non-empty target
 //
 	{
-	test.Next(_L("- streaming into a non-empty target"));
+	INFO_PRINTF1(_L("- streaming into a non-empty target"));
 
 	// insert a block of text into the original
 	TheFieldSetOriginal->NotifyInsertion(0,100); // pos=0, len=100
@@ -210,11 +219,11 @@ LOCAL_C void test4()
 	}
 
 
-LOCAL_C void test5()
+void CT_STREAM::test5()
 // Streams a field set containing an out of date field
 //
 	{
-	test.Next(_L("- streaming an out of date field"));
+	INFO_PRINTF1(_L("- streaming an out of date field"));
 
 	// insert a block of text into the original
 	TheFieldSetOriginal->NotifyInsertion(0,100); // pos=0, len=100
@@ -236,11 +245,11 @@ LOCAL_C void test5()
 	}
 
 
-LOCAL_C void test6()
+void CT_STREAM::test6()
 // Tests that copy/paste methods exist
 //
 	{
-	test.Next(_L("- testing copy/paste methods with empty array"));
+	INFO_PRINTF1(_L("- testing copy/paste methods with empty array"));
 	testCopyPaste(TheFieldSetCopy,TheFieldSetOriginal,0,0,0); // copyPos,Len,PastePos
 	test(IsEqual(TheFieldSetCopy,TheFieldSetOriginal));
 	TheFieldSetOriginal->Reset();
@@ -248,11 +257,11 @@ LOCAL_C void test6()
 	}
 
 
-LOCAL_C void test7()
+void CT_STREAM::test7()
 // Tests copy/paste methods in detail
 //
 	{
-	test.Next(_L("- testing copy/paste methods in detail"));
+	INFO_PRINTF1(_L("- testing copy/paste methods in detail"));
 	// insert a block of text into the original
 	TheFieldSetOriginal->NotifyInsertion(0,100); // pos=0, len=100
 	// insert a field into the original
@@ -346,11 +355,11 @@ LOCAL_C void test7()
 	}
 
 
-LOCAL_C void test8()
+void CT_STREAM::test8()
 // Tests paste method with restricted target length
 //
 	{
-	test.Next(_L("- testing paste method with restricted length"));
+	INFO_PRINTF1(_L("- testing paste method with restricted length"));
 	// insert a block of text into the original
 	TheFieldSetOriginal->NotifyInsertion(0,100); // pos=0, len=100
 	// insert 2 fields into the original
@@ -413,12 +422,12 @@ LOCAL_C void test8()
 	}
 
 
-LOCAL_C void test9()
+void CT_STREAM::test9()
 // Tests paste into set with no field factory
 // Should convert all pasted fields to text...
 //
 	{
-	test.Next(_L("- testing paste into set with no field factory"));
+	INFO_PRINTF1(_L("- testing paste into set with no field factory"));
 	TheFieldSetCopy->SetFieldFactory(NULL);
 	// insert a block of text into the original
 	TheFieldSetOriginal->NotifyInsertion(0,100); // pos=0, len=100
@@ -442,11 +451,11 @@ LOCAL_C void test9()
 	}
 
 
-LOCAL_C void test10()
+void CT_STREAM::test10()
 // Streams a field set containing 100 chars & 1 field
 //
 	{
-	test.Next(_L("- streaming CDateTimeField"));
+	INFO_PRINTF1(_L("- streaming CDateTimeField"));
 
 	// insert a block of text into the original
 	TheFieldSetOriginal->NotifyInsertion(0,100); // pos=0, len=100
@@ -465,9 +474,9 @@ LOCAL_C void test10()
 	ret=TheFieldSetOriginal->NewFieldValueL(miniBuf,10); // pos=10
 		test(ret==KErrNone);
 	TPtr buf = miniBuf->Des();
-	test.Printf(_L("  Value before streaming: "));
-		test.Printf(buf);
-		test.Printf(_L("\n"));
+	INFO_PRINTF1(_L("  Value before streaming: "));
+		INFO_PRINTF1(buf);
+		INFO_PRINTF1(_L("\n"));
 	// test streaming
 	testStoreRestore(TheFieldSetCopy,TheFieldSetOriginal);
 	test(IsEqual(TheFieldSetCopy,TheFieldSetOriginal));
@@ -475,23 +484,23 @@ LOCAL_C void test10()
 	ret=TheFieldSetCopy->NewFieldValueL(miniBuf,10); // pos=10
 		test(ret==KErrNone);
 	buf = miniBuf->Des();
-	test.Printf(_L("  Value after streaming:  "));
-		test.Printf(buf);
-		test.Printf(_L("\n"));
+	INFO_PRINTF1(_L("  Value after streaming:  "));
+		INFO_PRINTF1(buf);
+		INFO_PRINTF1(_L("\n"));
 	CleanupStack::PopAndDestroy(); // miniBuf
 	TheFieldSetOriginal->Reset();
 	TheFieldSetCopy->Reset();
 	}
 
 
-void TestStreamingL()
+void CT_STREAM::TestStreamingL()
 //
 // Test streaming of PrintSetup info.
 // Stream from one copy to another, then compare
 //
 	{
 	// create the PrintSetups
-	test.Start(_L("Streaming CTextFieldSet"));
+	INFO_PRINTF1(_L("Streaming CTextFieldSet"));
 
 	// instantiate the factory and FieldSet
 	TheFactory = new(ELeave) TTestFieldFactory();
@@ -534,7 +543,7 @@ void TestStreamingL()
 	}
 
 
-LOCAL_C void setupCleanup()
+void CT_STREAM::setupCleanup()
 //
 // Initialise the cleanup stack.
 //
@@ -551,7 +560,7 @@ LOCAL_C void setupCleanup()
 	}
 
 
-LOCAL_C void DeleteDataFile(const TDesC& aFullName)
+void CT_STREAM::DeleteDataFile(const TDesC& aFullName)
 	{
 	RFs fsSession;
 	TInt err = fsSession.Connect();
@@ -580,28 +589,32 @@ LOCAL_C void DeleteDataFile(const TDesC& aFullName)
 		}
 	}
 
-GLDEF_C TInt E32Main()
-//
-// Test streaming conversions.
-//
+
+CT_STREAM::CT_STREAM()
     {
-	test.Title();
+    SetTestStepName(KTestStep_T_STREAM);
+    }
 
-	__UHEAP_MARK;
+TVerdict CT_STREAM::doTestStepL()
+    {
+	INFO_PRINTF1(_L("T_STREAM - Fields Persistence"));
+    SetTestStepResult(EFail);
+
+    __UHEAP_MARK;
+
 	setupCleanup();
-
-	TRAPD(r,TestStreamingL());
-	test(r==KErrNone);
+    
+    TRAPD(error1, TestStreamingL());
 
 	delete TheTrapCleanup;
 
-	__UHEAP_MARKEND;
-	
-	::DeleteDataFile(KTFieldOutputFile);	//deletion of data files must be before call to End() - DEF047652
-	
-	test.End();
-	test.Close();
+    __UHEAP_MARKEND;
+	DeleteDataFile(KTFieldOutputFile);	//deletion of data files must be before call to End() - DEF047652
 
-	return 0;
+    if(error1 == KErrNone)
+        {
+        SetTestStepResult(EPass);
+        }
+
+    return TestStepResult();
     }
-

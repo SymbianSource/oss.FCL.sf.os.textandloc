@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 1999-2009 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 1999-2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -17,13 +17,32 @@
 */
 
 
-#include <e32test.h>
 #include <txtrich.h>
 #include <e32math.h>
 #include "T_parse.h"
+#include "T_PARSE_for_TEF.h"
+
+LOCAL_D CTestStep *pTestStep = NULL;
+#define test(cond)											\
+	{														\
+	TBool __bb = (cond);									\
+	pTestStep->TEST(__bb);									\
+	if (!__bb)												\
+		{													\
+		pTestStep->ERR_PRINTF1(_L("ERROR: Test Failed"));	\
+		User::Leave(1);										\
+		}													\
+	}
+#undef INFO_PRINTF1
+#undef INFO_PRINTF2
+#undef INFO_PRINTF3
+// copy from tefexportconst.h
+#define INFO_PRINTF1(p1)            pTestStep->Logger().LogExtra(((TText8*)__FILE__), __LINE__, ESevrInfo, (p1))
+#define INFO_PRINTF2(p1, p2)        pTestStep->Logger().LogExtra(((TText8*)__FILE__), __LINE__, ESevrInfo, (p1), (p2))
+#define INFO_PRINTF3(p1, p2, p3)    pTestStep->Logger().LogExtra(((TText8*)__FILE__), __LINE__, ESevrInfo, (p1), (p2), (p3))
+
 
 LOCAL_D CTrapCleanup* TrapCleanup;
-LOCAL_D RTest test(_L("Testing EText parser system"));
 LOCAL_D const TInt KTestCleanupStack=0x200;
 
 
@@ -316,7 +335,7 @@ void CEditObserver::EditObserver(TInt aStart, TInt aExtent)
 
 void Test1()
 	{
-	test.Next(_L("Install 5, deinstall in reverse order"));
+	INFO_PRINTF1(_L("Install 5, deinstall in reverse order"));
 	CTestParser* parser1 = CTestParser::NewL();
 	CTestParser* parser2 = CTestParser::NewL();
 	CTestParser* parser3 = CTestParser::NewL();
@@ -343,7 +362,7 @@ void Test1()
 
 void Test2()
 	{
-	test.Next(_L("Install, deinstall in interleaved order"));
+	INFO_PRINTF1(_L("Install, deinstall in interleaved order"));
 	CTestParser* parser1 = CTestParser::NewL();
 	CRichText::ActivateParserL(parser1);	// List 1
 	CTestParser* parser2 = CTestParser::NewL();
@@ -374,7 +393,7 @@ void Test2()
 
 void Test3()
 	{
-	test.Next(_L("Testing memory with OOM"));
+	INFO_PRINTF1(_L("Testing memory with OOM"));
 
 	TInt i;
 	TInt ret;
@@ -498,7 +517,7 @@ void Test3()
 		__UHEAP_RESET;
 		}
 
-	test.Printf(_L("%d attempted activations, %d successful\n"), 5 * count, success);
+	INFO_PRINTF3(_L("%d attempted activations, %d successful\n"), 5 * count, success);
 	}
 
 
@@ -510,7 +529,7 @@ void Test4()
 	// - Does find complete target in right place
 	// - Once target is removed, can't find it
 	// repeat x 100
-	test.Next(_L("Testing EText behaviour with active parsers and single target"));
+	INFO_PRINTF1(_L("Testing EText behaviour with active parsers and single target"));
 	// Create and activate a parser
 	CTestParser* parser1 = CTestParser::NewL();
 	CRichText::ActivateParserL(parser1);
@@ -532,6 +551,9 @@ void Test4()
 	TInt lengthTags;
 	for (i = 0; i < 100; i++)
 		{
+#if 0
+		INFO_PRINTF2(_L("i=%d"), i);
+#endif
 		// Get a random in range 0-999
 		TInt random = Math::Rand(seed) % 1000;
 		// "Randomly" insert target string that is not complete
@@ -540,7 +562,13 @@ void Test4()
 		test(!richText->ParseText(startTags, lengthTags, ETrue));
 		// Complete target string and check we find single target where we expect
 		richText->InsertL(random + 5, 'T');
+#if 1
 		test(richText->ParseText(startTags, lengthTags, EFalse));
+#else
+		TBool b = richText->ParseText(startTags, lengthTags, EFalse);
+		INFO_PRINTF2(_L("    b=%d"), b);
+		test(b);
+#endif
 		test((startTags == random) && (lengthTags == 6));
 		test(richText->ParseText(startTags, lengthTags, ETrue));
 		test((startTags == random) && (lengthTags == 6));
@@ -570,7 +598,7 @@ void Test5()
 	// - Does find complete targets with exact range covered
 	// - Once targets are removed, can't find it
 	// repeat x 100
-	test.Next(_L("Testing EText behaviour with active parsers and double target"));
+	INFO_PRINTF1(_L("Testing EText behaviour with active parsers and double target"));
 	// Create and activate a parser
 	CTestParser* parser1 = CTestParser::NewL();
 	CRichText::ActivateParserL(parser1);
@@ -592,6 +620,9 @@ void Test5()
 	TInt lengthTags;
 	for (i = 0; i < 100; i++)
 		{
+#if 0
+		INFO_PRINTF2(_L("i=%d"), i);
+#endif
 		// Get a random in range 0-999
 		TInt random1 = Math::Rand(seed1) % 1000;
 		TInt random2 = Math::Rand(seed1) % 1000;
@@ -612,7 +643,12 @@ void Test5()
 		// Complete target string and check we find single target where we expect
 		richText->InsertL(rlow + 5, 'T');
 		richText->InsertL(rhigh + 5, 'T');
+#if 1
 		test(richText->ParseText(startTags, lengthTags, EFalse));
+#else
+		TBool bb = richText->ParseText(startTags, lengthTags, EFalse);
+		test(bb);
+#endif
 		test((startTags == rlow) && (lengthTags == rhigh + 6 - rlow));
 		test(richText->ParseText(startTags, lengthTags, ETrue));
 		test((startTags == rlow) && (lengthTags == rhigh + 6 - rlow));
@@ -645,7 +681,7 @@ void Test5()
 
 void Test6()
 	{
-	test.Next(_L(" @SYMTestCaseID:SYSLIB-ETEXT-UT-3405 Calling PositionOfNextTag on an empty document "));
+	INFO_PRINTF1(_L(" @SYMTestCaseID:SYSLIB-ETEXT-UT-3405 Calling PositionOfNextTag on an empty document "));
 	
 	// Create and activate a parser
 	CTestParser* parser1 = CTestParser::NewL();
@@ -701,7 +737,7 @@ void Test6()
 */
 void Test7()
 	{
-	test.Next(_L(" @SYMTestCaseID:SYSLIB-ETEXT-UT-3406 Testing EText behaviour with active parsers and single target "));
+	INFO_PRINTF1(_L(" @SYMTestCaseID:SYSLIB-ETEXT-UT-3406 Testing EText behaviour with active parsers and single target "));
 	
 	// Create and activate a parser
 	CTestParser* parser1 = CTestParser::NewL();
@@ -775,61 +811,63 @@ void Test7()
 	delete editObserver;
 	}
 
+CT_PARSE::CT_PARSE()
+    {
+    SetTestStepName(KTestStep_T_PARSE);
+    pTestStep = this;
+    }
 
-TInt E32Main()
-	{
-	TrapCleanup = CTrapCleanup::New();
-	TRAPD(r,\
-		{\
-		for (TInt i=KTestCleanupStack;i>0;i--)\
-			CleanupStack::PushL((TAny*)1);\
-		test(r==KErrNone);\
-		CleanupStack::Pop(KTestCleanupStack);\
-		});
-    test(r == KErrNone);
-	test.Title();
+TVerdict CT_PARSE::doTestStepL()
+    {
+    SetTestStepResult(EFail);
 
-	test.Start(_L("Testing memory under normal conditions"));
-	TInt ret;
+    TrapCleanup = CTrapCleanup::New();
+    TRAPD(r,\
+        {\
+        for (TInt i=KTestCleanupStack;i>0;i--)\
+            CleanupStack::PushL((TAny*)1);\
+        test(r==KErrNone);\
+        CleanupStack::Pop(KTestCleanupStack);\
+        });
 
-	__UHEAP_MARK;
-	TRAP(ret, Test1());
-    test(ret == KErrNone);
-	__UHEAP_MARKEND;
+    INFO_PRINTF1(_L("Testing EText parser system"));
 
-	__UHEAP_MARK;
-	TRAP(ret, Test2());
-    test(ret == KErrNone);
-	__UHEAP_MARKEND;
+    INFO_PRINTF1(_L("Testing memory under normal conditions"));
 
-	__UHEAP_MARK;
-	TRAP(ret, Test3());
-    test(ret == KErrNone);
-	__UHEAP_MARKEND;
+    __UHEAP_MARK;
+    TRAPD(ret1, Test1());
+    __UHEAP_MARKEND;
 
-	__UHEAP_MARK;
-	TRAP(ret, Test4());
-    test(ret == KErrNone);
-	__UHEAP_MARKEND;
+    __UHEAP_MARK;
+    TRAPD(ret2, Test2());
+    __UHEAP_MARKEND;
 
-	__UHEAP_MARK;
-	TRAP(ret, Test5());
-    test(ret == KErrNone);
-	__UHEAP_MARKEND;
+    __UHEAP_MARK;
+    TRAPD(ret3, Test3());
+    __UHEAP_MARKEND;
 
-	__UHEAP_MARK;
-	TRAP(ret, Test6());
-    test(ret == KErrNone);
-	__UHEAP_MARKEND;
-	
-	__UHEAP_MARK;
-	TRAP(ret, Test7());
-    test(ret == KErrNone);
-	__UHEAP_MARKEND;
-	
-	delete TrapCleanup;
+    __UHEAP_MARK;
+    TRAPD(ret4, Test4());
+    __UHEAP_MARKEND;
 
-	test.End();
-	test.Close();
-	return 0;
-	}
+    __UHEAP_MARK;
+    TRAPD(ret5, Test5());
+    __UHEAP_MARKEND;
+
+    __UHEAP_MARK;
+    TRAPD(ret6, Test6());
+    __UHEAP_MARKEND;
+    
+    __UHEAP_MARK;
+    TRAPD(ret7, Test7());
+    __UHEAP_MARKEND;
+    
+    delete TrapCleanup;
+
+    if (r == KErrNone && ret1 == KErrNone && ret2 == KErrNone && ret3 == KErrNone && ret4 == KErrNone && ret5 == KErrNone && ret6 == KErrNone && ret7 == KErrNone)
+        {
+        SetTestStepResult(EPass);
+        }
+
+    return TestStepResult();
+    }

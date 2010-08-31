@@ -159,6 +159,8 @@ public:
 		COpenFont*& aFont, TOpenFontSpec& aActualFontSpec, TInt aMaxHeight);
 	TBool HasUnicodeCharacterL(TInt aFaceIndex, TInt aCode) const;
 	TAny* GetTrueTypeTable(TInt& aError, TInt aFaceIndex, TUint32 aTag, TInt* aLength);
+	TInt GetGlyphOutline(TInt aFaceIndex, TUint aCode, 
+	        TBool aIsGlyphId, TBool, TAny*& aOutline, TInt &aLength);
 
 private:
 	static void SetGlyphMetrics(FT_GlyphSlot aGlyphSlot, TOpenFontGlyphData* aGlyphData);
@@ -182,7 +184,7 @@ private:
 	};
 
 NONSHARABLE_CLASS(CFreeTypeFont) : public COpenFont, public MOpenFontShapingExtension, 
-    public MOpenFontTrueTypeExtension
+    public MOpenFontTrueTypeExtension, public MOpenFontGlyphOutlineExtension
 	{
 public:
 	static CFreeTypeFont* NewL(
@@ -216,6 +218,8 @@ private:
 	TAny* GetTrueTypeTable(TInt& aError, TUint32 aTag, TInt* aLength);
 	TInt  ReleaseTrueTypeTable(TAny* aTable);
 	TBool HasTrueTypeTable(TUint32 aTag);
+	TInt GetGlyphOutline(TUint aCode, TBool aIsGlyphId, 
+	            TBool aHinted, TAny*& aOutline, TInt &aLength);
 
 	inline TAny* operator new(TUint aSize, TAny* aBase) __NO_THROW;
 	inline TAny* operator new(TUint aSize) __NO_THROW;
@@ -1066,6 +1070,8 @@ void CFreeTypeFont::ExtendedInterface(TUid aUid, TAny*& aParam)
 		aParam = static_cast<MOpenFontShapingExtension*>(this);
 	else if (aUid == KUidOpenFontTrueTypeExtension)	
 		aParam = static_cast<MOpenFontTrueTypeExtension*>(this);
+	else if (aUid == KUidOpenFontGlyphOutlineExtension)
+	    aParam = static_cast<MOpenFontGlyphOutlineExtension*>(this);
 	else
 		COpenFont::ExtendedInterface(aUid, aParam);
 	}
@@ -1169,7 +1175,18 @@ void CFreeTypeFont::GetExtensionFontMetrics(
 	}
 
 
-
+TInt CFreeTypeFont::GetGlyphOutline(TUint aCode, TBool aIsGlyphId, 
+                TBool aHinted, TAny*& aOutline, TInt& aLength)
+    {
+    CFreeTypeFontFile* file = (CFreeTypeFontFile*)File();
+    if (!file)
+        {
+        return KErrNotFound;
+        }
+    aHinted = EFalse; // to avoid 'unused' warning.
+    
+    return file->GetGlyphOutline(FaceIndex(), aCode, aIsGlyphId, aHinted, aOutline, aLength);
+    }
 
 TAny* CFreeTypeFont::GetTrueTypeTable(TInt& aError, TUint32 aTag, TInt* aLength)
 	{
@@ -1284,6 +1301,483 @@ void CFreeTypeFontFile::DoRasterizeGlyphL(
 		iContext->TranslateAntiAliasedGlyphBitmap(aFace->Face()->glyph,aGlyphData);
 	}
 
+enum vg_commands {
+    VG_CMD_NONE = 0,
+    VG_CMD_MOVETO,
+    VG_CMD_LINETO,
+    VG_CMD_CONICTO,
+    VG_CMD_CUBICTO,
+    VG_CMD_CLOSE
+};
+
+
+enum contour_states 
+    {
+    CONTOUR_STATE_NOT_STARTED = 0,
+    CONTOUR_STATE_START,
+    CONTOUR_STATE_CONIC,
+    CONTOUR_STATE_CUBIC1,
+    CONTOUR_STATE_CUBIC2,
+    CONTOUR_STATE_MAX
+    };
+
+static const TInt StateTransitions[CONTOUR_STATE_MAX][3] = 
+    {
+        {CONTOUR_STATE_START, -1, -1},
+        {CONTOUR_STATE_START, CONTOUR_STATE_CONIC, CONTOUR_STATE_CUBIC1},
+        {CONTOUR_STATE_START, -1, -1},
+        {-1, -1, CONTOUR_STATE_CUBIC2}, 
+        {CONTOUR_STATE_START, -1, -1}, 
+    };
+
+static const TInt OutputCommands[CONTOUR_STATE_MAX][3] = 
+    {
+        {VG_CMD_MOVETO, -1, -1},
+        {VG_CMD_LINETO, VG_CMD_NONE, VG_CMD_NONE},
+        {VG_CMD_CONICTO, -1, -1},
+        {-1, -1, VG_CMD_NONE}, 
+        {VG_CMD_CUBICTO, -1, -1},
+    };
+
+
+class MVGCommandProcessor 
+    {
+public:
+    virtual TInt ProcessCommand(TInt8 cmd, FT_Vector &start, FT_Vector &end) = 0;
+    };
+
+class COutlineStringBuilder: public MVGCommandProcessor, public CBase 
+    {
+private:
+    TUint8 *iBuffer;
+    TUint8 *iCur;
+    TInt iLen;
+
+
+public:
+    COutlineStringBuilder():iBuffer(0), iLen(2000) 
+        { 
+        iBuffer = (TUint8 *)User::Alloc(iLen);
+        iCur = iBuffer;
+        }
+    
+    ~COutlineStringBuilder() 
+        {
+        // ownership of the buffer is transferred to the caller.
+        }
+    
+    
+    TUint8 *GetBuffer(TInt &aLen) 
+        {
+        aLen = iCur - iBuffer;
+        *iCur = '\0';
+        return iBuffer;
+        }
+    
+    TInt AppendChar(char ch)
+        {
+        *(iCur++) = ch;
+        return 0;
+        }
+    
+    TInt AppendFTPos(FT_Pos n)
+        {
+        int divisor = 1;
+        FT_Pos tmp = (n > 0) ? n : (-n);
+        while (tmp/divisor >= 10) {
+            divisor *= 10;
+        }
+        
+        if (n < 0)
+            {
+            AppendChar('-');
+            }
+        
+        for ( ; divisor >= 1; divisor /= 10)
+            {
+            AppendChar('0' + tmp/divisor);
+            tmp = tmp % divisor;
+            }
+        
+        return 0;
+        }
+    
+    TInt AppendCoord(FT_Pos x, FT_Pos y) 
+        {
+        AppendFTPos(x);
+        AppendChar(',');
+        AppendFTPos(y);
+        AppendChar(' ');
+        return 0;
+        }
+    
+    TInt
+    ProcessCommand(TInt8 cmd, FT_Vector &start, FT_Vector &end) 
+        {
+        FT_Vector *st = &start;
+
+        if (iCur + 64 > iBuffer + iLen) 
+            {
+            TUint distance = iCur - iBuffer;
+            iLen += 1000;
+            TUint8 *newBuffer = (TUint8 *)User::ReAlloc(iBuffer, iLen);
+            iBuffer = newBuffer;
+            iCur = iBuffer + distance;
+            }
+        
+        if (VG_CMD_MOVETO == cmd) 
+            {
+            AppendChar('M');
+            AppendCoord(start.x, start.y);
+            }
+        else if (VG_CMD_LINETO == cmd)
+            {
+            AppendChar('L');
+            AppendCoord(end.x, end.y);
+            }
+        else if (VG_CMD_CONICTO == cmd)
+            {
+            AppendChar('Q');
+            AppendCoord((st+1)->x, (st+1)->y);
+            AppendCoord(end.x, end.y);
+            }
+        else if (VG_CMD_CUBICTO == cmd)
+            {
+            AppendChar('Q');
+            AppendCoord((st+1)->x, (st+1)->y);
+            AppendCoord((st+2)->x, (st+2)->y);
+            AppendCoord(end.x, end.y);
+            }
+        else if (VG_CMD_CLOSE == cmd)
+            {
+            AppendChar('Z');
+            AppendChar(' ');
+            }
+        
+        return KErrNone;
+        }
+    };
+
+
+class COutlineConvDirector: public CBase {
+private:
+    MVGCommandProcessor *iProcessor;
+    const FT_Outline *iOutline; 
+    FT_Outline iNewOutline;
+
+    
+private:
+    char
+    GetNextPointType(char aTag) 
+        {
+        char ret = FT_CURVE_TAG(aTag);
+        if (FT_CURVE_TAG_ON == ret)
+            {
+            ret = 0;
+            }
+        else if (FT_CURVE_TAG_CONIC == ret)
+            {
+            ret = 1;
+            }
+        else if (FT_CURVE_TAG_CUBIC == ret)
+            {
+            ret = 2;
+            }
+        else 
+            {
+            __ASSERT_DEBUG(0, User::Panic(_L("IncorrectState"), -1));
+            }
+        return ret;
+        }
+    
+    TInt SwapPoints(const TInt i1, const TInt i2)
+        {
+        FT_Vector tmpVector = iOutline->points[i1];
+        char tmpTags = iOutline->tags[i1];
+        iOutline->points[i1] = iOutline->points[i2];
+        iOutline->tags[i1] = iOutline->tags[i2];
+        iOutline->points[i2] = tmpVector;
+        iOutline->tags[i2] = tmpTags;
+        return 0;
+        }
+    
+    TInt MoveFirstOnPointToBeginning(const TInt aStartIndex, const TInt aEndIndex) 
+        {
+        /* Contours of three or more points are valid, and single points 
+         * (reference points, technically not contours) are also valid as 
+         * special cases in TrueType. 
+         */ 
+        char curTag = FT_CURVE_TAG(iOutline->tags[aStartIndex]);
+        
+        // so a contour having only one point which is 'off' is invalid!
+        __ASSERT_DEBUG(!(aEndIndex - aStartIndex == 0 && FT_CURVE_TAG_ON != curTag), 
+                User::Panic(_L("Contour consisting of 1 'off' point."), -1));
+        
+        /* Contours consisting of two points are not a valid configuration. */
+        __ASSERT_DEBUG(aEndIndex - aStartIndex != 1, 
+                User::Panic(_L("Contour consisting of two points."), -1));
+        
+        if (FT_CURVE_TAG_ON == curTag) 
+            {
+            return KErrNone;
+            }
+        TInt firstOnIndex = -1;
+        TInt i = 0;
+        for (i = 1+aStartIndex; i < aEndIndex; ++i)
+            {
+            if (FT_CURVE_TAG_ON == FT_CURVE_TAG(iOutline->tags[i]))
+                {
+                firstOnIndex = i;
+                break;
+                }
+            }
+        __ASSERT_DEBUG(-1 != firstOnIndex, 
+                User::Panic(_L("Contour containing no 'on' point."), -1));
+        
+        for (i = firstOnIndex-1; i >= aStartIndex; --i)
+            {
+            for (TInt j = i; j < aEndIndex; ++j)
+                {
+                SwapPoints(j, j+1);
+                }
+            }
+        
+        return KErrNone;
+        }
+    
+    TInt
+    ConvertContour(const TInt aStartIndex, const TInt aEndIndex)
+        {
+        /* Contours consisting of two 
+         * points are not a valid configuration. 
+         */
+        __ASSERT_DEBUG(aEndIndex - aStartIndex != 1, 
+                User::Panic(_L("Contour consisting of two points."), -1));
+        
+        TInt state = CONTOUR_STATE_NOT_STARTED, newState = -1;
+        TInt cmdStart = aStartIndex, cmdCur = 0, command = -1;
+        
+        char ptype = GetNextPointType(iNewOutline.tags[cmdStart]);
+        __ASSERT_DEBUG(0 == ptype, User::Panic(_L("IncorrectState"), -1)); 
+        state = CONTOUR_STATE_START;
+        iProcessor->ProcessCommand(VG_CMD_MOVETO, 
+                iNewOutline.points[aStartIndex], iNewOutline.points[aStartIndex]);
+        
+        
+        for (cmdCur = cmdStart + 1; cmdCur <= aEndIndex; ++cmdCur)
+            {
+            ptype = GetNextPointType(iNewOutline.tags[cmdCur]);
+            newState = StateTransitions[state][ptype];
+            __ASSERT_DEBUG(-1 != newState, User::Panic(_L("IncorrectState"), -1));
+            command = OutputCommands[state][ptype];
+            __ASSERT_DEBUG(-1 != command, User::Panic(_L("IncorrectState"), -1));
+            
+            if (VG_CMD_NONE != command)
+                {
+                iProcessor->ProcessCommand(command, 
+                        iNewOutline.points[cmdStart], iNewOutline.points[cmdCur]);
+                cmdStart = cmdCur;
+                }
+            state = newState;
+            }
+        
+        if (CONTOUR_STATE_CONIC == state)
+            {
+            iProcessor->ProcessCommand(VG_CMD_CONICTO, iNewOutline.points[cmdStart], 
+                    iNewOutline.points[aStartIndex]);
+            }
+        else if (CONTOUR_STATE_CUBIC2 == state)
+            {
+            iProcessor->ProcessCommand(VG_CMD_CUBICTO, iNewOutline.points[cmdStart], 
+                    iNewOutline.points[aStartIndex]);
+            }
+        iProcessor->ProcessCommand(VG_CMD_CLOSE, 
+                iNewOutline.points[aStartIndex], iNewOutline.points[aStartIndex]);
+        
+        return KErrNone;
+        }
+
+
+    TInt Preprocess() 
+        {
+        /* two successive conic "off" points forces the rasterizer to 
+         * create (during the scan-line conversion process exclusively) a 
+         * virtual "on" point amidst them, at their exact middle.
+         */
+        char prevTag = FT_CURVE_TAG(iOutline->tags[0]), currentTag = 0;
+        TInt numNewPoints = 0;
+        TInt contourIndex = 0;
+        
+        iNewOutline.contours = 0;
+        iNewOutline.n_contours = iOutline->n_contours;
+        iNewOutline.contours = (short *)
+                User::Alloc(iNewOutline.n_contours * sizeof(short));
+        
+        if (0 == iOutline->contours[0]) 
+            {
+            iNewOutline.contours[0] = iOutline->contours[0]; // == 0
+            ++contourIndex;
+            }
+        for (TInt i = 1; i < iOutline->n_points; ++i) 
+            {
+                currentTag = FT_CURVE_TAG(iOutline->tags[i]);
+                if (FT_CURVE_TAG_CONIC == prevTag && prevTag == currentTag)
+                    {
+                    numNewPoints++;
+                    }
+                prevTag = currentTag;
+                if (i == iOutline->contours[contourIndex]) 
+                    {
+                    iNewOutline.contours[contourIndex] =
+                        iOutline->contours[contourIndex] + numNewPoints;
+                    ++contourIndex;
+                    }
+            }
+        
+        
+        iNewOutline.n_points = iOutline->n_points + numNewPoints;
+        iNewOutline.flags = iOutline->flags;
+        
+        iNewOutline.points = 0;
+        iNewOutline.tags = 0;
+        
+        iNewOutline.points = (FT_Vector *)
+            User::Alloc(iNewOutline.n_points * sizeof(FT_Vector));
+
+        if (iNewOutline.contours)
+            {
+            iNewOutline.tags = (char *)
+                User::Alloc(iNewOutline.n_points * sizeof(char));
+            }
+        
+        // copy the 'points' and 'tags' array, inserting new points
+        // when necessary.
+        TInt oldIndex = 0, newIndex = 0;
+        for ( ; oldIndex < iOutline->n_points; ++oldIndex) 
+            {
+            char oldTag = FT_CURVE_TAG(iOutline->tags[oldIndex]);
+            iNewOutline.points[newIndex] = iOutline->points[oldIndex];
+            iNewOutline.tags[newIndex] = iOutline->tags[oldIndex];
+            
+            if (FT_CURVE_TAG_CONIC == oldTag && 
+                    oldIndex + 1 < iOutline->n_points) 
+                {
+                char nextTag = FT_CURVE_TAG(iOutline->tags[oldIndex+1]);
+                // insert a new 'on' point when there are two consecutive 
+                // 'conic off' points.
+                if (oldTag == nextTag)
+                    {
+                    newIndex++;
+                    FT_Vector *cur = &(iOutline->points[oldIndex]);
+                    FT_Vector *next = &(iOutline->points[oldIndex + 1]);
+                    iNewOutline.points[newIndex].x = (cur->x + next->x)/2;
+                    iNewOutline.points[newIndex].y = (cur->y + next->y)/2;
+                    iNewOutline.tags[newIndex] = FT_CURVE_TAG_ON;
+                    }
+                }
+            newIndex++;
+            }
+        
+        return 0;
+        }
+    
+public:
+    COutlineConvDirector():iProcessor(0), iOutline(0) 
+        {
+        // a null constructor
+        iNewOutline.contours = 0;
+        iNewOutline.tags = 0;
+        iNewOutline.points = 0;
+        }
+    
+    ~COutlineConvDirector()
+        {
+        User::Free(iNewOutline.contours);
+        User::Free(iNewOutline.points);
+        User::Free(iNewOutline.tags);
+        }
+    
+    TInt
+    ConvertOutline(const FT_Outline &aOutline, MVGCommandProcessor *aProcessor) 
+        {
+        if (0 != aOutline.n_contours) 
+            {
+            iProcessor = aProcessor;
+            iOutline = &aOutline;
+            
+            MoveFirstOnPointToBeginning(0, iOutline->contours[0]);
+            TInt i = 0;
+            for (i = 1; i < iOutline->n_contours; ++i)
+                {
+                MoveFirstOnPointToBeginning(iOutline->contours[i-1]+1, iOutline->contours[i]);
+                }
+                    
+            Preprocess();
+            
+            ConvertContour(0, iNewOutline.contours[0]);
+            for (i = 1; i < iNewOutline.n_contours; ++i)
+                {
+                ConvertContour(iNewOutline.contours[i-1]+1, iNewOutline.contours[i]);
+                }
+            }
+        else
+            {
+			RDebug::Printf("Zero contour in outline: missing glyph.");
+            FT_Vector dummyVector;
+            aProcessor->ProcessCommand(VG_CMD_CLOSE, dummyVector, dummyVector);
+            }
+        return KErrNone;
+        }
+};
+
+
+TInt CFreeTypeFontFile::GetGlyphOutline(TInt aFaceIndex, TUint aCode, 
+        TBool aIsGlyphId, TBool, TAny*& aOutline, TInt &aLength) 
+    {
+    // The 4th param 'aHinted' is ignored in this reference implementation.
+    // Need to add it back and implement accordingly if freetype is used in 
+    // production code.
+    CFaceListItem *faceList = LoadFaceL(aFaceIndex);
+    FT_Face face = faceList->Face();
+    TUint code = aCode;
+    if (!aIsGlyphId) 
+        {
+        code = FT_Get_Char_Index(face, aCode);
+        if (0 == code)
+            {
+            return KErrNotFound;
+            }
+        }
+    
+    TInt ret = FT_Load_Glyph(face, code, 
+            FT_LOAD_NO_SCALE | FT_LOAD_IGNORE_TRANSFORM);
+    
+    if (0 != ret)
+        {
+        return KErrUnknown;
+        }
+    
+    COutlineStringBuilder strBuilder;
+    if (0 != strBuilder.GetBuffer(aLength)) 
+        {
+        FT_Outline &outline = face->glyph->outline;
+        
+        COutlineConvDirector d;
+        d.ConvertOutline(outline, &strBuilder);
+        }
+    else
+        {
+        return KErrNoMemory;
+        }
+
+    TUint8 *buf = strBuilder.GetBuffer(aLength);
+    RDebug::Printf("length of buffer is %d\n", aLength);
+    RDebug::Printf("Outline for glyph %d: \n", aCode);
+    RDebug::Printf("%s", buf);
+    aOutline = (TAny*)buf;
+    
+    return KErrNone;
+    }
 TAny* CFreeTypeFontFile::GetTrueTypeTable(TInt& aError, TInt aFaceIndex,
 	TUint32 aTag, TInt* aLength)
 	{

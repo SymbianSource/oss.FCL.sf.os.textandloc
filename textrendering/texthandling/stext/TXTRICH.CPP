@@ -26,6 +26,11 @@
 #include "ParseLst.h"
 #include "TXTCLIPBOARD.H"
 
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "TXTRICHTraces.h"
+#endif
+
 #ifdef SYMBIAN_ENABLE_SPLIT_HEADERS
 #include "TXTETEXT_INTERNAL.H"
 #include "TXTRICH_INTERNAL.H"
@@ -37,7 +42,15 @@ EXPORT_C void CRichText::__DbgTestInvariant()const
 	{
 #ifdef _DEBUG
 // ASSERT: The global format layers are never null.
+	if (iGlobalParaFormatLayer == NULL)
+	    {
+	    OstTrace0( TRACE_DUMP, CRICHTEXT_DBGTESTINVARIANT, "Invariant" );
+	    }
 	__ASSERT_DEBUG(iGlobalParaFormatLayer != NULL, User::Invariant());
+	if (iGlobalCharFormatLayer == NULL)
+	    {
+	    OstTrace0( TRACE_DUMP, DUP1_CRICHTEXT_DBGTESTINVARIANT, "Invariant" );
+	    }
 	__ASSERT_DEBUG(iGlobalCharFormatLayer != NULL, User::Invariant());
 	if (IndexPresent())
 		{
@@ -49,10 +62,20 @@ EXPORT_C void CRichText::__DbgTestInvariant()const
 			TParaAttribsEntry entry = (*iIndex->iParaIx)[offset];
 			cumulativeParaLength += entry.iLength;
 			}
+		if (cumulativeParaLength != (DocumentLength() + 1))
+		    {
+		    OstTrace0( TRACE_DUMP, DUP2_CRICHTEXT_DBGTESTINVARIANT, "Invariant" );
+		    }
 		__ASSERT_DEBUG(cumulativeParaLength == (DocumentLength() + 1), User::Invariant());
 		}
 		// Change here for defect INC005336.
 		// This defect is present when the assertion below fails.
+        if ((iParserData != NULL) &&
+                (iParserData->HaveRange()) &&
+                (iParserData->EndParse() > DocumentLength()))
+            {
+            OstTrace0( TRACE_DUMP, DUP3_CRICHTEXT_DBGTESTINVARIANT, "Invariant" );
+            }
 		__ASSERT_DEBUG( (iParserData == NULL) || \
 			(!iParserData->HaveRange()) || \
 			(iParserData->EndParse() <= DocumentLength()), User::Invariant());
@@ -80,7 +103,15 @@ used internally for storing paragraph attributes. Default = EMultiPara.
 @return The rich text object. */
 	{
 	// Create new rich text containing just a single end-of-document character.
+	if (aGlobalParaLayer == NULL)
+	    {
+	    OstTrace0( TRACE_FATAL, CRICHTEXT_NEWL, "ENullFormatLayerHandle" );
+	    }
 	__ASSERT_ALWAYS(aGlobalParaLayer != NULL, Panic(ENullFormatLayerHandle));
+	if (aGlobalCharLayer == NULL)
+	    {
+	    OstTrace0( TRACE_FATAL, DUP1_CRICHTEXT_NEWL, "ENullFormatLayerHandle" );
+	    }
 	__ASSERT_ALWAYS(aGlobalCharLayer != NULL, Panic(ENullFormatLayerHandle));
 
 	CRichText* self = new(ELeave) CRichText(aGlobalParaLayer, aGlobalCharLayer);
@@ -122,7 +153,15 @@ or multiple paragraphs, and thus affects the granularity of aggregate objects
 used internally for storing paragraph attributes. Default = EMultiPara.
 @return The new rich text object. */
 	{
+	if (aGlobalParaLayer == NULL)
+	    {
+	    OstTrace0( TRACE_FATAL, DUP2_CRICHTEXT_NEWL, "ENullFormatLayerHandle" );
+	    }
 	__ASSERT_ALWAYS(aGlobalParaLayer != NULL, Panic(ENullFormatLayerHandle));
+	if (aGlobalCharLayer == NULL)
+	    {
+	    OstTrace0( TRACE_FATAL, DUP3_CRICHTEXT_NEWL, "ENullFormatLayerHandle" );
+	    }
 	__ASSERT_ALWAYS(aGlobalCharLayer != NULL, Panic(ENullFormatLayerHandle));
 
 	CRichText* self = new(ELeave) CRichText(aGlobalParaLayer, aGlobalCharLayer, CONST_CAST(CStyleList*, &aStyleList));
@@ -159,7 +198,15 @@ if the text object supports fields.
 which should rarely need to be changed.
 @return The new rich text object. */
 	{
+	if (aGlobalParaLayer == NULL)
+	    {
+	    OstTrace0( TRACE_FATAL, DUP4_CRICHTEXT_NEWL, "ENullFormatLayerHandle" );
+	    }
 	__ASSERT_ALWAYS(aGlobalParaLayer != NULL, Panic(ENullFormatLayerHandle));
+	if (aGlobalCharLayer == NULL)
+	    {
+	    OstTrace0( TRACE_FATAL, DUP5_CRICHTEXT_NEWL, "ENullFormatLayerHandle" );
+	    }
 	__ASSERT_ALWAYS(aGlobalCharLayer != NULL, Panic(ENullFormatLayerHandle));
 
 	CRichText* self = new(ELeave) CRichText(aGlobalParaLayer, aGlobalCharLayer);
@@ -205,8 +252,20 @@ which should rarely need to be changed.
 	{
 	// Restore a new rich text from the specified stream, that uses the specified global layers, and the
 	// specified picture header factory and store, if this rich text supports pictures.
+	if (!aPictureFactory && aStoreResolver)
+	    {
+	    OstTrace0( TRACE_FATAL, DUP6_CRICHTEXT_NEWL, "EInvalidPictureFactorySettings" );
+	    }
 	__ASSERT_ALWAYS(!(!aPictureFactory && aStoreResolver), Panic(EInvalidPictureFactorySettings));
+	if (aGlobalParaLayer == NULL)
+	    {
+	    OstTrace0( TRACE_FATAL, DUP7_CRICHTEXT_NEWL, "ENullFormatLayerHandle" );
+	    }
 	__ASSERT_ALWAYS(aGlobalParaLayer != NULL, Panic(ENullFormatLayerHandle));
+	if (aGlobalCharLayer == NULL)
+	    {
+	    OstTrace0( TRACE_FATAL, DUP8_CRICHTEXT_NEWL, "ENullFormatLayerHandle" );
+	    }
 	__ASSERT_ALWAYS(aGlobalCharLayer != NULL, Panic(ENullFormatLayerHandle));
 
 	CRichText* self = new(ELeave) CRichText(aGlobalParaLayer, aGlobalCharLayer);
@@ -383,8 +442,20 @@ TStreamId CRichText::DoCopyToStoreL(CStreamStore& aStore,TInt aPos,TInt aLength,
 	__TEST_INVARIANT;
 
 	TInt documentLength = DocumentLength();
+	if (aPos < 0 || aPos > documentLength)
+	    {
+	    OstTrace0( TRACE_FATAL, CRICHTEXT_DOCOPYTOSTOREL, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos >= 0 && aPos <= documentLength,Panic(ECharPosBeyondDocument));
+	if (aLength < 0)
+	    {
+	    OstTrace0( TRACE_FATAL, DUP1_CRICHTEXT_DOCOPYTOSTOREL, "ECopyToClipboardNegativeLength" );
+	    }
 	__ASSERT_ALWAYS(aLength >= 0,Panic(ECopyToClipboardNegativeLength));
+	if (aPos + aLength > documentLength)
+	    {
+	    OstTrace0( TRACE_FATAL, DUP2_CRICHTEXT_DOCOPYTOSTOREL, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos + aLength <= documentLength,Panic(ECharPosBeyondDocument));
 
 	if (aLength == 0)
@@ -490,6 +561,10 @@ TInt CRichText::DoPasteRtFromStoreL(const CStreamStore& aStore, const CStreamDic
 //
 	{
 	__TEST_INVARIANT;
+	if (aPos > DocumentLength())
+	    {
+	    OstTrace0( TRACE_FATAL, CRICHTEXT_DOPASTERTFROMSTOREL, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos <= DocumentLength(), Panic(ECharPosBeyondDocument));
 
 	TUid type = KClipboardUidTypeRichTextWithStyles;
@@ -532,12 +607,17 @@ TInt CRichText::PasteRichTextFromStoreL(const CStreamStore& aStore, const CStrea
 		CreateAndGenerateMarkupComponentL();  // create the index if it does not already exist
 	TStreamId id = aDictionary.At(KClipboardUidTypePlainText);
 // ASSERT: We have rich text, so the plain text stream must exist.
+	if (id == KNullStreamId)
+	    {
+	    OstTrace0( TRACE_FATAL, CRICHTEXT_PASTERICHTEXTFROMSTOREL, "EClipboardIntegrity" );
+	    }
 	__ASSERT_ALWAYS(id != KNullStreamId,Panic(EClipboardIntegrity));
 	TInt consumed = CPlainText::DoPasteFromStoreL(aStore, id, aPos);
 	TRAPD(ret, CompletePasteRichTextFromStoreL(aStore, aRichTextStreamId, aPos, aStylePasteMode));
 	if (ret != KErrNone)
 		{
 		CPlainText::Delete(aPos,consumed);
+		OstTrace1( TRACE_FATAL, DUP1_CRICHTEXT_PASTERICHTEXTFROMSTOREL, "Leave code=%d", ret );
 		User::Leave(ret);
 		}
 	return consumed;
@@ -625,12 +705,34 @@ panic occurs.
 @param aBuf The descriptor to insert. */
 	{
 	__TEST_INVARIANT;
+	if (aPos < 0 || aPos > DocumentLength())
+	    {
+	    OstTrace0( TRACE_FATAL, CRICHTEXT_INSERTL, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos >= 0 && aPos <= DocumentLength(), Panic(ECharPosBeyondDocument));
+	if (aChar == EPictureCharacter)
+	    {
+	    OstTrace0( TRACE_FATAL, DUP1_CRICHTEXT_INSERTL, "ENonOverloadedInsertCalledWithPictureCharacter" );
+	    }
 	__ASSERT_ALWAYS(aChar!= EPictureCharacter, Panic(ENonOverloadedInsertCalledWithPictureCharacter));
 
-	TBuf<1> content;
-	content.Append(aChar);
-	RtInsertL(aPos, content);
+	if (aChar < 0x10000)
+		{
+		TBuf<1> content;
+		content.Append(aChar);
+		RtInsertL(aPos, content);
+		}
+	else
+		{
+		TText16 high = TChar::GetHighSurrogate(aChar);
+		TText16 low = TChar::GetLowSurrogate(aChar);
+		RDebug::Print(_L("CRichText::InsertL(), %X expand to %X %X."), TUint(aChar), high, low);
+		
+		TBuf<2> content;
+		content.Append(high);
+		content.Append(low);
+		RtInsertL(aPos, content);
+		}
 
 	__TEST_INVARIANT;
 	}
@@ -655,6 +757,10 @@ EXPORT_C void CRichText::RtInsertL(TInt aPos, const TDesC& aBuf)
 //
 	{
 	__TEST_INVARIANT;
+	if (aPos < 0 || aPos > DocumentLength())
+	    {
+	    OstTrace0( TRACE_FATAL, CRICHTEXT_RTINSERTL, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos >= 0 && aPos <= DocumentLength(), Panic(ECharPosBeyondDocument));
 
 	int length = aBuf.Length();
@@ -694,6 +800,10 @@ be valid, or a panic occurs.
 and information about the picture. */
 	{
 	__TEST_INVARIANT;
+	if (aPos < 0 || aPos > DocumentLength())
+	    {
+	    OstTrace0( TRACE_FATAL, DUP2_CRICHTEXT_INSERTL, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos >= 0 && aPos <= DocumentLength(), Panic(ECharPosBeyondDocument));
 
 	CleanupStack::PushL(aHeader.iPicture);
@@ -744,8 +854,20 @@ may have changed. */
 	// Delete commences at, and includes, character position aPos.
 	__TEST_INVARIANT;
 
+	if (aPos < 0 || aPos > DocumentLength())
+	    {
+	    OstTrace0( TRACE_FATAL, CRICHTEXT_DELETEL, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos >= 0 && aPos <= DocumentLength(), Panic(ECharPosBeyondDocument));
+	if (aLength < 0)
+	    {
+	    OstTrace0( TRACE_FATAL, DUP1_CRICHTEXT_DELETEL, "EDebugDeleteZeroLength" );
+	    }
 	__ASSERT_ALWAYS(aLength >= 0, Panic(EDebugDeleteZeroLength));
+	if (aPos + (aLength - 1) > DocumentLength())
+	    {
+	    OstTrace0( TRACE_FATAL, DUP2_CRICHTEXT_DELETEL, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos + (aLength - 1) <= DocumentLength(), Panic(ECharPosBeyondDocument));
 
 	TBool requireMerge = EFalse;
@@ -783,7 +905,15 @@ Must be a valid position or a panic occurs.
 	// Store the length of the text before we commence with deletions.
 	TInt initialDocLen=DocumentLength();
 
+	if (aPos < 0 || aPos > initialDocLen)
+	    {
+	    OstTrace0( TRACE_FATAL, CRICHTEXT_DELETEPARAGRAPH, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos >= 0 && aPos <= initialDocLen, Panic(ECharPosBeyondDocument));
+	if (aPos + aLength > initialDocLen + 1)
+	    {
+	    OstTrace0( TRACE_FATAL, DUP1_CRICHTEXT_DELETEPARAGRAPH, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos + aLength <= initialDocLen + 1, Panic(ECharPosBeyondDocument));
 
 	if (aLength <= 0)
@@ -833,7 +963,15 @@ must be less than the document length, or a panic occurs. */
 	// Guaranteed not to leave if this pre-condition holds true.
 	__TEST_INVARIANT;
 
+	if (aPos < 0 || aPos > DocumentLength())
+	    {
+	    OstTrace0( TRACE_FATAL, CRICHTEXT_DELETEFROMPARAGRAPH, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos >= 0 && aPos <= DocumentLength(), Panic(ECharPosBeyondDocument));
+	if (aPos + (aLength - 1) > DocumentLength())
+	    {
+	    OstTrace0( TRACE_FATAL, DUP1_CRICHTEXT_DELETEFROMPARAGRAPH, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos + (aLength - 1) <= DocumentLength(), Panic(ECharPosBeyondDocument));
 
 	if (aLength <= 0)
@@ -920,6 +1058,10 @@ which it is located.
 	// of this paragraph.  If aPos is already on a paragraph boundary then do nothing.
 	//
 	__TEST_INVARIANT;
+	if (aPos < 0 || aPos > DocumentLength())
+	    {
+	    OstTrace0( TRACE_FATAL, CRICHTEXT_PARAGRAPHNUMBERFORPOS, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos >= 0 && aPos <= DocumentLength(), Panic(ECharPosBeyondDocument));
 
 	if (IndexPresent())
@@ -958,6 +1100,10 @@ void CancelInsertCharFormat(TAny* aCRichTextIndex)
 
 void CRichText::SetExtendedInsertCharFormatL(const TCharFormatX& aFormat, const TCharFormatXMask& aMask, TInt aPos)
 	{
+	if (aPos < 0 || aPos > DocumentLength())
+	    {
+	    OstTrace0( TRACE_FATAL, CRICHTEXT_SETEXTENDEDINSERTCHARFORMATL, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos >= 0 && aPos <= DocumentLength(), Panic(ECharPosBeyondDocument));
 	CreateAndGenerateMarkupComponentL();
 	CRichTextIndex* index = iIndex.AsPtr();
@@ -1040,8 +1186,20 @@ EFalse if there has been no paragraph merge. */
 	// immediately inserted.
 	//
 	__TEST_INVARIANT;
+	if (aPos < 0 || aPos > DocumentLength())
+	    {
+	    OstTrace0( TRACE_FATAL, CRICHTEXT_DELSETINSERTCHARFORMATL, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos >= 0 && aPos <= DocumentLength(), Panic(ECharPosBeyondDocument));
+	if (aLength < 0)
+	    {
+	    OstTrace0( TRACE_FATAL, DUP1_CRICHTEXT_DELSETINSERTCHARFORMATL, "EDebugDeleteZeroLength" );
+	    }
 	__ASSERT_ALWAYS(aLength >= 0, Panic(EDebugDeleteZeroLength));
+	if (aPos + (aLength - 1) > DocumentLength())
+	    {
+	    OstTrace0( TRACE_FATAL, DUP2_CRICHTEXT_DELSETINSERTCHARFORMATL, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos + (aLength - 1) <= DocumentLength(), Panic(ECharPosBeyondDocument));
 
 	TBool parasMerged = EFalse;
@@ -1098,8 +1256,20 @@ characters in the range aPos to aPos+(aLength-1).
 	// character position aPos to aPos+aLength-1.
 	//
 	__TEST_INVARIANT;
+	if (aPos < 0 || aPos > DocumentLength())
+	    {
+	    OstTrace0( TRACE_FATAL, CRICHTEXT_APPLYPARAFORMATL, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos >= 0 && aPos <= DocumentLength(), Panic(ECharPosBeyondDocument));
+	if (aLength < 0)
+	    {
+	    OstTrace0( TRACE_FATAL, DUP1_CRICHTEXT_APPLYPARAFORMATL, "EApplyParaFormatNegativeLength" );
+	    }
 	__ASSERT_ALWAYS(aLength >= 0,Panic(EApplyParaFormatNegativeLength));
+	if (aPos + (aLength - 1) > DocumentLength())
+	    {
+	    OstTrace0( TRACE_FATAL, DUP2_CRICHTEXT_APPLYPARAFORMATL, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos + (aLength - 1) <= DocumentLength(), Panic(ECharPosBeyondDocument));
 
 	CreateAndGenerateMarkupComponentL();
@@ -1133,8 +1303,20 @@ length is zero, the function has the same effect as SetInsertCharFormatL(). */
 	__TEST_INVARIANT;
 	
 	TInt document_length = DocumentLength();
+	if (aPos < 0)
+	    {
+	    OstTrace0( TRACE_FATAL, CRICHTEXT_APPLYCHARFORMATL, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos >= 0,Panic(ECharPosBeyondDocument));
+	if (aLength < 0)
+	    {
+	    OstTrace0( TRACE_FATAL, DUP1_CRICHTEXT_APPLYCHARFORMATL, "EApplyCharFormatNegativeLength" );
+	    }
 	__ASSERT_ALWAYS(aLength >= 0,Panic(EApplyCharFormatNegativeLength));
+	if (aPos + aLength - 1 > document_length)
+	    {
+	    OstTrace0( TRACE_FATAL, DUP2_CRICHTEXT_APPLYCHARFORMATL, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos + aLength - 1 <= document_length,Panic(ECharPosBeyondDocument));
 
 	//If some characters are highlighted AND current position + highlighted txt = document length	
@@ -1156,8 +1338,20 @@ length is zero, the function has the same effect as SetInsertCharFormatL(). */
 void CRichText::ApplyExtendedCharFormatL(const TCharFormatX& aFormat,const TCharFormatXMask& aMask,TInt aPos,TInt aLength)
 	{
 	TInt document_length = DocumentLength();
+	if (aPos < 0)
+	    {
+	    OstTrace0( TRACE_FATAL, CRICHTEXT_APPLYEXTENDEDCHARFORMATL, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos >= 0,Panic(ECharPosBeyondDocument));
+	if (aLength < 0)
+	    {
+	    OstTrace0( TRACE_FATAL, DUP1_CRICHTEXT_APPLYEXTENDEDCHARFORMATL, "EApplyCharFormatNegativeLength" );
+	    }
 	__ASSERT_ALWAYS(aLength >= 0,Panic(EApplyCharFormatNegativeLength));
+	if (aPos + aLength - 1 > document_length)
+	    {
+	    OstTrace0( TRACE_FATAL, DUP2_CRICHTEXT_APPLYEXTENDEDCHARFORMATL, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos + aLength - 1 <= document_length,Panic(ECharPosBeyondDocument));
 	
 	DoApplyExtendedCharFormatL(aFormat, aMask, aPos, aLength);
@@ -1214,9 +1408,25 @@ when the style is applied. */
 	// character positions aPos to aPos+aLength-1.
 	//
 	__TEST_INVARIANT;
+	if (aPos < 0 || aPos > DocumentLength())
+	    {
+	    OstTrace0( TRACE_FATAL, CRICHTEXT_APPLYPARAGRAPHSTYLEL, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos >= 0 && aPos <= DocumentLength(), Panic(ECharPosBeyondDocument));
+	if (aLength < 0)
+	    {
+	    OstTrace0( TRACE_FATAL, DUP1_CRICHTEXT_APPLYPARAGRAPHSTYLEL, "EApplyParaStyleNegativeLength" );
+	    }
 	__ASSERT_ALWAYS(aLength >= 0, Panic(EApplyParaStyleNegativeLength));
+	if (aPos + (aLength - 1) > DocumentLength())
+	    {
+	    OstTrace0( TRACE_FATAL, DUP2_CRICHTEXT_APPLYPARAGRAPHSTYLEL, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos + (aLength - 1) <= DocumentLength(), Panic(ECharPosBeyondDocument));
+	if (!StyleListPresent())
+	    {
+	    OstTrace0( TRACE_FATAL, DUP3_CRICHTEXT_APPLYPARAGRAPHSTYLEL, "ERichTextNotSetForUsingStyles" );
+	    }
 	__ASSERT_ALWAYS(StyleListPresent(), Panic(ERichTextNotSetForUsingStyles));
 
 	CreateAndGenerateMarkupComponentL();
@@ -1248,6 +1458,10 @@ be tested for using StyleListPresent()).
 	// Update the rich text index following the change of an applied paragraph style.
 	//
 	__TEST_INVARIANT;
+	if (!StyleListPresent())
+	    {
+	    OstTrace0( TRACE_FATAL, CRICHTEXT_NOTIFYSTYLECHANGEDL, "ERichTextNotSetForUsingStyles" );
+	    }
 	__ASSERT_ALWAYS(StyleListPresent(), Panic(ERichTextNotSetForUsingStyles));
 
 	CreateAndGenerateMarkupComponentL();
@@ -1271,8 +1485,20 @@ document position aPos. Its type (returned by CParaFormatLayer::Type())
 indicates whether this object is a style, or just a paragraph format layer. */
 	{
 	__TEST_INVARIANT;
+	if (aPos < 0 || aPos > DocumentLength())
+	    {
+	    OstTrace0( TRACE_FATAL, CRICHTEXT_PARAGRAPHSTYLE, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos >= 0 && aPos <= DocumentLength(), Panic(ECharPosBeyondDocument));
+	if (aLength < 0)
+	    {
+	    OstTrace0( TRACE_FATAL, DUP1_CRICHTEXT_PARAGRAPHSTYLE, "EParagraphStyleNegativeLength" );
+	    }
 	__ASSERT_ALWAYS(aLength >= 0,Panic(EParagraphStyleNegativeLength));
+	if (aPos + (aLength - 1) > DocumentLength())
+	    {
+	    OstTrace0( TRACE_FATAL, DUP2_CRICHTEXT_PARAGRAPHSTYLE, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos + (aLength - 1) <= DocumentLength(), Panic(ECharPosBeyondDocument));
 
 	if (IndexPresent())
@@ -1323,8 +1549,20 @@ the range goes beyond the end of the document
 
 	__TEST_INVARIANT;
 
+	if (aPos < 0 || aPos > DocumentLength())
+	    {
+	    OstTrace0( TRACE_FATAL, CRICHTEXT_REMOVESPECIFICPARAFORMATL, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos >= 0 && aPos <= DocumentLength(), Panic(ECharPosBeyondDocument));
+	if (aLength < 0)
+	    {
+	    OstTrace0( TRACE_FATAL, DUP1_CRICHTEXT_REMOVESPECIFICPARAFORMATL, "ERemoveSpecificParaFormatNegativeLength" );
+	    }
 	__ASSERT_ALWAYS(aLength >= 0, Panic(ERemoveSpecificParaFormatNegativeLength));
+	if (aPos + (aLength - 1) > DocumentLength())
+	    {
+	    OstTrace0( TRACE_FATAL, DUP2_CRICHTEXT_REMOVESPECIFICPARAFORMATL, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos + (aLength - 1) <= DocumentLength(), Panic(ECharPosBeyondDocument));
 
 	if (IndexPresent())
@@ -1356,8 +1594,20 @@ function has no effect. */
 	__TEST_INVARIANT;
 	
 	TInt document_length = DocumentLength();
+	if (aPos < 0 || aPos > DocumentLength())
+	    {
+	    OstTrace0( TRACE_FATAL, CRICHTEXT_REMOVESPECIFICCHARFORMATL, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos >= 0 && aPos <= DocumentLength(), Panic(ECharPosBeyondDocument));
+	if (aLength < 0)
+	    {
+	    OstTrace0( TRACE_FATAL, DUP1_CRICHTEXT_REMOVESPECIFICCHARFORMATL, "ERemoveSpecificParaFormatNegativeLength" );
+	    }
 	__ASSERT_ALWAYS(aLength >= 0, Panic(ERemoveSpecificParaFormatNegativeLength));
+	if (aPos + (aLength - 1) > DocumentLength())
+	    {
+	    OstTrace0( TRACE_FATAL, DUP2_CRICHTEXT_REMOVESPECIFICCHARFORMATL, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos + (aLength - 1) <= DocumentLength(), Panic(ECharPosBeyondDocument));
 	
 	// in correspondance to INC097216, character format removing considers the height of end of document
@@ -1406,6 +1656,10 @@ void CRichText::GetTextAndExtendedFormat(TPtrC& aText,TCharFormatX& aFormat,TInt
 	{
 	__TEST_INVARIANT;
 	TInt documentLength = DocumentLength();
+	if (aPos < 0 || aPos > documentLength)
+	    {
+	    OstTrace0( TRACE_FATAL, CRICHTEXT_GETTEXTANDEXTENDEDFORMAT, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos >= 0 && aPos <= documentLength, Panic(ECharPosBeyondDocument));
 	if (!IndexPresent())
 		{
@@ -1429,6 +1683,10 @@ EXPORT_C TInt CRichText::GetPictureSizeInTwips(TSize& aSize, TInt aPos) const
 KErrNone if there is. */
 	{
 	__TEST_INVARIANT;
+	if (aPos < 0 || aPos > DocumentLength())
+	    {
+	    OstTrace0( TRACE_FATAL, CRICHTEXT_GETPICTURESIZEINTWIPS, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos >= 0 && aPos <= DocumentLength(), Panic(ECharPosBeyondDocument));
 
 	if (IndexPresent())
@@ -1458,6 +1716,10 @@ and the second argument is MLayDoc::EForceLoadFalse. */
 	__ETEXT_WATCH(PICTURE_HANDLE);
 
 	__TEST_INVARIANT;
+	if (aPos<0 || aPos>DocumentLength())
+	    {
+	    OstTrace0( TRACE_FATAL, CRICHTEXT_PICTUREHANDLEL, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos>=0 && aPos<=DocumentLength(),Panic(ECharPosBeyondDocument));
 
 	if (IndexPresent())
@@ -1480,6 +1742,10 @@ formatting.
 	__ETEXT_WATCH(GET_PARAGRAPH_FORMAT)
 
 	__TEST_INVARIANT;
+	if (aPos < 0 || aPos > DocumentLength())
+	    {
+	    OstTrace0( TRACE_FATAL, CRICHTEXT_GETPARAGRAPHFORMATL, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos >= 0 && aPos <= DocumentLength(), Panic(ECharPosBeyondDocument));
 
 	if (!IndexPresent())
@@ -1503,6 +1769,10 @@ EXPORT_C void CRichText::GetSpecificParagraphFormatL(CParaFormat* aFormat,
 	__ETEXT_WATCH(GET_PARAGRAPH_FORMAT)
 
 	__TEST_INVARIANT;
+	if (aPos < 0 || aPos > DocumentLength())
+	    {
+	    OstTrace0( TRACE_FATAL, CRICHTEXT_GETSPECIFICPARAGRAPHFORMATL, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos >= 0 && aPos <= DocumentLength(), Panic(ECharPosBeyondDocument));
 
 	aFormat->Reset();
@@ -1541,8 +1811,20 @@ bullets and borders are not written to aFormat. */
 	// Application: seeding paragraph formatting dialogs.
 	//
 	__TEST_INVARIANT;
+	if (aPos < 0 || aPos > DocumentLength())
+	    {
+	    OstTrace0( TRACE_FATAL, CRICHTEXT_GETPARAFORMATL, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos >= 0 && aPos <= DocumentLength(), Panic(ECharPosBeyondDocument));
+	if (aLength < 0)
+	    {
+	    OstTrace0( TRACE_FATAL, DUP1_CRICHTEXT_GETPARAFORMATL, "EGetParaFormatNegativeLength" );
+	    }
 	__ASSERT_ALWAYS(aLength >= 0, Panic(EGetParaFormatNegativeLength));
+	if (aPos + aLength > DocumentLength())
+	    {
+	    OstTrace0( TRACE_FATAL, DUP2_CRICHTEXT_GETPARAFORMATL, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos + aLength <= DocumentLength(), Panic(ECharPosBeyondDocument));
 
 	if (IndexPresent())
@@ -1589,8 +1871,20 @@ void CRichText::GetExtendedCharFormat(TCharFormatX& aFormat, TCharFormatXMask& a
 	{
 	__TEST_INVARIANT;
 	int document_length = DocumentLength();
+	if (aPos < 0 || aPos > document_length)
+	    {
+	    OstTrace0( TRACE_FATAL, CRICHTEXT_GETEXTENDEDCHARFORMAT, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos >= 0 && aPos <= document_length, Panic(ECharPosBeyondDocument));
+	if (aLength < 0)
+	    {
+	    OstTrace0( TRACE_FATAL, DUP1_CRICHTEXT_GETEXTENDEDCHARFORMAT, "EGetCharFormatNegativeLength" );
+	    }
 	__ASSERT_ALWAYS(aLength >= 0, Panic(EGetCharFormatNegativeLength));
+	if (aPos + aLength - 1 > document_length)
+	    {
+	    OstTrace0( TRACE_FATAL, DUP2_CRICHTEXT_GETEXTENDEDCHARFORMAT, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos + aLength - 1 <= document_length, Panic(ECharPosBeyondDocument));
 
 	if (IndexPresent())
@@ -1612,6 +1906,10 @@ void CRichText::GetSpecificCharFormatLeftRight(TCharFormat& aFormat,
 
 	__TEST_INVARIANT;
 
+	if (aPos < 0 || aPos > DocumentLength())
+	    {
+	    OstTrace0( TRACE_FATAL, CRICHTEXT_GETSPECIFICCHARFORMATLEFTRIGHT, "ECharPosBeyondDocument" );
+	    }
 	__ASSERT_ALWAYS(aPos >= 0 && aPos <= DocumentLength(), Panic(ECharPosBeyondDocument));
 
 	if (IndexPresent())
@@ -1769,6 +2067,10 @@ void CRichText::DoAppendTakingSolePictureOwnershipL(const CRichText& aSource)
 
 	if (IndexPresent())
 		{
+		if (!aSource.IndexPresent())
+		    {
+		    OstTrace0( TRACE_DUMP, DUP1_CRICHTEXT_DOAPPENDTAKINGSOLEPICTUREOWNERSHIPL, "Invariant" );
+		    }
 		__ASSERT_DEBUG(aSource.IndexPresent(), User::Invariant());       // PrepareAppend should have sorted this
 
 		TGlobalLayerInfoAppend info(GlobalParaFormatLayer(), GlobalCharFormatLayer(), aSource.GlobalParaFormatLayer(), aSource.GlobalCharFormatLayer());

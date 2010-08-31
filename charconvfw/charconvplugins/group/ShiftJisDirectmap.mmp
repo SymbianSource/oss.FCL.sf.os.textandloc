@@ -18,11 +18,6 @@
 *
 */
 
-
-
-#ifdef EKA2
-///////////////////////////////////////////////////////////////
-// 3.0 Code
 TARGET               ShiftJisDirectmap.dll
 TARGETTYPE           PLUGIN
 CAPABILITY           All -Tcb
@@ -60,42 +55,3 @@ end
 
 SMPSAFE
 
-///////////////////////////////////////////////////////////////
-#else // Not EKA2
-///////////////////////////////////////////////////////////////
-// 2.8 Code
-target          ShiftJisDirectmap.CPL
-targetpath      /system/charconv
-targettype      dll
-uid             0x1000601a 0x101F8691
-
-SOURCEPATH			../src/plugins
-USERINCLUDE ../inc
-source          ShiftJisDirectmap.CPP
-
-library         euser.lib
-//use CnvShiftJis::ReplacementForUnconvertibleUnicodeCharacters()
-//library         shiftjis_kddiau_shared.lib
-library         convutils.lib
-library         jisx0201_2.lib
-library         jisx0208_2.lib
-library         CnvShiftJisDirectmap.lib
-
-SOURCEPATH		../resource
-start resource  ShiftJisDirectmap.RSS
-lang            sc
-end
-
-#if defined(ARMCC)
-deffile         /epoc32/include/def/EABI/CONVPLUG.DEF 
-#elif defined(WINSCW)
-deffile         /epoc32/release/winscw/CONVPLUG.DEF 
-#elif defined(WINS)
-deffile         /epoc32/release/wins/CONVPLUG.DEF 
-#else
-deffile         /epoc32/release/marm/CONVPLUG.DEF 
-#endif
-
-CAPABILITY      CAP_GENERAL_DLL
-///////////////////////////////////////////////////////////////
-#endif

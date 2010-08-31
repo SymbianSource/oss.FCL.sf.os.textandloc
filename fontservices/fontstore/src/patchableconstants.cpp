@@ -25,6 +25,13 @@ to/from.
  */
 EXPORT_C extern const TInt8 KLinkedFontDrive = 0x63; //c in ASCII
 
+/**
+@internalTechnology
+
+The maximum size of memory used by the font table cache and the glyph outline cache.
+ */
+EXPORT_C extern const TUint32 KFontTable_GlyphOutline_CacheMaxMem = 4 * 0x100000; // 4 Mega bytes.
+
 #if (__ARMCC_VERSION <= 310000)
 #include "FNTSTORE.H"
 #endif

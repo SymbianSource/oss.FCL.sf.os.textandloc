@@ -15,6 +15,11 @@
 *
 */
 
+#include "TMSTD.H"
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "TmBufferBaseTraces.h"
+#endif
 
 #include "TMSTD.H"
 
@@ -26,7 +31,10 @@ CTmBufferBase::~CTmBufferBase()
 void CTmBufferBase::Truncate(TInt aLength)
 	{
 	if (aLength > iLength || aLength < 0)
+	    {
+	    OstTrace0( TRACE_FATAL, CTMBUFFERBASE_TRUNCATE, "EBadTruncationLength" );
 		TmPanic(EBadTruncationLength);
+		}
 	iLength = aLength;
 	}
 

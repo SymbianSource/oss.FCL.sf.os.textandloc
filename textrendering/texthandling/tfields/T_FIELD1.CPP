@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 1997-2009 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 1997-2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -16,22 +16,32 @@
 */
 
 
-#include <e32test.h>
+#include "T_FIELD1.h"
 #include "TESTFAC.H"
 #include <fldset.h>
 #include <flddef.h>
+
+#define test(cond)											\
+	{														\
+	TBool __bb = (cond);									\
+	TEST(__bb);												\
+	if (!__bb)												\
+		{													\
+		ERR_PRINTF1(_L("ERROR: Test Failed"));				\
+		User::Leave(1);										\
+		}													\
+	}
 
 #define UNUSED_VAR(a) a = a
 
 const TInt KTestCleanupStack=0x40;
 
-LOCAL_D RTest test(_L("Testing Fields"));
 LOCAL_D CTrapCleanup* TheTrapCleanup;
 LOCAL_D CTextFieldSet* TheFieldSet;
 LOCAL_D TTestFieldFactory* TheFactory;
 
 
-LOCAL_C TBool UpdateField(TInt aPos)
+TBool CT_FIELD1::UpdateField(TInt aPos)
 	{
 	// find out which field aPos is in
 	TFindFieldInfo info;
@@ -51,11 +61,11 @@ LOCAL_C TBool UpdateField(TInt aPos)
 	}
 
 
-LOCAL_C void test1()
+void CT_FIELD1::test1()
 // Tests that all CTextFieldSet methods exist as specced
 //
 	{
-	test.Next(_L("- Testing that all CTextFieldSet methods exist"));
+	INFO_PRINTF1(_L("- Testing that all CTextFieldSet methods exist"));
 	// inform TheFieldSet about an imaginary insertion, then an imaginary deletion
 	TheFieldSet->NotifyInsertion(0,10); // pos=0, len=10
 	TheFieldSet->NotifyDeletion(2,5); // pos=2, len=5
@@ -83,11 +93,11 @@ LOCAL_C void test1()
 	}
 
 
-LOCAL_C void test2()
+void CT_FIELD1::test2()
 // Tests inserting, updating and removing a field
 //
 	{
-	test.Next(_L("- Testing field insertion, update and removal"));
+	INFO_PRINTF1(_L("- Testing field insertion, update and removal"));
 		test(TheFieldSet->CharCount()==0);
 		test(TheFieldSet->FieldCount()==0);
 	// insert a field
@@ -141,12 +151,12 @@ LOCAL_C void test2()
 	}
 
 
-LOCAL_C void test3()
+void CT_FIELD1::test3()
 // Tests InField() in "all" the oddball situations
 //
 	{
 	TFindFieldInfo info;
-	test.Next(_L("- Testing InField() calls"));
+	INFO_PRINTF1(_L("- Testing InField() calls"));
 		test(TheFieldSet->CharCount()==0);
 		test(TheFieldSet->FieldCount()==0);
 	// Zero length doc
@@ -232,12 +242,12 @@ LOCAL_C void test3()
 	}
 
 
-LOCAL_C void test4()
+void CT_FIELD1::test4()
 // Tests Insertion and deletion of text around and into fields
 //
 	{
 	TFindFieldInfo info;
-	test.Next(_L("- Testing insertion and deletion of text around and into fields"));
+	INFO_PRINTF1(_L("- Testing insertion and deletion of text around and into fields"));
 		test(TheFieldSet->CharCount()==0);
 		test(TheFieldSet->FieldCount()==0);
 	// Insert some text
@@ -389,11 +399,11 @@ LOCAL_C void test4()
 	}
 
 
-LOCAL_C void test5()
+void CT_FIELD1::test5()
 // Tests inserting, updating and removing a CDateTimeField
 //
 	{
-	test.Next(_L("- Testing CDateTimeField"));
+	INFO_PRINTF1(_L("- Testing CDateTimeField"));
 		test(TheFieldSet->CharCount()==0);
 		test(TheFieldSet->FieldCount()==0);
 	// insert a field with default format
@@ -413,20 +423,20 @@ LOCAL_C void test5()
 	CleanupStack::PushL(miniBuf);
 		test(ret==KErrNone);
 	TPtr buf = miniBuf->Des();
-	test.Printf(_L("  The field value is: "));
-		test.Printf(buf);
-		test.Printf(_L("\n"));
+	INFO_PRINTF1(_L("  The field value is: "));
+	INFO_PRINTF1(buf);
+	INFO_PRINTF1(_L("\n"));
 	// reset the field array
 	TheFieldSet->Reset();
 	CleanupStack::PopAndDestroy(); // miniBuf
 	}
 
 
-LOCAL_C void test6()
+void CT_FIELD1::test6()
 // Tests CDateTimeFields with non-default formatting
 //
 	{
-	test.Next(_L("- Testing CDateTimeField with non-default formatting"));
+	INFO_PRINTF1(_L("- Testing CDateTimeField with non-default formatting"));
 		test(TheFieldSet->CharCount()==0);
 		test(TheFieldSet->FieldCount()==0);
 	// create a field and set format
@@ -449,20 +459,20 @@ LOCAL_C void test6()
 	CleanupStack::PushL(miniBuf);
 		test(ret==KErrNone);
 	TPtr buf = miniBuf->Des();
-	test.Printf(_L("  The field value is: "));
-		test.Printf(buf);
-		test.Printf(_L("\n"));
+	INFO_PRINTF1(_L("  The field value is: "));
+	INFO_PRINTF1(buf);
+	INFO_PRINTF1(_L("\n"));
 	// reset the field array
 	TheFieldSet->Reset();
 	CleanupStack::PopAndDestroy(); // miniBuf
 	}
 
 
-LOCAL_C void test7()
+void CT_FIELD1::test7()
 // Tests inserting, updating and removing a CPageNumberField
 //
 	{
-	test.Next(_L("- Testing CPageNumberField"));
+	INFO_PRINTF1(_L("- Testing CPageNumberField"));
 		test(TheFieldSet->CharCount()==0);
 		test(TheFieldSet->FieldCount()==0);
 	// insert a field with default format
@@ -482,20 +492,20 @@ LOCAL_C void test7()
 	CleanupStack::PushL(miniBuf);
 		test(ret==KErrNone);
 	TPtr buf = miniBuf->Des();
-	test.Printf(_L("  The field value is: "));
-		test.Printf(buf);
-		test.Printf(_L("\n"));
+	INFO_PRINTF1(_L("  The field value is: "));
+	INFO_PRINTF1(buf);
+	INFO_PRINTF1(_L("\n"));
 	// reset the field array
 	TheFieldSet->Reset();
 	CleanupStack::PopAndDestroy(); // miniBuf
 	}
 
 
-LOCAL_C void test8()
+void CT_FIELD1::test8()
 // Tests inserting, updating and removing a CPageNumberField
 //
 	{
-	test.Next(_L("- Testing CFileNameField"));
+	INFO_PRINTF1(_L("- Testing CFileNameField"));
 		test(TheFieldSet->CharCount()==0);
 		test(TheFieldSet->FieldCount()==0);
 	// insert a field with default format
@@ -515,9 +525,9 @@ LOCAL_C void test8()
 	CleanupStack::PushL(miniBuf);
 		test(ret==KErrNone);
 	TPtr buf = miniBuf->Des();
-	test.Printf(_L("  The field value is: "));
-		test.Printf(buf);
-		test.Printf(_L("\n"));
+	INFO_PRINTF1(_L("  The field value is: "));
+	INFO_PRINTF1(buf);
+	INFO_PRINTF1(_L("\n"));
 	// reset the field array
 	TheFieldSet->Reset();
 	CleanupStack::PopAndDestroy(); // miniBuf
@@ -528,9 +538,9 @@ LOCAL_C void test8()
 Added to test the fix to 'EDNHARN-4NVDHC: Text fields are not removed correctly in edwin'. Deletion
 of two fields failed to delete the second one.
 */
-static void test_multiple_fields()
+void CT_FIELD1::test_multiple_fields()
 	{
-	test.Next(_L(" - testing multiple fields"));
+	INFO_PRINTF1(_L(" - testing multiple fields"));
 	test(TheFieldSet->CharCount()==0);
 	test(TheFieldSet->FieldCount()==0);
 
@@ -564,11 +574,11 @@ static void test_multiple_fields()
 	}
 
 
-LOCAL_C void testFields()
+void CT_FIELD1::testFields()
 // Test the fields dll.
 //
     {
-	test.Start(_L("Testing Fields"));
+	INFO_PRINTF1(_L("Testing Fields"));
 	
 	// instantiate the  FieldSet and use the default factory
 	TheFactory = new(ELeave) TTestFieldFactory();
@@ -601,7 +611,7 @@ LOCAL_C void testFields()
     }
 
 
-LOCAL_C void setupCleanup()
+void CT_FIELD1::setupCleanup()
 //
 // Initialise the cleanup stack.
 //
@@ -617,25 +627,30 @@ LOCAL_C void setupCleanup()
 		});
 	}
 
-
-GLDEF_C TInt E32Main()
-//
-// Test the streaming framework.
-//
+CT_FIELD1::CT_FIELD1()
     {
+    SetTestStepName(KTestStep_T_FIELD1);
+    }
 
-	test.Title();
-	
-	__UHEAP_MARK;
+TVerdict CT_FIELD1::doTestStepL()
+    {
+	INFO_PRINTF1(_L("Testing Fields"));
+    SetTestStepResult(EFail);
+
+    __UHEAP_MARK;
+
 	setupCleanup();
-	TRAPD(r,testFields());
-    UNUSED_VAR(r);
-    test(r == KErrNone);
+    
+    TRAPD(error1, testFields());
 
 	delete TheTrapCleanup;
-	
-	__UHEAP_MARKEND;
-	test.End();
-	test.Close();
-	return 0;
+
+    __UHEAP_MARKEND;
+
+    if(error1 == KErrNone)
+        {
+        SetTestStepResult(EPass);
+        }
+
+    return TestStepResult();
     }

@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 1997-2009 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 1997-2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -19,7 +19,6 @@
 #include <txtrich.h>
 #include <txtstyle.h>
 #include "TXTMRTSR.H"
-#include <e32test.h>
 #include <gdi.h>
 #include <conpics.h>											   						 
 #include <s32mem.h>
@@ -27,8 +26,19 @@
 #include <flddef.h>
 #include <fldbltin.h>
 #include <fldset.h>
+#include "TRTCUSTM.h"
 
-GLDEF_C RTest test(_L("TRTCUSTM"));
+#define test(cond)											\
+	{														\
+	TBool __bb = (cond);									\
+	TEST(__bb);												\
+	if (!__bb)												\
+		{													\
+		ERR_PRINTF1(_L("ERROR: Test Failed"));				\
+		User::Leave(1);										\
+		}													\
+	}
+
 LOCAL_D RFs theFs;
 LOCAL_D CFileStore* TheStore;
 LOCAL_D CParaFormatLayer* GlobalParaFormatLayer;
@@ -47,7 +57,7 @@ public:
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////
-class TTestFieldFactory : public MTextFieldFactory
+class TTestFieldFactoryTRTCUSTM : public MTextFieldFactory
 	{
 public:
 	// from MTextFieldFactory
@@ -56,7 +66,7 @@ public:
 	// Returns NULL if it does not recognise/support the field type
 	};
 
-CTextField* TTestFieldFactory::NewFieldL(TUid aFieldType)
+CTextField* TTestFieldFactoryTRTCUSTM::NewFieldL(TUid aFieldType)
 // Creates a field (in aHeader) of the type specified in aHeader
 // 
 	{
@@ -67,7 +77,7 @@ CTextField* TTestFieldFactory::NewFieldL(TUid aFieldType)
 	}
 /////////////////////////////////////////////////////////////////////////////////////////////
 
-LOCAL_D void WriteInlineL(RWriteStream& aStream,CRichText* aRichText)
+void CT_TRTCUSTM::WriteInlineL(RWriteStream& aStream,CRichText* aRichText)
 	{
 	aRichText->CancelInsertCharFormat();
 	aRichText->ExternalizeFieldDataL(aStream);
@@ -79,7 +89,7 @@ LOCAL_D void WriteInlineL(RWriteStream& aStream,CRichText* aRichText)
 	aRichText->ExternalizePlainTextL(aStream);
 	}
 
-LOCAL_D void ReadInlineL(RReadStream& aStream,CRichText* aRichText)
+void CT_TRTCUSTM::ReadInlineL(RReadStream& aStream,CRichText* aRichText)
 	{
 	aRichText->InternalizeFieldDataL(aStream);
 	aRichText->InternalizeStyleDataL(aStream);
@@ -90,7 +100,7 @@ LOCAL_D void ReadInlineL(RReadStream& aStream,CRichText* aRichText)
 	}
 
 
-LOCAL_D TStreamId PerformSaveL(CRichText* aRichText)
+TStreamId CT_TRTCUSTM::PerformSaveL(CRichText* aRichText)
 //
 	{
 	RStoreWriteStream out;
@@ -104,7 +114,7 @@ LOCAL_D TStreamId PerformSaveL(CRichText* aRichText)
 	}
 
 
-LOCAL_C CRichText* PerformLoadL(TStreamId aId)
+CRichText* CT_TRTCUSTM::PerformLoadL(TStreamId aId)
 //
 	{
 	CRichText* text=CRichText::NewL(GlobalParaFormatLayer,GlobalCharFormatLayer);
@@ -118,7 +128,7 @@ LOCAL_C CRichText* PerformLoadL(TStreamId aId)
 	}
 
 
-LOCAL_C CStyleList* CreatePopulatedStyleList()
+CStyleList* CT_TRTCUSTM::CreatePopulatedStyleList()
 //
 	{
 	//
@@ -138,7 +148,7 @@ LOCAL_C CStyleList* CreatePopulatedStyleList()
 
 _LIT(KTRtCustOutputFile,"c:\\etext\\TRTCUSTM.DAT");
 
-LOCAL_C void CustomLoadSave()
+void CT_TRTCUSTM::CustomLoadSave()
 	{
 // Set up the framework
 	theFs.Delete(KTRtCustOutputFile);
@@ -149,7 +159,7 @@ LOCAL_C void CustomLoadSave()
 //
 // Case (1) Rich text with owned style list. - no markup data
 //
-	test.Start(_L("RT + no markup + style list owned"));
+	INFO_PRINTF1(_L("RT + no markup + style list owned"));
 	//
 	// Setup the rich text
 	CStyleList* list=CreatePopulatedStyleList();
@@ -175,7 +185,7 @@ LOCAL_C void CustomLoadSave()
 //
 // Case (2) Rich text with referenced style list. - no markup data
 //
-	test.Next(_L("RT + no markup + style list externally owned"));
+	INFO_PRINTF1(_L("RT + no markup + style list externally owned"));
 	//
 	// Setup the rich text
 	list=CreatePopulatedStyleList();
@@ -207,7 +217,7 @@ LOCAL_C void CustomLoadSave()
 //
 // Case (3) Rich text with referenced style list. - with markup
 //
-	test.Next(_L("RT + markup + style list externally owned"));
+	INFO_PRINTF1(_L("RT + markup + style list externally owned"));
 	// Setup the rich text
 	list=CreatePopulatedStyleList();
 	richText1=CRichText::NewL(GlobalParaFormatLayer,GlobalCharFormatLayer,*list);
@@ -244,7 +254,7 @@ LOCAL_C void CustomLoadSave()
 //
 // Case (4) Rich text with no style list. - no effective markup
 //
-	test.Next(_L("RT + delete picture + no style list"));
+	INFO_PRINTF1(_L("RT + delete picture + no style list"));
 	// Setup the rich text
 	richText1=CRichText::NewL(GlobalParaFormatLayer,GlobalCharFormatLayer);
 	hasMarkupData=richText1->HasMarkupData();
@@ -283,7 +293,7 @@ LOCAL_C void CustomLoadSave()
 //
 // Case (5) Rich text with SetInsertCharFormat()
 //
-	test.Next(_L("RT + SetInsertCharFormatL()"));
+	INFO_PRINTF1(_L("RT + SetInsertCharFormatL()"));
 	// Setup the rich text
 	richText1=CRichText::NewL(GlobalParaFormatLayer,GlobalCharFormatLayer);
 	hasMarkupData=richText1->HasMarkupData();
@@ -315,7 +325,7 @@ LOCAL_C void CustomLoadSave()
 // Case (6) Rich text with components - default re/store used.
 //
 
-	test.Next(_L("RT + components"));
+	INFO_PRINTF1(_L("RT + components"));
 	// Setup the rich text
 	richText1=CRichText::NewL(GlobalParaFormatLayer,GlobalCharFormatLayer);
 	hasMarkupData=richText1->HasMarkupData();
@@ -326,7 +336,7 @@ LOCAL_C void CustomLoadSave()
 	richText1->InsertL(richText1->DocumentLength(),CEditableText::EParagraphDelimiter);
 	//
 	// Create & insert some fields
-	TTestFieldFactory factory;
+	TTestFieldFactoryTRTCUSTM factory;
 	richText1->SetFieldFactory(&factory);
 	CTextField* field=NULL;
 	CTextField* field2=NULL;
@@ -384,7 +394,7 @@ LOCAL_C void CustomLoadSave()
 //
 // Case (7) Rich text with fields with referenced style list with markup
 //
-	test.Next(_L("RT + fields + markup + style list"));
+	INFO_PRINTF1(_L("RT + fields + markup + style list"));
 	// Setup the rich text
 	list=CreatePopulatedStyleList();
 	richText1=CRichText::NewL(GlobalParaFormatLayer,GlobalCharFormatLayer,*list);
@@ -465,7 +475,7 @@ LOCAL_C void CustomLoadSave()
 //
 // Case (8) Rich text with fields with referenced style list with markup - default store
 //
-	test.Next(_L("RT + fields + markup + style list - default store"));
+	INFO_PRINTF1(_L("RT + fields + markup + style list - default store"));
 	// Setup the rich text
 	list=CreatePopulatedStyleList();
 	richText1=CRichText::NewL(GlobalParaFormatLayer,GlobalCharFormatLayer,*list);
@@ -518,7 +528,7 @@ LOCAL_C void CustomLoadSave()
 //
 // Case (9) Rich text with no components whatsoever - default store
 //
-	test.Next(_L("RT + no markup whatsoever - default store"));
+	INFO_PRINTF1(_L("RT + no markup whatsoever - default store"));
 	richText1=CRichText::NewL(GlobalParaFormatLayer,GlobalCharFormatLayer);
 	hasMarkupData=richText1->HasMarkupData();
 	test(!hasMarkupData);
@@ -548,7 +558,6 @@ LOCAL_C void CustomLoadSave()
 	//
 	//
 	CleanupStack::PopAndDestroy();  // TheStore
-	test.End();
 	}
 	
 /**
@@ -567,10 +576,10 @@ LOCAL_C void CustomLoadSave()
   dealing with paragraph delimiter and hidden characters in a paragraph
 @SYMDEF					PDEF101757
 */
-LOCAL_C void TestDEF101757()
+void CT_TRTCUSTM::TestDEF101757()
 	{	
 	TFindFieldInfo info;
-	TTestFieldFactory factory;
+	TTestFieldFactoryTRTCUSTM factory;
 	CTextField* field=NULL;
 	CTextField* field1=NULL;
 	CTextField* field2=NULL;
@@ -580,7 +589,7 @@ LOCAL_C void TestDEF101757()
 	_LIT(KSample1, "Hello"); // length:5
 	_LIT(KSample2, "How are you"); // length:11
 	
-	test.Start(_L(" @SYMTestCaseID:SYSLIB-ETEXT-CT-3380 Insertion and deletion to rich text object "));
+	INFO_PRINTF1(_L(" @SYMTestCaseID:SYSLIB-ETEXT-CT-3380 Insertion and deletion to rich text object "));
 	
 	CRichText* richText=CRichText::NewL(GlobalParaFormatLayer,GlobalCharFormatLayer);
 	CleanupStack::PushL(richText);
@@ -697,12 +706,11 @@ LOCAL_C void TestDEF101757()
 	test(richText->FieldCount()==2);
 	
 	CleanupStack::PopAndDestroy(richText);
-	test.End();
 	}
 	
 
 //Testcode for INC054540
-LOCAL_C void TestINC054540()
+void CT_TRTCUSTM::TestINC054540()
 	{
 	theFs.Delete(KTRtCustOutputFile);
 	theFs.MkDirAll(KTRtCustOutputFile);
@@ -711,12 +719,12 @@ LOCAL_C void TestINC054540()
 //
 //test 1: Test INC054540 fix for 255 fields
 //	
-	test.Start(_L("test"));
+	INFO_PRINTF1(_L("test"));
 	
 	CRichText* richText1=CRichText::NewL(GlobalParaFormatLayer,GlobalCharFormatLayer);
 	//
 	// Now add a text field to this.
-	TTestFieldFactory factory;
+	TTestFieldFactoryTRTCUSTM factory;
 	richText1->SetFieldFactory(&factory);
 	CTextField* field=NULL;
 	TInt x=0;
@@ -764,7 +772,7 @@ LOCAL_C void TestINC054540()
 //
 //test 2: Test INC054540 fix for more than 255 fields
 //	
-	test.Next(_L("test for more than 255 fields"));
+	INFO_PRINTF1(_L("test for more than 255 fields"));
 	richText1=CRichText::NewL(GlobalParaFormatLayer,GlobalCharFormatLayer);
 	// Add the text fields
 	richText1->SetFieldFactory(&factory);
@@ -812,11 +820,10 @@ LOCAL_C void TestINC054540()
 	//
 	//
 	CleanupStack::PopAndDestroy();  // TheStore
-	test.End();
 	}
 
 
-LOCAL_C void doMainL()
+void CT_TRTCUSTM::doMainL()
 	{
 	GlobalParaFormatLayer=CParaFormatLayer::NewL();
 	GlobalCharFormatLayer=CCharFormatLayer::NewL();
@@ -832,7 +839,7 @@ LOCAL_C void doMainL()
 	}
 
 
-LOCAL_C void setupCleanup()
+void CT_TRTCUSTM::setupCleanup()
 //
 // Initialise the cleanup stack.
 //
@@ -849,7 +856,7 @@ LOCAL_C void setupCleanup()
 	}
 
 
-LOCAL_C void DeleteDataFile(const TDesC& aFullName)
+void CT_TRTCUSTM::DeleteDataFile(const TDesC& aFullName)
 	{
 	RFs fsSession;
 	TInt err = fsSession.Connect();
@@ -878,26 +885,31 @@ LOCAL_C void DeleteDataFile(const TDesC& aFullName)
 		}
 	}
 
-GLDEF_C TInt E32Main()
-//
-// Test permanent file TheStore.
-//
-    {
-	test.Title();
-	setupCleanup();
-	__UHEAP_MARK;
-//
-	test.Start(_L("Testing custom save/load optimization"));
-	TRAPD(ret,doMainL());	
-	test(ret==KErrNone);
-	
-	::DeleteDataFile(KTRtCustOutputFile); 	//deletion of data files must be before call to End() - DEF047652
-	test.End();
-//
-	__UHEAP_MARKEND;
-	delete TheTrapCleanup;
-	test.Close();
 
-	return KErrNone;
+CT_TRTCUSTM::CT_TRTCUSTM()
+    {
+    SetTestStepName(KTestStep_T_TRTCUSTM);
     }
 
+TVerdict CT_TRTCUSTM::doTestStepL()
+    {
+    SetTestStepResult(EFail);
+
+    setupCleanup();
+    __UHEAP_MARK;
+    
+    INFO_PRINTF1(_L("TRTCUSTM"));
+    INFO_PRINTF1(_L("Testing custom save/load optimization"));
+    TRAPD(error1, doMainL());
+    DeleteDataFile(KTRtCustOutputFile);   //deletion of data files must be before call to End() - DEF047652
+
+    __UHEAP_MARKEND;
+    delete TheTrapCleanup;
+
+    if(error1 == KErrNone)
+        {
+        SetTestStepResult(EPass);
+        }
+
+    return TestStepResult();
+    }

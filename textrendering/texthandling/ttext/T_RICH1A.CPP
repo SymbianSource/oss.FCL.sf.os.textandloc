@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 1997-2009 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 1997-2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -16,17 +16,34 @@
 */
 
 
-#include <e32test.h>
 #include <txtrich.h>
 #include <gdi.h>
 #include <conpics.h>
 #include <s32stor.h>
 #include "../incp/T_PMLPAR.H"
+#include "T_RICH1A.h"
+
+LOCAL_D CTestStep *pTestStep = NULL;
+#define test(cond)											\
+	{														\
+	TBool __bb = (cond);									\
+	pTestStep->TEST(__bb);									\
+	if (!__bb)												\
+		{													\
+		pTestStep->ERR_PRINTF1(_L("ERROR: Test Failed"));	\
+		User::Leave(1);										\
+		}													\
+	}
+#undef INFO_PRINTF1
+#undef INFO_PRINTF2
+// copy from tefexportconst.h
+#define INFO_PRINTF1(p1)        pTestStep->Logger().LogExtra(((TText8*)__FILE__), __LINE__, ESevrInfo, (p1))
+#define INFO_PRINTF2(p1, p2)    pTestStep->Logger().LogExtra(((TText8*)__FILE__), __LINE__, ESevrInfo, (p1), (p2))
+
 
 #define UNUSED_VAR(a) a = a
 
 LOCAL_D CTrapCleanup* TheTrapCleanup;
-LOCAL_D RTest test(_L("CRichText Document"));
 LOCAL_D const TInt KTestCleanupStack=0x200;
 
 class MAtomicTest
@@ -127,18 +144,18 @@ CRichTest<S,T,D>::CRichTest(CParaFormatLayer* aPara,CCharFormatLayer* aChar)
 template<class S, class T,CEditableText::TDocumentStorage D>
 void CRichTest<S,T,D>::DoFlatTests()
 	{
-	test.Start(_L("Registering all methods"));
+	INFO_PRINTF1(_L("Registering all methods"));
 	RegisterMethodsL();
-	test.Next(_L("Inserting with embedded paragraph delimiters"));
+	INFO_PRINTF1(_L("Inserting with embedded paragraph delimiters"));
 	InsertWithDelimsL();
-	test.End();
+	
 	}
 
 
 template<class S, class T,CEditableText::TDocumentStorage D>
 void CRichTest<S,T,D>::InsertWithDelimsL()
 	{
-	test.Start(_L("Inserting into shared para"));
+	INFO_PRINTF1(_L("Inserting into shared para"));
 
 	Reset();
 	TBuf<512> testbuf(_L("a"));
@@ -176,7 +193,7 @@ void CRichTest<S,T,D>::InsertWithDelimsL()
 	//////////////////////////////////
 	// Pathalogical case (1)
 	// Inserting text with delimiters between 2 adjacent pictures.
-	test.Next(_L("Inserting text with delimiters between 2 adjacent pictures."));
+	INFO_PRINTF1(_L("Inserting text with delimiters between 2 adjacent pictures."));
 	//
 	Reset();
 	CXzePicture* picA=CXzePicture::NewL('Z');
@@ -211,7 +228,7 @@ void CRichTest<S,T,D>::InsertWithDelimsL()
 	////////////////////////////////
 	// Pathalogical case (2)
 	// Insert text with delimiters after a picture
-	test.Next(_L("Insert text with delimiters after a picture"));
+	INFO_PRINTF1(_L("Insert text with delimiters after a picture"));
 	//
 	Reset();  // Destroys all pictures.
 	picA=CXzePicture::NewL('Z');
@@ -224,7 +241,7 @@ void CRichTest<S,T,D>::InsertWithDelimsL()
 	////////////////////////////////
 	// Pathalogical case (3)
 	// Insert text with delimiters before a picture
-	test.Next(_L("Insert text with delimiters before a picture"));
+	INFO_PRINTF1(_L("Insert text with delimiters before a picture"));
 	//
 	Reset();  // Destroys all pictures.
 	picA=CXzePicture::NewL('Z');
@@ -235,7 +252,7 @@ void CRichTest<S,T,D>::InsertWithDelimsL()
 	InsertL(0,buf);
 	//	
 	Reset();
-	test.End();
+	
 	}
 
 
@@ -246,10 +263,10 @@ void CRichTest<S,T,D>::RegisterMethodsL()
 // methods exist and run without panicking.
 //
 	{
-	test.Start(_L("CRichText::NewL()"));
+	INFO_PRINTF1(_L("CRichText::NewL()"));
 
 	// InsertL()
-	test.Next(_L("InsertL()"));
+	INFO_PRINTF1(_L("InsertL()"));
 	TPtrC buf(_L("Herewith"));
 	InsertL(0,buf);
 
@@ -267,7 +284,7 @@ void CRichTest<S,T,D>::RegisterMethodsL()
 	DeleteL(3,7);
 
 	// SetInsertCharFormatL()
-	test.Next(_L("SetInsertCharFormatL()"));
+	INFO_PRINTF1(_L("SetInsertCharFormatL()"));
 	TCharFormat format; TCharFormatMask mask;
 	format.iFontSpec.iFontStyle.SetStrokeWeight(EStrokeWeightBold);
 	mask.SetAttrib(EAttFontStrokeWeight);
@@ -282,20 +299,20 @@ void CRichTest<S,T,D>::RegisterMethodsL()
 	CancelInsertCharFormat();
 
 	// Inserting new paragraph
-	test.Next(_L("Inserting paragraph delimiter (Insert(TChar))"));
+	INFO_PRINTF1(_L("Inserting paragraph delimiter (Insert(TChar))"));
 	InsertL(4,CEditableText::EParagraphDelimiter);
 
 	// Delete()
-	test.Next(_L("DeleteL()"));
+	INFO_PRINTF1(_L("DeleteL()"));
 	DeleteL(5,1);
 
 	// Sensing character format over a specified range.
-	test.Next(_L("GetCharFormat()"));
+	INFO_PRINTF1(_L("GetCharFormat()"));
 	TCharFormat charFormat1; TCharFormatMask undeterminedMask;
 	GetCharFormat(charFormat1,undeterminedMask,0,4);
 
 	// Sensing paragraph format over a specified range.
-	test.Next(_L("SenseParagraphFormatL()"));
+	INFO_PRINTF1(_L("SenseParagraphFormatL()"));
 	CParaFormat* pParaFormat=NULL;
 	TRAPD(r,pParaFormat=CParaFormat::NewL());
 	test(r==KErrNone);
@@ -304,7 +321,7 @@ void CRichTest<S,T,D>::RegisterMethodsL()
 	delete pParaFormat;
 	
 	// DelSetInsertCharFormatL()
-	test.Next(_L("DelSetInsertCharFormatL()"));
+	INFO_PRINTF1(_L("DelSetInsertCharFormatL()"));
 	TPtrC buf4(_L("This is para 2."));
 	InsertL(0,buf4);
 	SetInsertCharFormatL(format,mask,15);
@@ -313,32 +330,32 @@ void CRichTest<S,T,D>::RegisterMethodsL()
 	DelSetInsertCharFormatL(4,5);
 	
 	// CancelInsertCharFormat()
-	test.Next(_L("CancelInsertCharFormat()"));
+	INFO_PRINTF1(_L("CancelInsertCharFormat()"));
 	CancelInsertCharFormat();
 	
 	// ApplyParaFormatL()
-	test.Next(_L("ApplyParaFormatL()"));
+	INFO_PRINTF1(_L("ApplyParaFormatL()"));
 	CParaFormat* paraFormat=CParaFormat::NewL(); TParaFormatMask paraMask;
 	paraFormat->iHorizontalAlignment=CParaFormat::ECenterAlign;
 	paraMask.SetAttrib(EAttAlignment);
 	ApplyParaFormatL(paraFormat,paraMask,0,DocumentLength());
 
 	// ApplyCharFormatL()
-	test.Next(_L("ApplyCharFormatL()"));
+	INFO_PRINTF1(_L("ApplyCharFormatL()"));
 	format.iFontSpec.iFontStyle.SetPosture(EPostureItalic); mask.SetAttrib(EAttFontPosture);
 	format.iFontPresentation.iStrikethrough=EStrikethroughOn; mask.SetAttrib(EAttFontStrikethrough);
 	ApplyCharFormatL(format,mask,0,DocumentLength());
 
 	// SenseParaFormatL()
-	test.Next(_L("SenseParaFormatL()"));
+	INFO_PRINTF1(_L("SenseParaFormatL()"));
 	GetParagraphFormatL(paraFormat,DocumentLength()-1);
 
 	// CountParas()
-	test.Next(_L("ParagraphCount()"));
+	INFO_PRINTF1(_L("ParagraphCount()"));
 	ParagraphCount();
 
 	// ParagraphStart()
-	test.Next(_L("ParagraphStart()"));
+	INFO_PRINTF1(_L("ParagraphStart()"));
 	TInt aPos=0;
 	ToParagraphStart(aPos);
 
@@ -347,7 +364,7 @@ void CRichTest<S,T,D>::RegisterMethodsL()
 
 	delete paraFormat;
 
-	test.End();
+	
 	}
 
 /**
@@ -366,7 +383,7 @@ template<class S, class T,CEditableText::TDocumentStorage D>
 void CRichTest<S,T,D>::TestForDefectINC109323L()
 	{
 	__UHEAP_MARK;
-	test.Next(_L(" @SYMTestCaseID:SYSLIB-ETEXT-UT-3548 Test ApplyCharFormatL() for bold at end positions of text "));	
+	INFO_PRINTF1(_L(" @SYMTestCaseID:SYSLIB-ETEXT-UT-3548 Test ApplyCharFormatL() for bold at end positions of text "));	
 	_LIT(KText1, "Testing Bold format");
 	_LIT(KText2, "bold");	
 
@@ -409,7 +426,7 @@ void CRichTest<S,T,D>::TestRemSpecParaFmtL()
 //
 	{
 	__UHEAP_MARK;
-	test.Next(_L("RemoveSpecificParaFormatL()"));
+	INFO_PRINTF1(_L("RemoveSpecificParaFormatL()"));
 	CParaFormat* globalParaFormat=CParaFormat::NewLC();
 	TParaFormatMask globalParaMask;
 	globalParaFormat->iHorizontalAlignment=CParaFormat::ECenterAlign;
@@ -457,7 +474,7 @@ void CRichTest<S,T,D>::TestDelete1L()
 //
 	{
 	__UHEAP_MARK;
-	test.Next(_L("DeleteL()"));
+	INFO_PRINTF1(_L("DeleteL()"));
 	CParaFormatLayer* paraLayer=CParaFormatLayer::NewL();
 	CCharFormatLayer* charLayer=CCharFormatLayer::NewL();
 	CRichText* doc=NULL;
@@ -502,7 +519,7 @@ void CRichTest<S,T,D>::TestDelete2L()
 //
 	{
 	__UHEAP_MARK;
-	test.Next(_L("DeleteL()"));
+	INFO_PRINTF1(_L("DeleteL()"));
 	CParaFormatLayer* paraLayer=CParaFormatLayer::NewL();
 	CCharFormatLayer* charLayer=CCharFormatLayer::NewL();
 	CRichText* doc=NULL;
@@ -563,7 +580,7 @@ template<class S, class T,CEditableText::TDocumentStorage D>
 void CRichTest<S,T,D>::TestApplyRemoveCharFormat()
     {
     __UHEAP_MARK;
-    test.Next(_L(" @SYMTestCaseID:SYSLIB-ETEXT-UT-3431 Test ApplyCharFormatL() & RemoveSpecificCharFormat() "));	
+    INFO_PRINTF1(_L(" @SYMTestCaseID:SYSLIB-ETEXT-UT-3431 Test ApplyCharFormatL() & RemoveSpecificCharFormat() "));	
     CParaFormatLayer* paraLayer = CParaFormatLayer::NewL();
     CleanupStack::PushL(paraLayer);
     CCharFormatLayer* charLayer = CCharFormatLayer::NewL();
@@ -619,7 +636,7 @@ void CRichTest<S,T,D>::TestResetL()
 //
 	{
 	__UHEAP_MARK;
-	test.Next(_L("Reset()"));
+	INFO_PRINTF1(_L("Reset()"));
 	CParaFormatLayer* paraLayer=CParaFormatLayer::NewL();
 	CCharFormatLayer* charLayer=CCharFormatLayer::NewL();
 	CRichText* doc=NULL;
@@ -656,7 +673,7 @@ void CRichTest<S,T,D>::DoPML()
 //
 	{
  	__UHEAP_MARK;
-	test.Next(_L("Checking PML sourced RichText Component"));
+	INFO_PRINTF1(_L("Checking PML sourced RichText Component"));
  	// set filename
 	TFileName theFileName=_L("z:\\test\\app-framework\\etext\\t_rich1a.pml");
 	// Parse PML
@@ -708,7 +725,7 @@ void CRichTest<S,T,D>::TestForDefectTET5DHEWWL()
 	{
 	__UHEAP_MARK;
 
-	test.Next(_L("Testing for the presence of defect TET-5DHEWW"));
+	INFO_PRINTF1(_L("Testing for the presence of defect TET-5DHEWW"));
 
 	CParaFormatLayer* paraLayer = CParaFormatLayer::NewL();
 	CCharFormatLayer* charLayer = CCharFormatLayer::NewL();
@@ -742,7 +759,7 @@ void CRichTest<S,T,D>::TestForDefectTET5DHEWWL()
 	TInt docLen = doc->DocumentLength();
 	test(docLen==19);
 
-	test.Printf(_L("RTEST:                        Test PASSED - defect not present!\n"));
+	INFO_PRINTF1(_L("RTEST:                        Test PASSED - defect not present!\n"));
 
 	delete doc;
 	delete paraLayer;
@@ -757,7 +774,7 @@ void CRichTest<S,T,D>::TestForDefectINC010183L()
 	{
 	__UHEAP_MARK;
 
-	test.Next(_L("Testing for the presence of defect INC010183"));
+	INFO_PRINTF1(_L("Testing for the presence of defect INC010183"));
 
 	CParaFormatLayer* paraLayer = CParaFormatLayer::NewL();
 	CleanupStack::PushL(paraLayer);
@@ -805,7 +822,7 @@ void CRichTest<S,T,D>::TestForDefectINC064162L()
 	{
 	__UHEAP_MARK;
 	
-	test.Next(_L("INC064162 - Testing insertion of zero-length text doesn't cancel the pending TCharFormat"));
+	INFO_PRINTF1(_L("INC064162 - Testing insertion of zero-length text doesn't cancel the pending TCharFormat"));
 	
 	TInt length = 3;	
 	TPtrC bufPtrLetterNone(_L(""));
@@ -1000,7 +1017,7 @@ void TestClassesL()
 	doc->TestForDefectINC010183L();
 	doc->TestForDefectINC064162L();
 	doc->TestForDefectINC109323L();
-	test.Next(_L("INC038479 - Email editor: font settings made at doc end can be lost and returned to default"));
+	INFO_PRINTF1(_L("INC038479 - Email editor: font settings made at doc end can be lost and returned to default"));
 	// Also tests SetInsetCharFormat more thoroughly.
 	doc->RunAtomicTest();
 
@@ -1013,11 +1030,11 @@ void TestClassesL()
 
 void DoTestsL()
 	{
-	test.Start(_L("CRichText - Flat"));
+	INFO_PRINTF1(_L("CRichText - Flat"));
 	TestClassesL<TText,TPtrC,CEditableText::EFlatStorage>();
-	test.Next(_L("CRichText - Segmented"));
+	INFO_PRINTF1(_L("CRichText - Segmented"));
 	TestClassesL<TText,TPtrC,CEditableText::ESegmentedStorage>();
-	test.End();
+	
 	}
 
 	
@@ -1037,17 +1054,29 @@ LOCAL_C void setupCleanup()
 		});
 	}
 
-TInt E32Main()
-	{
-	setupCleanup();
-	test.Title();
-	__UHEAP_MARK;
-	
-	TRAPD(ret,DoTestsL());
-    test(ret == KErrNone);
-	
-	test.Close();
-	__UHEAP_MARKEND;
-	delete TheTrapCleanup;
-	return 0;
-	}
+CT_RICH1A::CT_RICH1A()
+    {
+    SetTestStepName(KTestStep_T_RICH1A);
+    pTestStep = this;
+    }
+
+TVerdict CT_RICH1A::doTestStepL()
+    {
+    SetTestStepResult(EFail);
+
+    setupCleanup();
+    INFO_PRINTF1(_L("CRichText Document"));
+    __UHEAP_MARK;
+    
+    TRAPD(ret,DoTestsL());
+    
+    __UHEAP_MARKEND;
+    delete TheTrapCleanup;
+    
+    if (ret == KErrNone)
+        {
+        SetTestStepResult(EPass);
+        }
+
+    return TestStepResult();
+    }

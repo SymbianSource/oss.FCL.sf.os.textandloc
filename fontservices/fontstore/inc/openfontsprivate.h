@@ -20,6 +20,7 @@
 #define __OPENFONTS_PRIVATE_H__
 
 #include <hextree.h>
+#include <e32hashtab.h>
 
 class COpenFontShaperCacheEntry;
 
@@ -87,6 +88,7 @@ private:
     TInt iCount;
     };
 
+
 /**
  The per-font glyph cache. For now, just the members that used to be directly in
  COpenFont. Now it is a private class it can be elaborated to do character-to-glyph-index
@@ -133,8 +135,6 @@ public:
 private:
 	inline COpenFontSessionCacheEntry(const COpenFont* aFont, TInt aCode, TInt aGlyphIndex, const TOpenFontCharMetrics& aMetrics);
 	~COpenFontSessionCacheEntry();
-public:
-    TInt iLastAccess;               // serial number of the last access to the glyph
 
 private: 
     TInt iFontOffset;          // offset of the font that contains this glyph, (not owned by this class!)    
@@ -148,21 +148,242 @@ private:
  */
 class COpenFontSessionCache
     {
+	friend class COpenFontSessionCacheList;
 public:
     static COpenFontSessionCache* NewL(RHeap* aHeap, TInt aSessionHandle, TInt aEntries);
     void Delete(RHeap* aHeap);
     
     TInt SessionHandle() { return iSessionHandle; }
-    const COpenFontGlyph* Glyph(const COpenFont* aFont, TInt aCode, TInt& aIndex);
+    const COpenFontGlyph* Glyph(const COpenFont* aFont, TInt aCode, TInt& aIndex) const;
     void Insert(RHeap* aHeap, COpenFontSessionCacheEntry* aEntry, TInt aIndex);
     
 private:
     COpenFontSessionCache(TInt aSessionHandle);
     ~COpenFontSessionCache();
-public:
-    TInt iSessionHandle;    
-    TInt iLastAccess;
+private:
+    TInt iSessionHandle;
+    TInt64 iRandomSeed;
     ROffsetArray<COpenFontSessionCacheEntry> iEntryArray;
+    };
+
+
+class TFontTableGlyphOutlineCacheMemMonitor
+    {
+public:
+    TFontTableGlyphOutlineCacheMemMonitor();
+    void Inc(TInt aBytes);
+    void Dec(TInt aBytes);
+    TInt GetMemUsage();
+private:
+    TInt iBytes;
+    };
+
+struct TCacheUserInfo {
+    TInt iSessionHandle;
+    TInt iRefCount;
+    TCacheUserInfo(TInt aSessionHandle, TInt aRefCount = 0): 
+            iSessionHandle(aSessionHandle), iRefCount(aRefCount) { } 
+};
+
+class CFontTableCache;
+
+class CFontTableCacheItem
+    {
+friend class CFontTableCache ;
+
+public:
+    CFontTableCacheItem(TUid &aFileUid, const TUint32 aTag, 
+            TInt aOffset, TInt aLength);
+    ~CFontTableCacheItem(); 
+
+    TInt DecRefCount(TInt aSessionHandle);
+    TInt IncRefCount(TInt aSessionHandle);
+
+    TBool HasOutstandingRefCount();
+    TInt FindUser(TInt aSessionHandle, TInt *id);
+    
+#ifdef _DEBUG
+    void SetUser(RPointerArray<TCacheUserInfo> users)
+        {
+        TInt len = users.Count();
+        for( TInt i = 0; i < len ; i++ )
+            {
+            iUsers.Append(users[i]);
+            }
+        }    
+#endif
+    
+private:
+    CFontTableCacheItem(const CFontTableCacheItem &); // disallow copy construction.
+    CFontTableCacheItem& operator =(const CFontTableCacheItem &); // disallow assignment.
+    
+    TUid iFileUid; 
+    TUint32 iTag; 
+ 
+
+    TInt iOffset;
+    TInt iLength; 
+    RPointerArray<TCacheUserInfo> iUsers;
+    }; 
+
+
+class CFontTableCache 
+    {
+public:
+    CFontTableCache(RHeap* aHeap, TFontTableGlyphOutlineCacheMemMonitor& aMon);
+    ~CFontTableCache();
+    TInt Append(TUid aFileUid, TUint32 aTag, 
+            TAny*& aContent, TInt aLength);
+    TInt Find(TUid aFileUid, TUint32 aTag, TAny*& aContent, TInt& aLength, TInt* id);
+    TInt IncRefCount(TUid FileUid, TUint32 aTag, TInt aSessionHandle);
+    TInt DecRefCount(TUid aFileUid, TUint32 aTag, TInt aSessionHandle);
+    TBool HasOutstandingRefCount();
+    TBool HasOutstandingRefCountWithUid(TUid aFileUid);  
+    void CleanupCacheOnFbsSessionTermination(TInt aSessionHandle);
+    void CleanupCacheOnOpenFontFileRemoval(COpenFontFile*);
+#ifdef _DEBUG    
+    void SetFontItem(RPointerArray<CFontTableCacheItem> cacheItems)
+        {
+        TInt len = cacheItems.Count();
+        for(TInt i = 0; i < len; i++)
+            {
+            iCacheItems.Append(cacheItems[i]);
+            }
+        }
+#endif   
+    
+private:
+    CFontTableCache(const CFontTableCache &); // no copy construction.
+    CFontTableCache& operator =(const CFontTableCache &); // no assignment.
+#ifdef _DEBUG
+    TInt GetCacheState(const char *func);
+#endif
+    
+    TFontTableGlyphOutlineCacheMemMonitor &iCacheMemMon;
+    RHeap *iHeap;
+    RPointerArray<CFontTableCacheItem> iCacheItems;
+    };
+
+
+class TUnhintedOutlineCache;
+
+class TUnhintedOutlineId 
+    {
+public:
+    TUnhintedOutlineId(TUid aFileUid, TInt aFaceIndex, TUint aId);
+    TUid iFileUid;
+    TInt iFaceIndex;
+    TUint iId;
+    };
+
+class COutlineCacheItem {
+friend class CUnhintedOutlineCache;
+friend class CHintedOutlineCache;
+    
+public:
+    COutlineCacheItem(TInt aOffset, TInt aLength);
+    ~COutlineCacheItem() ;
+
+    TInt DecRefCount(TInt aSessionHandle);
+    TInt IncRefCount(TInt aSessionHandle);
+#ifdef _DEBUG
+    void SetUser(RPointerArray<TCacheUserInfo> users)
+        {
+        TInt len = users.Count();
+        for( TInt i = 0; i < len ; i++ )
+            {
+            iUsers.Append(users[i]);
+            }
+        }    
+#endif
+ 
+private:
+    TInt FindUser(TInt aSessionHandle, TInt *id);
+        
+
+    TInt iOffset;
+    TInt iLength;
+    RPointerArray<TCacheUserInfo> iUsers;
+};    
+
+class CUnhintedOutlineCache {
+public:
+    CUnhintedOutlineCache(RHeap* aHeap, TFontTableGlyphOutlineCacheMemMonitor& aMon);
+    TInt Find(const TUnhintedOutlineId &aOutlineId, TAny*& aData, TInt& aLength);
+    TInt IncRefCount(const TUnhintedOutlineId& aOutlineId, TInt aSessionHandle);
+    TInt DecRefCount(const TUnhintedOutlineId& aOutlineId, TInt aSessionHandle);
+    TInt CacheUnhintedOutline(const TUnhintedOutlineId& aOutlineId, 
+            TAny * const aData, const TInt aLength, TAny*& aOutline, TInt &aLen);
+    TInt CleanupCacheOnOpenFontFileRemoval(COpenFontFile* aFontFile);
+    TInt CleanupCacheOnFbsSessionTermination(TInt aSessionHandle);
+#ifdef _DEBUG
+    TInt GetCacheState(const char *func);
+#endif
+    ~CUnhintedOutlineCache();
+    
+#ifdef _DEBUG
+    void SetUnHintedItem(TUnhintedOutlineId id, COutlineCacheItem* item)
+        {
+        iItemIdMap.Insert(id, item);
+        }
+#endif
+    
+private:
+    // disallow assignment and copy-construction
+    CUnhintedOutlineCache(const CUnhintedOutlineCache &); 
+    CUnhintedOutlineCache& operator =(const CUnhintedOutlineCache &);
+    
+    static TUint32 IdHash(const TUnhintedOutlineId& aOutlineId);
+    static TBool IdIdentity(const TUnhintedOutlineId& id1, const TUnhintedOutlineId& id2);
+    
+    TFontTableGlyphOutlineCacheMemMonitor& iCacheMemMon;
+    RHeap* iHeap; 
+    RHashMap<TUnhintedOutlineId, COutlineCacheItem*> iItemIdMap; // map the identity to an index in 'iCacheItems'.
+};
+
+class CHintedOutlineCache;
+
+class THintedOutlineId 
+    {
+public:
+    THintedOutlineId(COpenFont* aFont, TUint aId);
+    COpenFont *iFont;
+    TUint iId;
+    };
+
+
+class CHintedOutlineCache {
+public:
+    CHintedOutlineCache(RHeap* aHeap, TFontTableGlyphOutlineCacheMemMonitor& aMon);
+    TInt Find(const THintedOutlineId& aOutlineId, TAny*& aData, TInt& aLength);
+    TInt IncRefCount(const THintedOutlineId& aOutlineId, TInt aSessionHandle);
+    TInt DecRefCount(const THintedOutlineId& aOutlineId, TInt aSessionHandle);
+    TInt CacheHintedOutline(const THintedOutlineId& aOutlineId, 
+            TAny* aData, TInt aLength, TAny*& aOutline, TInt& aLen);
+    TInt CleanupCacheOnOpenFontRemoval(COpenFont* aFont);
+    TInt CleanupCacheOnFbsSessionTermination(TInt aSessionHandle);
+#ifdef _DEBUG
+    TInt GetCacheState(const char *func);
+    void SetHintedItem(THintedOutlineId id, COutlineCacheItem* item)
+        {
+        iItemIdMap.Insert(id, item);
+        }
+    RHashMap<THintedOutlineId, COutlineCacheItem*> GetHintedMap()
+    {
+    return iItemIdMap;
+    }
+#endif
+    
+private:
+    // disallow assignment and copy-construction
+    CHintedOutlineCache(const CHintedOutlineCache &); 
+    CHintedOutlineCache& operator =(const CHintedOutlineCache &);
+    static TUint32 IdHash(const THintedOutlineId& aOutlineId);
+    static TBool IdIdentity(const THintedOutlineId& id1, const THintedOutlineId& id2);
+        
+    TFontTableGlyphOutlineCacheMemMonitor& iCacheMemMon;
+    RHeap* iHeap; 
+    RHashMap<THintedOutlineId, COutlineCacheItem*> iItemIdMap; // map the identity to an index in 'iCacheItems'.
     };
 
 

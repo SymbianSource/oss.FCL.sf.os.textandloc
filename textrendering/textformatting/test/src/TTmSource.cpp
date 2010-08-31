@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2002-2009 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 2002-2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -24,10 +24,18 @@
 #include "TAGMA_INTERNAL.H"
 #endif
 
+#include "ttmsource.h"
+
+
 #define UNUSED_VAR(a) a = a
 
-CTrapCleanup* TrapCleanup;
-RTest test(_L("TTmSource - MTmSource tests"));
+namespace LocalToTTmSource
+{
+CTTmSourceStep* TestStep = NULL;
+#define TESTPOINT(p) TestStep->testpoint(p,(TText8*)__FILE__,__LINE__)
+#define TESTPRINT(p) TestStep->print(p,(TText8*)__FILE__,__LINE__)
+}
+using namespace LocalToTTmSource;
 
 class TTestGraphicsDeviceMap : public MGraphicsDeviceMap
 	{
@@ -55,12 +63,12 @@ public:
 		++iRequestCount;
 		if (aBeforePicture)
 			{
-			test(aClass == iClassBefore);
-			test(aHaveSpaces == iSpacesBefore);
+            TESTPOINT(aClass == iClassBefore);
+            TESTPOINT(aHaveSpaces == iSpacesBefore);
 			return iResultBefore;
 			}
-		test(aClass == iClassAfter);
-		test(aHaveSpaces == iSpacesAfter);
+		TESTPOINT(aClass == iClassAfter);
+		TESTPOINT(aHaveSpaces == iSpacesAfter);
 		return iResultAfter;
 		}
 	// expected parameters for LineBreakPossible
@@ -132,15 +140,15 @@ public:
 		if (ELineBreakClasses <= first && first < ELineBreakClasses + 10)
 			{
 			++customCount;
-			test(first - ELineBreakClasses + '0' == FindNextCustomClass());
+			TESTPOINT(first - ELineBreakClasses + '0' == FindNextCustomClass());
 			TInt countSpaces = CountSpaces();
-			test(!aHaveSpaces == !countSpaces);
+			TESTPOINT(!aHaveSpaces == !countSpaces);
 			}
 		if (ELineBreakClasses <= second && second < ELineBreakClasses + 10)
 			{
 			++customCount;
 			TInt c = FindNextCustomClass();
-			test(second - ELineBreakClasses + '0' == c);
+			TESTPOINT(second - ELineBreakClasses + '0' == c);
 			}
 		if (0 == customCount)
 			return MTmSource::LineBreakPossible(aPrevClass, aNextClass, aHaveSpaces);
@@ -161,12 +169,12 @@ public:
 		const TDesC& aText, TInt aMinBreakPos, TInt aMaxBreakPos,
 		TBool aForwards,TInt& aBreakPos) const
 		{
-		test (iDirection == (aForwards? 1 : -1));
+	    TESTPOINT (iDirection == (aForwards? 1 : -1));
 		// The allowable break-points should not include the first
 		// and last characters of the run.
-		test (aMinBreakPos != 0);
+	    TESTPOINT (aMinBreakPos != 0);
 		for (TInt i = aMinBreakPos - 1; i <= aMaxBreakPos; ++i)
-			test('@' == aText[i]);
+		    TESTPOINT('@' == aText[i]);
 		++iSaRequestCount;
 		aBreakPos = iText->Ptr() + iSaBreakpoint - aText.Ptr();
 		return aMinBreakPos <= aBreakPos && aBreakPos <= aMaxBreakPos;
@@ -175,7 +183,7 @@ public:
 	virtual TBool IsHangingCharacter(TUint aChar) const
 		{
 		++iHangingCharRequestCount;
-		test(aChar == (*iText)[iMaxBreakPos]);
+		TESTPOINT(aChar == (*iText)[iMaxBreakPos]);
 		if (!iHangingChar)
 			return EFalse;
 		if (iDirection < 0)
@@ -200,33 +208,33 @@ public:
 			aBreakPos, aHangingChars, aBreakPosAfterSpaces);
 		if (r)
 			{
-			test(aMinBreakPos <= aBreakPos);
-			test(0 < aBreakPos);
-			test(aBreakPos <= aHangingChars);
-			test(aHangingChars <= aBreakPosAfterSpaces);
-			test(aBreakPos <= aMaxBreakPos);
-			test(aHangingChars == aBreakPos || iHangingChar);
+            TESTPOINT(aMinBreakPos <= aBreakPos);
+            TESTPOINT(0 < aBreakPos);
+            TESTPOINT(aBreakPos <= aHangingChars);
+            TESTPOINT(aHangingChars <= aBreakPosAfterSpaces);
+            TESTPOINT(aBreakPos <= aMaxBreakPos);
+            TESTPOINT(aHangingChars == aBreakPos || iHangingChar);
 			// If the direction was backwards, the algorithm should have
 			// checked if a hanging character was allowed.
 			// This condition could be relaxed to allow it not to be checked
 			// if there is no break allowed between the possible hanging
 			// character and the previous character.
-			test(!aForwards || aText.Length() == aMaxBreakPos
+            TESTPOINT(!aForwards || aText.Length() == aMaxBreakPos
 				|| 0 < iHangingCharRequestCount);
 			// If the maximum break point was chosen or exceeded, the algorithm
 			// should have checked to find out whether a hanging character is
 			// allowed.
-			test(aHangingChars < aMaxBreakPos
+            TESTPOINT(aHangingChars < aMaxBreakPos
 				|| 0 < iHangingCharRequestCount);
 			// Check that only spaces exist between aHangingChars and
 			// aMaxBreakPos
 			for (TInt i = aHangingChars; i != aBreakPosAfterSpaces; ++i)
 				{
 				TUint n;
-				test(ESpLineBreakClass == LineBreakClass(aText[i], n, n));
+				TESTPOINT(ESpLineBreakClass == LineBreakClass(aText[i], n, n));
 				}
 			// Check that all the spaces were counted
-			test(aBreakPosAfterSpaces == aText.Length()
+			TESTPOINT(aBreakPosAfterSpaces == aText.Length()
 				|| aText[aBreakPosAfterSpaces] != ' ');
 			}
 		// Find out how many runs of two or more Sa there are, and check that
@@ -246,7 +254,7 @@ public:
 			maxChecked = aText.Length();
 		TInt runs = 0;
 		TInt sasSoFar = 0;
-		test (maxChecked - minChecked < 2
+		TESTPOINT (maxChecked - minChecked < 2
 			|| aText[minChecked] != '@'
 			|| aText[minChecked + 1] != '@'
 			|| !aForwards
@@ -264,8 +272,8 @@ public:
 			}
 		if (1 < sasSoFar)
 			++runs;
-		test(sasSoFar < 2 || aForwards || aHangingChars == iSaBreakpoint);
-		test(runs == iSaRequestCount);
+		TESTPOINT(sasSoFar < 2 || aForwards || aHangingChars == iSaBreakpoint);
+		TESTPOINT(runs == iSaRequestCount);
 		return r;
 		}
 
@@ -332,57 +340,54 @@ TInt TestLineBreak(const TDesC& aText, TInt aSaBreak, TBool aHangingChar,
 		b1 : -1;
 	}
 
-void RunTests()
-	{
-	test.Title();
-	test.Start(_L(" @SYMTestCaseID:SYSLIB-FORM-LEGACY-TTMSOURCE-0001 Line-Break Tests: "));
+CTTmSourceStep::CTTmSourceStep()
+    {
+    
+    }
 
-	test(-1 == TestLineBreak(_L(""), 0, 0, 0, 0, 0));
-	test(-1 == TestLineBreak(_L("5"), 0, 0, 0, 0, 0));
-	test(-1 == TestLineBreak(_L("5"), 0, 0, 0, 0, 1));
-	test(-1 == TestLineBreak(_L("@"), 1, 0, 0, 0, 0));
-	test(1 == TestLineBreak(_L("a   b"), 0, 0, 0, 0, 0));
-	test(-1 == TestLineBreak(_L("0 0 0 9    9"), 0, 0, 0, 0, 0));
-	test(-1 == TestLineBreak(_L("0 0 0 9    9"), 0, 0, 0, 0, 1));
-	test(9 == TestLineBreak(_L("4242454445"), 0, 0, 0, 0, 0));
-	test(5 == TestLineBreak(_L("4242454445"), 0, 0, 0, 0, 1));
-	test(5 == TestLineBreak(_L("hello there"), 0, 0, 0, 0, 0));
-	test(5 == TestLineBreak(_L("hello there"), 0, 0, 0, 0, 1));
-	test(-1 == TestLineBreak(_L("hel  the re"), 0, 0, 5, 7, 0));
-	test(-1 == TestLineBreak(_L("hel  the re"), 0, 0, 5, 7, 1));
-	test(8 == TestLineBreak(_L("hel  the re"), 0, 1, 5, 7, 0));
-	test(8 == TestLineBreak(_L("hel  the re"), 0, 1, 6, 7, 1));
-	test(3 == TestLineBreak(_L("@@@@@"), 3, 0, 0, 0, 0));
-	test(3 == TestLineBreak(_L("@@@@@"), 3, 0, 0, 0, 1));
-	test(5 == TestLineBreak(_L("9999@@@@@00099@@@@gfra"), 5, 0, 5, 0, 0));
-	test(5 == TestLineBreak(_L("9999@@@@@00099@@@@gfra"), 5, 0, 5, 0, 1));
-	test(16 == TestLineBreak(_L("9999@@@@@00099@@@@gfra"), 16, 0, 0, 0, 0));
-	test(16 == TestLineBreak(_L("9999@@@@@00099@@@@gfra"), 16, 0, 0, 0, 1));
-	test(5 == TestLineBreak(_L("55@@@55"), 0, 0, 0, 0, 0));
-	test(2 == TestLineBreak(_L("55@@@55"), 0, 0, 0, 0, 1));
-	test(3 == TestLineBreak(_L("55@55"), 0, 0, 0, 0, 0));
-	test(2 == TestLineBreak(_L("55@55"), 0, 0, 0, 0, 1));
+
+TVerdict CTTmSourceStep::doTestStepL()
+	{
+    SetTestStepResult(EPass);
+    TestStep = this;
+    TESTPRINT(_L("TTmSource - MTmSource tests"));
+	TESTPRINT(_L(" @SYMTestCaseID:SYSLIB-FORM-LEGACY-TTMSOURCE-0001 Line-Break Tests: "));
+
+	TEST(-1 == TestLineBreak(_L(""), 0, 0, 0, 0, 0));
+	TEST(-1 == TestLineBreak(_L("5"), 0, 0, 0, 0, 0));
+	TEST(-1 == TestLineBreak(_L("5"), 0, 0, 0, 0, 1));
+	TEST(-1 == TestLineBreak(_L("@"), 1, 0, 0, 0, 0));
+	TEST(1 == TestLineBreak(_L("a   b"), 0, 0, 0, 0, 0));
+	TEST(-1 == TestLineBreak(_L("0 0 0 9    9"), 0, 0, 0, 0, 0));
+	TEST(-1 == TestLineBreak(_L("0 0 0 9    9"), 0, 0, 0, 0, 1));
+	TEST(9 == TestLineBreak(_L("4242454445"), 0, 0, 0, 0, 0));
+	TEST(5 == TestLineBreak(_L("4242454445"), 0, 0, 0, 0, 1));
+	TEST(5 == TestLineBreak(_L("hello there"), 0, 0, 0, 0, 0));
+	TEST(5 == TestLineBreak(_L("hello there"), 0, 0, 0, 0, 1));
+	TEST(-1 == TestLineBreak(_L("hel  the re"), 0, 0, 5, 7, 0));
+	TEST(-1 == TestLineBreak(_L("hel  the re"), 0, 0, 5, 7, 1));
+	TEST(8 == TestLineBreak(_L("hel  the re"), 0, 1, 5, 7, 0));
+	TEST(8 == TestLineBreak(_L("hel  the re"), 0, 1, 6, 7, 1));
+	TEST(3 == TestLineBreak(_L("@@@@@"), 3, 0, 0, 0, 0));
+	TEST(3 == TestLineBreak(_L("@@@@@"), 3, 0, 0, 0, 1));
+	TEST(5 == TestLineBreak(_L("9999@@@@@00099@@@@gfra"), 5, 0, 5, 0, 0));
+	TEST(5 == TestLineBreak(_L("9999@@@@@00099@@@@gfra"), 5, 0, 5, 0, 1));
+	TEST(16 == TestLineBreak(_L("9999@@@@@00099@@@@gfra"), 16, 0, 0, 0, 0));
+	TEST(16 == TestLineBreak(_L("9999@@@@@00099@@@@gfra"), 16, 0, 0, 0, 1));
+	TEST(5 == TestLineBreak(_L("55@@@55"), 0, 0, 0, 0, 0));
+	TEST(2 == TestLineBreak(_L("55@@@55"), 0, 0, 0, 0, 1));
+	TEST(3 == TestLineBreak(_L("55@55"), 0, 0, 0, 0, 0));
+	TEST(2 == TestLineBreak(_L("55@55"), 0, 0, 0, 0, 1));
 
 	// Test for DEF046468, which was caused by the TLineBreakIterator constructor accessing past the end of a string
-	test.Next(_L("Line-Break DEF046468 Test:"));
+	TESTPRINT(_L("Line-Break DEF046468 Test:"));
 	// Create a string of 16 chars with a picture code at the 17th position
 	_LIT(KLarsString, "dolor sit amet, \xFFFC");
 	// Create a TPtrC for the 16 character string ( with the picture code after the string in memory )
 	TBufC<20> KTestBuffer(KLarsString);
 	TPtrC KTestString( reinterpret_cast<const TUint16*>(KTestBuffer.Ptr()), 16);
 	// Test the iterator overrun. If iterator accesses past the end of the array, it'll get picture code and crash
-	test(9 == TestLineBreak(KTestString,0,0,1,15,0));
-
-	test.End();
-	test.Close();
-
-	}
-
-TInt E32Main()
-	{
-	TrapCleanup = CTrapCleanup::New();
-	TRAPD(err, RunTests());
-    test(err == KErrNone);
-	delete TrapCleanup;
-	return 0;
+	TEST(9 == TestLineBreak(KTestString,0,0,1,15,0));
+	
+	return TestStepResult();
 	}

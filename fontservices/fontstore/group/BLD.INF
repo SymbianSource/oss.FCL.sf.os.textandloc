@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2006-2009 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 2006-2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -67,6 +67,7 @@ PRJ_TESTEXPORTS
 
 ../tfs/scripts/fntstoretest_T_All.script						z:/fntstoretest/fntstoretest_t_all.script
 ../tfs/scripts/fntstoretest_T_Fnt.script						z:/fntstoretest/fntstoretest_t_fnt.script
+../tfs/scripts/fntstoretest_T_Cache.script						z:/fntstoretest/fntstoretest_T_Cache.script
 ../tfs/scripts/fntstoretest_T_FntMem.script						z:/fntstoretest/fntstoretest_t_fntmem.script
 ../tfs/scripts/fntstoretest_T_FontBitmap.script					z:/fntstoretest/fntstoretest_t_fontbitmap.script
 ../tfs/scripts/fntstoretest_T_FsOpen.script						z:/fntstoretest/fntstoretest_t_fsopen.script

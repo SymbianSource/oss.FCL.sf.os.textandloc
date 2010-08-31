@@ -441,7 +441,9 @@ void CTShaperCache::TestShaperCacheAPIsL()
 		input.iReserved1 = 0;
 		TInt addedBytes = 0;
 		TShapeHeader* chached_header3 = 0;
-		
+		openFont->FreeShaperCacheMemory(KMaxShaperSesssionCacheMemory);
+		openFont->File()->GetFontStore()->SetShaperCacheMemUsage(0);
+		RArray<TInt> cacheMemUsage;
 		/* Keep inserting pseudo-new shaped entries into the cache to fill it up */
 		while(openFont->File()->GetFontStore()->GetShaperCacheMemUsage() < KMaxShaperSesssionCacheMemory)
 			{
@@ -453,31 +455,40 @@ void CTShaperCache::TestShaperCacheAPIsL()
 			if (chached_header3 != NULL)
 				openFont->File()->GetFontStore()->SetShaperCacheMemUsage(memoryUsed + addedBytes);
 			((CBitmapFont*)font)->DeleteShape(0, chached_header3);
+			cacheMemUsage.AppendL(openFont->File()->GetFontStore()->GetShaperCacheMemUsage() - memoryUsed);
 			chached_header3 = NULL;
 			}
 		
 		/* Now try to add a new entry, and check that the entry replaced was the last entry in the cache */
 		TInt last_entry_glyph_count = glyphCache->iShaperCacheSentinel->iPrevious->iShapeHeader->iGlyphCount;
 		shape->iGlyphCount++;
-		params->iEnd = input.iEnd + 1;
+		input.iEnd++;
+		params->iEnd = input.iEnd;
 		
 		/* Calculate the memory needed for the new entry */
-		TInt bufferSize = (sizeof(TUint32) + sizeof(TInt16) + sizeof(TInt16) * 2)
-				* shape->iGlyphCount + sizeof(TInt16) * 2;
-		TInt bytes_needed = bufferSize + sizeof(COpenFontShaperCacheEntry) + 
-			sizeof(TShapeHeader) + sizeof(TUint16)*params->iText->Length();
+
 		
-		TInt bytesToDelete = 0;
+        TInt heapSizeBefAloc = 0;
+        iHeap->AllocSize(heapSizeBefAloc);      
+        COpenFontShaperCacheEntry *tempEntry = COpenFontShaperCacheEntry::New(iHeap, input, shape);
+        TInt heapSizeAftAloc = 0;
+        iHeap->AllocSize(heapSizeAftAloc);
+        TInt bytes_needed = heapSizeAftAloc - heapSizeBefAloc;
+        COpenFontShaperCacheEntry::Delete(iHeap, tempEntry);
+        
+		TInt bytesToDelete = 0;    
+	    
 		COpenFontShaperCacheEntry* previous = glyphCache->iShaperCacheSentinel->iPrevious;
 		/* Calculate the memory that will be freed to accommodate the new entry,
 		   and the position of the last entry in the cache once deletion is done */
+		TInt index = 0;
 		while (bytesToDelete <= bytes_needed)
 			{
-			bytesToDelete += (((sizeof(TUint32) + sizeof(TInt16) + sizeof(TInt16) * 2) * previous->iShapeHeader->iGlyphCount + sizeof(TInt16) * 2) + 
-				(sizeof(COpenFontShaperCacheEntry) + sizeof(TShapeHeader) + sizeof(TUint16)*params->iText->Length()));
-			previous = previous->iPrevious;
+
+             bytesToDelete += cacheMemUsage[index++];
+			 previous = previous->iPrevious;
 			}
-			
+		cacheMemUsage.Close();	
 		/* Find the glyphcount of the expected new last entry in the cache */
 		expectedGlyphCount = previous->iShapeHeader->iGlyphCount;
 		
@@ -499,7 +510,7 @@ void CTShaperCache::TestShaperCacheAPIsL()
 		   be released when the last entry is deleted
 		 */
 		last_entry_glyph_count = glyphCache->iShaperCacheSentinel->iPrevious->iShapeHeader->iGlyphCount;
-		bufferSize = (sizeof(TUint32) + sizeof(TInt16) + sizeof(TInt16) * 2)
+		TInt bufferSize = (sizeof(TUint32) + sizeof(TInt16) + sizeof(TInt16) * 2)
 				* last_entry_glyph_count + sizeof(TInt16) * 2;
 
 		bytes_needed = bufferSize + sizeof(COpenFontShaperCacheEntry) + 

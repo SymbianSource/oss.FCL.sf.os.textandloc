@@ -21,6 +21,11 @@
 #include "FRMCONST.H"
 #include <txtlaydc.h>
 
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "FRMPAGETraces.h"
+#endif
+
 #ifdef SYMBIAN_ENABLE_SPLIT_HEADERS
 #include "FRMCONST_INTERNAL.H"
 #include "FRMCONST_PARTNER.H"
@@ -91,6 +96,10 @@ beforehand.
 @param aPrinterDevice The printer device. */
 EXPORT_C void CTextPaginator::SetPrinterDevice(CPrinterDevice* aPrinterDevice)
 	{
+	if (!iLayout)
+	    {
+	    OstTrace0( TRACE_FATAL, CTEXTPAGINATOR_SETPRINTERDEVICE, "EFDocumentToPaginateNotSet" );
+	    }
  	__ASSERT_ALWAYS(iLayout,FormPanic(EFDocumentToPaginateNotSet));
 	iPrinterDevice=aPrinterDevice;
 	iLayout->SetImageDeviceMap(aPrinterDevice);
@@ -168,6 +177,10 @@ together.
 Note: SetDocumentL() must have been called beforehand, or a panic occurs. */
 EXPORT_C void CTextPaginator::PaginateCompleteDocumentL()
 	{
+	if (!iLayout)
+	    {
+	    OstTrace0( TRACE_FATAL, CTEXTPAGINATOR_PAGINATECOMPLETEDOCUMENTL, "EFDocumentToPaginateNotSet" );
+	    }
  	__ASSERT_ALWAYS(iLayout,FormPanic(EFDocumentToPaginateNotSet));
   	if (iPageList->Count()==0)
 		iPageList->AppendL(iLayDoc->LdDocumentLength());
@@ -196,7 +209,15 @@ paginated.
 @return A count of the current number of pages. */
 EXPORT_C TInt CTextPaginator::AppendTextL(TInt& aCumulativeDocPos)
 	{
+	if (!iLayout)
+	    {
+	    OstTrace0( TRACE_FATAL, CTEXTPAGINATOR_APPENDTEXTL, "EFDocumentToPaginateNotSet" );
+	    }
 	__ASSERT_ALWAYS(iLayout,FormPanic(EFDocumentToPaginateNotSet));
+	if (aCumulativeDocPos>=iLayout->DocumentLength())
+	    {
+	    OstTrace0( TRACE_FATAL, DUP1_CTEXTPAGINATOR_APPENDTEXTL, "EFInvalidDocPos" );
+	    }
  	__ASSERT_ALWAYS(aCumulativeDocPos<iLayout->DocumentLength(),FormPanic(EFInvalidDocPos));
  	iMode=EFPaginateIncrementally;
 
@@ -227,7 +248,9 @@ EXPORT_C TInt CTextPaginator::AppendTextL(TInt& aCumulativeDocPos)
 
 	TRAPD(err,CopyTempPageListL());
 	if (err)
+	    {
 		LeaveL(err);
+	    }
 	return iPageList->Count();
 	}
 
@@ -457,6 +480,10 @@ void CTextPaginator::CopyTempPageListL()
 // Copies temp page list to one that external user sees
 //
 	{
+	if (iTempPageList->Count()<1 && iMode!=EFPaginateIncrementally)
+	    {
+	    OstTrace0( TRACE_DUMP, CTEXTPAGINATOR_COPYTEMPPAGELISTL, "EFPageListEmpty" );
+	    }
 	__ASSERT_DEBUG(iTempPageList->Count()>=1||iMode==EFPaginateIncrementally,FormPanic(EFPageListEmpty));
 	TRAPD(err,iPageList->ResizeL(iTempPageList->Count()));
 	if (err)
@@ -486,6 +513,8 @@ void CTextPaginator::LeaveL(TInt aErr)
 	if (iObserver)
 		iObserver->NotifyError(aErr);
 
+	OstTrace1( TRACE_FATAL, CTEXTPAGINATOR_LEAVEL, "CTextPaginator::LeaveL;aErr=%d", aErr );
+	
 	User::Leave(aErr);
 	}
 

@@ -17,25 +17,21 @@
 
 
 #include <e32std.h>
-#include <e32test.h>
 #include <utf.h>
+#include "t_newlin7.h"
 
 ///////////////////////////////////////////////////////////////////////////////////////
 
-RTest TheTest(_L("TNewLin7"));
-
-///////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////
-//Tests macroses and functions.
-static void Check(TInt aValue, TInt aLine)
-	{
-	if(!aValue)
-		{
-		TheTest(EFalse, aLine);
-		}
-	}
-#define TEST(arg) ::Check((arg), __LINE__)
-
+#define test(cond)                                          \
+    {                                                       \
+    TBool __bb = (cond);                                    \
+    TEST(__bb);                                             \
+    if (!__bb)                                              \
+        {                                                   \
+        ERR_PRINTF1(_L("ERROR: Test Failed"));              \
+        User::Leave(1);                                     \
+        }                                                   \
+    }
 ///////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////
 /**
@@ -46,29 +42,47 @@ static void Check(TInt aValue, TInt aLine)
 @SYMTestExpectedResults Test must not fail
 @SYMREQ                 REQ0000
 */
-GLDEF_C TInt E32Main()
+void CT_NEWLIN7::TestNEWLIN7()
 	{
-	TheTest.Title();
-	TheTest.Start(_L(" @SYMTestCaseID:SYSLIB-CHARCONV-CT-0570 Testing base64 sequences combined with line-breaks "));
+    INFO_PRINTF1(_L(" @SYMTestCaseID:SYSLIB-CHARCONV-CT-0570 Testing base64 sequences combined with line-breaks "));
 	TBuf16<256> unicode;
 	TBuf8<256> utf7;
 	TInt state=CnvUtfConverter::KStateDefault;
 	utf7=_L8("+U0E\nU0E");
-	TEST(CnvUtfConverter::ConvertToUnicodeFromUtf7(unicode, utf7, state)==0);
-	TEST(state==CnvUtfConverter::KStateDefault);
-	TEST(unicode.Length()==5);
-	TEST(unicode[0]==0x5341);
-	TEST(unicode[1]==0x000a);
-	TEST(unicode[2]==0x0055);
-	TEST(unicode[3]==0x0030);
-	TEST(unicode[4]==0x0045);
+	test(CnvUtfConverter::ConvertToUnicodeFromUtf7(unicode, utf7, state)==0);
+	test(state==CnvUtfConverter::KStateDefault);
+	test(unicode.Length()==5);
+	test(unicode[0]==0x5341);
+	test(unicode[1]==0x000a);
+	test(unicode[2]==0x0055);
+	test(unicode[3]==0x0030);
+	test(unicode[4]==0x0045);
 	unicode=_L16(")\n)\n*\n*\n+\n+\n)\n)\n*\n*\n+\n+");
-	TEST(CnvUtfConverter::ConvertFromUnicodeToUtf7(utf7, unicode, ETrue)==0);
-	TEST(utf7==_L8(")\n)\n+ACo-\n+ACo-\n+-\n+-\n)\n)\n+ACo-\n+ACo-\n+-\n+-"));
-	TEST(CnvUtfConverter::ConvertFromUnicodeToUtf7(utf7, unicode, EFalse)==0);
-	TEST(utf7==_L8(")\n)\n*\n*\n+-\n+-\n)\n)\n*\n*\n+-\n+-"));
-	TheTest.End();
-	TheTest.Close();
-	return KErrNone;
+	test(CnvUtfConverter::ConvertFromUnicodeToUtf7(utf7, unicode, ETrue)==0);
+	test(utf7==_L8(")\n)\n+ACo-\n+ACo-\n+-\n+-\n)\n)\n+ACo-\n+ACo-\n+-\n+-"));
+	test(CnvUtfConverter::ConvertFromUnicodeToUtf7(utf7, unicode, EFalse)==0);
+	test(utf7==_L8(")\n)\n*\n*\n+-\n+-\n)\n)\n*\n*\n+-\n+-"));
 	}
 
+CT_NEWLIN7::CT_NEWLIN7()
+    {
+    SetTestStepName(KTestStep_T_NEWLIN7);
+    }
+
+TVerdict CT_NEWLIN7::doTestStepL()
+    {
+    SetTestStepResult(EFail);
+
+    __UHEAP_MARK;
+
+    TRAPD(error1, TestNEWLIN7());
+
+    __UHEAP_MARKEND;
+
+    if(error1 == KErrNone )
+        {
+        SetTestStepResult(EPass);
+        }
+
+    return TestStepResult();
+    }

@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 2008-2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -46,6 +46,13 @@ ECOM_PLUGIN(tis1620.dll, tis1620.rsc)
 // test version of J5 and shiftjis plugins using kddiau version of shiftjis
 ECOM_PLUGIN(test_j5_kddiau.dll, 01000002.rsc)
 ECOM_PLUGIN(shiftjis_kddiau_test.dll, 01000000.rsc)
+
+// test version of xS60 eucjp_packed, also need dependent dll
+//ECOM_PLUGIN(eucjp_packed_2_test.dll, 01000004.rsc)
+// test version of xS60 iso2022jp, also need dependent dll
+//ECOM_PLUGIN(iso2022jp_2_test.dll, 01000006.rsc)
+// test version of xS60 iso2022jp1, also need dependent dll
+//ECOM_PLUGIN(iso2022jp1_2_test.dll, 01000008.rsc)
 
 data=EPOCROOT##epoc32\data\z\test\data\swedish.txt		test\Data\swedish.txt
 data=EPOCROOT##epoc32\data\z\test\data\finnish.txt		test\Data\finnish.txt
@@ -200,56 +207,7 @@ data=EPOCROOT##epoc32\data\z\test\data\win1258_for_input.dat	test\data\win1258_f
 data=EPOCROOT##epoc32\data\z\test\data\win1258_uni_expect.dat	test\data\win1258_uni_expect.dat
 data=EPOCROOT##epoc32\data\z\test\data\win1258_uni_input.dat	test\data\win1258_uni_input.dat
 
-file=ABI_DIR\BUILD_DIR\TGENERALFOREIGN.EXE			TEST\TGENERALFOREIGN.EXE
-file=ABI_DIR\BUILD_DIR\TBUILTIN.EXE					TEST\TBUILTIN.EXE
-file=ABI_DIR\BUILD_DIR\TGB2312.EXE					TEST\TGB2312.EXE
-file=ABI_DIR\BUILD_DIR\THZ.EXE						TEST\THZ.EXE
-file=ABI_DIR\BUILD_DIR\TGBK.EXE						TEST\TGBK.EXE
-file=ABI_DIR\BUILD_DIR\TGB18030.EXE					TEST\TGB18030.EXE
-file=ABI_DIR\BUILD_DIR\TBIG5.EXE					TEST\TBIG5.EXE
-file=ABI_DIR\BUILD_DIR\tshiftjis_kddiau.exe			TEST\tshiftjis_kddiau.exe
-file=ABI_DIR\BUILD_DIR\TISO2022JP.EXE				TEST\TISO2022JP.EXE
-file=ABI_DIR\BUILD_DIR\TJIS.EXE						TEST\TJIS.EXE	
-file=ABI_DIR\BUILD_DIR\TEUCJP_PACKED.EXE			TEST\TEUCJP_PACKED.EXE
-file=ABI_DIR\BUILD_DIR\TISO8859X.EXE				TEST\TISO8859X.EXE
-file=ABI_DIR\BUILD_DIR\TREPLACEMENT.EXE				TEST\TREPLACEMENT.EXE
-file=ABI_DIR\BUILD_DIR\TSNM.EXE						TEST\TSNM.EXE
-file=ABI_DIR\BUILD_DIR\TAUTODETECT.EXE				TEST\TAUTODETECT.EXE
-
-file=ABI_DIR\BUILD_DIR\TUCS2.EXE					TEST\TUCS2.EXE
-file=ABI_DIR\BUILD_DIR\tj5_kddiau.exe				TEST\tj5_kddiau.exe
-file=ABI_DIR\BUILD_DIR\TJ5_DOCOMO.EXE				TEST\TJ5_DOCOMO.EXE
+file=ABI_DIR\BUILD_DIR\t_charconvpluginserver.exe	Sys\Bin\t_charconvpluginserver.exe
 file=ABI_DIR\BUILD_DIR\shiftjis_kddiau_shared.dll	Sys\Bin\shiftjis_kddiau_shared.dll
-file=ABI_DIR\BUILD_DIR\TSHIFTJIS_DOCOMO.EXE			TEST\TSHIFTJIS_DOCOMO.EXE
-file=ABI_DIR\BUILD_DIR\test_multi_plugins.exe		TEST\test_multi_plugins.exe
-
-file=ABI_DIR\BUILD_DIR\textendedsms.exe		TEST\textendedsms.exe
-file=ABI_DIR\BUILD_DIR\tturkishlocking.exe		TEST\tturkishlocking.exe
-file=ABI_DIR\BUILD_DIR\tturkishlockingsingle.exe		TEST\tturkishlockingsingle.exe
-file=ABI_DIR\BUILD_DIR\tturkishsingle.exe		TEST\tturkishsingle.exe
-
-file=ABI_DIR\BUILD_DIR\tportuguesegsmsingle.exe		TEST\tportuguesegsmsingle.exe
-file=ABI_DIR\BUILD_DIR\tportugueselocking.exe		TEST\tportugueselocking.exe
-file=ABI_DIR\BUILD_DIR\tportugueselockingsingle.exe		TEST\tportugueselockingsingle.exe
-file=ABI_DIR\BUILD_DIR\tspanishgsmsingle.exe		TEST\tspanishgsmsingle.exe
-file=ABI_DIR\BUILD_DIR\teucjpdirectmap.exe		TEST\teucjpdirectmap.exe
-file=ABI_DIR\BUILD_DIR\tshiftjisdirectmap.exe		TEST\tshiftjisdirectmap.exe
-file=ABI_DIR\BUILD_DIR\teucjp_packed_2.exe		TEST\teucjp_packed_2.exe
-
-file=ABI_DIR\BUILD_DIR\tiscii.exe		TEST\tiscii.exe
-file=ABI_DIR\BUILD_DIR\tKOI8R.exe		TEST\tKOI8R.exe
-file=ABI_DIR\BUILD_DIR\tKOI8U.exe		TEST\tKOI8U.exe
-file=ABI_DIR\BUILD_DIR\tTIS_620.exe		TEST\tTIS_620.exe
-file=ABI_DIR\BUILD_DIR\twin874.exe		TEST\twin874.exe
-file=ABI_DIR\BUILD_DIR\twin1250.exe		TEST\twin1250.exe
-file=ABI_DIR\BUILD_DIR\twin1251.exe		TEST\twin1251.exe
-file=ABI_DIR\BUILD_DIR\twin1253.exe		TEST\twin1253.exe
-file=ABI_DIR\BUILD_DIR\twin1254.exe		TEST\twin1254.exe
-file=ABI_DIR\BUILD_DIR\twin1255.exe		TEST\twin1255.exe
-file=ABI_DIR\BUILD_DIR\twin1256.exe		TEST\twin1256.exe
-file=ABI_DIR\BUILD_DIR\twin1257.exe		TEST\twin1257.exe
-file=ABI_DIR\BUILD_DIR\twin1258.exe		TEST\twin1258.exe
-file=ABI_DIR\BUILD_DIR\tcp949.exe		TEST\tcp949.exe
-
 
 #endif
