@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 1997-2010 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 1997-2009 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -19,6 +19,7 @@
 #include <txtrich.h>
 #include "TSTCLIPB.H"
 #include <txtstyle.h>
+#include <e32test.h>
 #include <gdi.h>
 #include <conpics.h>											   						 
 #include <flddef.h>
@@ -26,21 +27,9 @@
 #include <s32mem.h>
 #include <s32file.h>
 #include "../incp/T_PMLPAR.H"
-#include "T_RICHOOM.h"
-
-#define test(cond)											\
-	{														\
-	TBool __bb = (cond);									\
-	TEST(__bb);												\
-	if (!__bb)												\
-		{													\
-		ERR_PRINTF1(_L("ERROR: Test Failed"));				\
-		User::Leave(1);										\
-		}													\
-	}
 
 const TInt KTestCleanupStack=0x500;
-
+GLDEF_C RTest test(_L("TRICHOOM"));
 LOCAL_D RFs theFs;
 LOCAL_D CParaFormatLayer* GlobalParaFormatLayer;
 LOCAL_D CCharFormatLayer* GlobalCharFormatLayer;
@@ -50,7 +39,7 @@ LOCAL_D CParser* TheParser;
 LOCAL_D RFs TheSession;
 
 
-CRichText* CT_RICHOOM::LoadIntoTextL(TFileName& aFileName)
+LOCAL_C CRichText* LoadIntoTextL(TFileName& aFileName)
 //
 	{
 	TRAPD(ret,
@@ -68,12 +57,12 @@ CRichText* CT_RICHOOM::LoadIntoTextL(TFileName& aFileName)
 	}
 
 
-void CT_RICHOOM::ConstructOOM()
+LOCAL_D void ConstructOOM()
 // Test CRichText construction, (and index), forcing a leave error at each
 // possible stage of the process.
 //
 	{
-	INFO_PRINTF1(_L("Construction under low memory conditions"));
+	test.Start(_L("Construction under low memory conditions"));
 	
 	CParaFormatLayer* paraLayer=CParaFormatLayer::NewL();
 	CCharFormatLayer* charLayer=CCharFormatLayer::NewL();
@@ -104,14 +93,14 @@ void CT_RICHOOM::ConstructOOM()
 	delete charLayer;
 	TBuf<36> answer;
 	answer.Format(_L("        #allocs for full c'tion: %d\n"),failRate-1);
-	INFO_PRINTF1(answer);
+	test.Printf(answer);
 	}
 
 
-void CT_RICHOOM::CopyPasteOOM()
+LOCAL_D void CopyPasteOOM()
 	{
 // Set up the framework
-	INFO_PRINTF1(_L("Copy/Paste OOM"));
+	test.Next(_L("Copy/Paste OOM"));
 	CRichText* richText1=CRichText::NewL(GlobalParaFormatLayer,GlobalCharFormatLayer);
 	TFileName file=_L("z:\\test\\app-framework\\etext\\climb.txt");
 	/*TInt count=*/richText1->ImportTextFileL(0,file,CPlainText::EOrganiseByParagraph);
@@ -140,7 +129,7 @@ void CT_RICHOOM::CopyPasteOOM()
 	richText1->ApplyCharFormatL(charFormat,charMask,10,37);
 //
 // Copy to clipboard normally.
-	INFO_PRINTF1(_L("Copy Normally"));
+	test.Start(_L("Copy Normally"));
 	User::LeaveIfError(TheSession.Connect());
 	CClipboard* writeBoard=CClipboard::NewForWritingLC(TheSession);
 	richText1->CopyToStoreL(writeBoard->Store(),writeBoard->StreamDictionary(),0,richText1->DocumentLength()-1);  // forces virtual trailing phrase
@@ -151,7 +140,7 @@ void CT_RICHOOM::CopyPasteOOM()
 	richText1=NULL;
 //
 // Paste from clipboard normally.
-	INFO_PRINTF1(_L("Paste Normally"));
+	test.Next(_L("Paste Normally"));
 	__UHEAP_MARK;
 	CRichText* empty=CRichText::NewL(GlobalParaFormatLayer,GlobalCharFormatLayer);
 	MDemPictureFactory pictureFactory;
@@ -167,8 +156,8 @@ void CT_RICHOOM::CopyPasteOOM()
 	__UHEAP_MARKEND;
 //
 // Paste from clipboard with OOM
-	INFO_PRINTF1(_L("Paste with OOM"));
-	INFO_PRINTF1(_L("...please wait"));
+	test.Next(_L("Paste with OOM"));
+	test.Next(_L("...please wait"));
 	__UHEAP_MARK;
 	empty=CRichText::NewL(GlobalParaFormatLayer,GlobalCharFormatLayer);
 	for (TInt ii=1; ;ii++)
@@ -189,16 +178,17 @@ void CT_RICHOOM::CopyPasteOOM()
 	empty=NULL;
 	TheSession.Close();
 	__UHEAP_MARKEND;
+	test.End();
 	}
 
 
-void CT_RICHOOM::CopyPasteOOM2()
+LOCAL_D void CopyPasteOOM2()
 // Test case for defect HA-282 - simple case
 //
 	{
 	__UHEAP_MARK;
 // Set up the framework
-	INFO_PRINTF1(_L("Copy/Paste OOM 2"));
+	test.Next(_L("Copy/Paste OOM 2"));
 	CRichText* richText1=CRichText::NewL(GlobalParaFormatLayer,GlobalCharFormatLayer);
 	richText1->InsertL(0,_L("HelloHello"));
 	richText1->InsertL(5,CEditableText::EParagraphDelimiter);
@@ -210,7 +200,7 @@ void CT_RICHOOM::CopyPasteOOM2()
 	richText1->ApplyCharFormatL(charFormat,charMask,0,6);
 //
 // Copy to clipboard normally.
-	INFO_PRINTF1(_L("Copy Normally"));
+	test.Start(_L("Copy Normally"));
 	User::LeaveIfError(TheSession.Connect());
 	CClipboard* writeBoard=CClipboard::NewForWritingLC(TheSession);
 	richText1->CopyToStoreL(writeBoard->Store(),writeBoard->StreamDictionary(),2,6);  // forces virtual trailing phrase
@@ -219,7 +209,7 @@ void CT_RICHOOM::CopyPasteOOM2()
 	writeBoard=NULL;
 //
 // Paste from clipboard normally.
-	INFO_PRINTF1(_L("Paste Normally"));
+	test.Next(_L("Paste Normally"));
 //	__UHEAP_MARK;
 	CRichText* empty=CRichText::NewL(GlobalParaFormatLayer,GlobalCharFormatLayer);
 	empty->AppendTakingSolePictureOwnershipL(*richText1);
@@ -234,8 +224,8 @@ void CT_RICHOOM::CopyPasteOOM2()
 //	__UHEAP_MARKEND;
 //
 // Paste from clipboard with OOM
-	INFO_PRINTF1(_L("Paste with OOM"));
-	INFO_PRINTF1(_L("...please wait"));
+	test.Next(_L("Paste with OOM"));
+	test.Next(_L("...please wait"));
 	__UHEAP_MARK;
 	empty=CRichText::NewL(GlobalParaFormatLayer,GlobalCharFormatLayer);
 	empty->AppendTakingSolePictureOwnershipL(*richText1);
@@ -259,17 +249,18 @@ void CT_RICHOOM::CopyPasteOOM2()
 	__UHEAP_MARKEND;
 	TheSession.Close();
 	__UHEAP_MARKEND;
+	test.End();
 	}
 
 
-void CT_RICHOOM::WriteInlineL(RWriteStream& aStream,CRichText* aRichText)
+LOCAL_D void WriteInlineL(RWriteStream& aStream,CRichText* aRichText)
 	{
 	aRichText->ExternalizeStyleDataL(aStream);
 	aRichText->ExternalizeMarkupDataL(aStream);	
 	aRichText->ExternalizePlainTextL(aStream);
 	}
 
-void CT_RICHOOM::ReadInlineL(RReadStream& aStream,CRichText* aRichText)
+LOCAL_D void ReadInlineL(RReadStream& aStream,CRichText* aRichText)
 	{
 	aRichText->InternalizeStyleDataL(aStream);
 	aRichText->InternalizeMarkupDataL(aStream);	
@@ -277,7 +268,7 @@ void CT_RICHOOM::ReadInlineL(RReadStream& aStream,CRichText* aRichText)
 	}
 
 
-CStyleList* CT_RICHOOM::CreatePopulatedStyleList()
+LOCAL_C CStyleList* CreatePopulatedStyleList()
 //
 	{
 	//
@@ -296,7 +287,7 @@ CStyleList* CT_RICHOOM::CreatePopulatedStyleList()
 	}
 _LIT(KTRichOutputFile,"c:\\etext\\TRICH.DAT");
 
-void CT_RICHOOM::SaveLoadOOM()
+LOCAL_C void SaveLoadOOM()
 	{
 // Set up the framework
 	theFs.Delete(KTRichOutputFile);
@@ -314,8 +305,8 @@ void CT_RICHOOM::SaveLoadOOM()
 	RStoreWriteStream out;
 	TStreamId id1 =  out.CreateLC(*store);
 	
-	INFO_PRINTF1(_L("Store/Restore OOM"));
-	INFO_PRINTF1(_L("Writing Inline noramlly"));
+	test.Next(_L("Store/Restore OOM"));
+	test.Start(_L("Writing Inline noramlly"));
 // Write out inline normally
 	WriteInlineL(out,richText1);
 	delete richText1;
@@ -326,7 +317,7 @@ void CT_RICHOOM::SaveLoadOOM()
 	in.OpenLC(*store,id1);
 	CRichText* empty = CRichText::NewL(GlobalParaFormatLayer,GlobalCharFormatLayer);
 
-	INFO_PRINTF1(_L("Reading Inline noramlly"));
+	test.Next(_L("Reading Inline noramlly"));
 // Read in inline normally:
 	TRAPD(ret,ReadInlineL(in,empty));
 	test(ret==KErrNone);
@@ -334,7 +325,7 @@ void CT_RICHOOM::SaveLoadOOM()
 	delete empty;
 	empty=NULL;
 
-	INFO_PRINTF1(_L("Reading Inline with OOM"));
+	test.Next(_L("Reading Inline with OOM"));
 // Read in inline with OOM:
 	empty=CRichText::NewL(GlobalParaFormatLayer,GlobalCharFormatLayer);
 
@@ -355,7 +346,7 @@ void CT_RICHOOM::SaveLoadOOM()
 			}
 		}
 
-	INFO_PRINTF1(_L("Writing Inline with OOM"));
+	test.Next(_L("Writing Inline with OOM"));
 // Write out inline with OOM:
 	CStyleList* list2=CreatePopulatedStyleList();
 	CRichText* richText2 = CRichText::NewL(GlobalParaFormatLayer,GlobalCharFormatLayer,*list2);
@@ -380,7 +371,7 @@ void CT_RICHOOM::SaveLoadOOM()
 		}
 	store->CommitL();
 
-	INFO_PRINTF1(_L("Reading Inline after OOM write"));
+	test.Next(_L("Reading Inline after OOM write"));
 // Read in inline normally following a write out with OOM
 	RStoreReadStream in3;
 	in3.OpenLC(*store,i);
@@ -413,20 +404,20 @@ void CT_RICHOOM::SaveLoadOOM()
 	richText3->InsertL(0,hdr1);
 	richText3->InsertL(2,_L("hello"));
 
-	INFO_PRINTF1(_L("Writing Outline noramlly"));
+	test.Next(_L("Writing Outline noramlly"));
 // Write outline normally:
 	TStreamId id2 = richText3->StoreL(*store);
 	store->CommitL();
 	delete richText3;
 
-	INFO_PRINTF1(_L("Reading Outline noramlly"));
+	test.Next(_L("Reading Outline noramlly"));
 // Read outline normally:
 	empty->Reset();
 	TRAP(ret,empty->RestoreL(*store,id2));
 	test(ret==KErrNone);
 	empty->Reset();
 
-	INFO_PRINTF1(_L("Reading Outline with OOM"));
+	test.Next(_L("Reading Outline with OOM"));
 // Read outline with OOM:
 	CRichText* inText2=CRichText::NewL(GlobalParaFormatLayer,GlobalCharFormatLayer);
 	for (TInt kk = 1; ;++kk)
@@ -463,7 +454,7 @@ void CT_RICHOOM::SaveLoadOOM()
 	richText4->InsertL(0,hdr6);
 	richText4->InsertL(1,_L("hello"));
 	
-	INFO_PRINTF1(_L("Writing Outline with OOM"));
+	test.Next(_L("Writing Outline with OOM"));
 // Wtite outline with OOM:
 	TStreamId id3(0);
 	for (TInt mm=1; ;++mm)
@@ -479,7 +470,7 @@ void CT_RICHOOM::SaveLoadOOM()
 			}
 		}
 
-	INFO_PRINTF1(_L("Reading Outline after OOM write"));
+	test.Next(_L("Reading Outline after OOM write"));
 // Read outline normally folliwng a write with OOM:
 	empty->Reset();
 	TRAP(ret,empty->RestoreL(*store,id3));
@@ -487,10 +478,11 @@ void CT_RICHOOM::SaveLoadOOM()
 		
 	CleanupStack::PopAndDestroy();  // store
 	delete empty;
+	test.End();
 	}
 
 
-void CT_RICHOOM::CheckTextIntegrity(const CRichText* aText)
+LOCAL_C void CheckTextIntegrity(const CRichText* aText)
 // Simply invokes a method to run the text (& component's) onvariants.
 //
 	{
@@ -501,12 +493,12 @@ void CT_RICHOOM::CheckTextIntegrity(const CRichText* aText)
 	}
 	
 	
-void CT_RICHOOM::BasicEditOOM()
+LOCAL_C void BasicEditOOM()
 // Tests basic editing functions under OOM conditions.
 //
 	{
-	INFO_PRINTF1(_L("Basic Editing methods under OOM"));
-	INFO_PRINTF1(_L("InsertL(TChar)"));
+	test.Next(_L("Basic Editing methods under OOM"));
+	test.Start(_L("InsertL(TChar)"));
 //
 //	Insert a single character
 	const TInt insertCharLoop=10;
@@ -533,7 +525,7 @@ void CT_RICHOOM::BasicEditOOM()
 	delete richText1;
 //
 //
-	INFO_PRINTF1(_L("InsertL(TDesC&)"));
+	test.Next(_L("InsertL(TDesC&)"));
 //
 //	Insert a descriptor
 	const TInt insertDescriptorLoop=10;
@@ -546,13 +538,9 @@ void CT_RICHOOM::BasicEditOOM()
 		__UHEAP_SETFAIL(RHeap::EDeterministic,nn);
 		TRAPD(ret,richText1->InsertL(richText1->DocumentLength(),buf));
 		if (ret!=KErrNone)
-			{
 			test(richText1->DocumentLength()==0);
-			}
 		else
-			{
 			test(richText1->DocumentLength()==buf.Length());
-			}
 		CheckTextIntegrity(richText1);
 		richText1->Reset();
 		}
@@ -561,7 +549,7 @@ void CT_RICHOOM::BasicEditOOM()
 
 //
 //
-	INFO_PRINTF1(_L("InsertL(TPictureHeader&)"));
+	test.Next(_L("InsertL(TPictureHeader&)"));
 //
 //	Insert a picture header
 	richText1=CRichText::NewL(GlobalParaFormatLayer,GlobalCharFormatLayer,CEditableText::ESegmentedStorage,KSmallTextBufferSize);
@@ -595,13 +583,15 @@ void CT_RICHOOM::BasicEditOOM()
 		}
 	__UHEAP_RESET;
 	delete richText1;
+	
 
+	test.End();	
 	__UHEAP_RESET;
 //	delete richText1;
 	}
 
 
-void CT_RICHOOM::AppendTest1L()
+LOCAL_C void AppendTest1L()
 	{
 //	Insert a single character
 	const TInt insertDescriptorLoop=10;
@@ -616,9 +606,7 @@ void CT_RICHOOM::AppendTest1L()
 		__UHEAP_SETFAIL(RHeap::EDeterministic,nn);
 		TRAPD(ret,target->AppendTakingSolePictureOwnershipL(*source));
 		if (ret!=KErrNone)
-			{
 			test(target->DocumentLength()==targetStartLength);
-			}
 		else
 			{
 			TInt targetLength=target->DocumentLength();
@@ -630,10 +618,11 @@ void CT_RICHOOM::AppendTest1L()
 	__UHEAP_RESET;
 	delete target;
 	delete source;
+//	test.End();
 	}
 
 
-void CT_RICHOOM::AppendTest2L(CRichText* aTarget)
+LOCAL_C void AppendTest2L(CRichText* aTarget)
 	{
 	__UHEAP_RESET;
 	const TInt KSmallTextBufferSize=1;
@@ -649,9 +638,7 @@ void CT_RICHOOM::AppendTest2L(CRichText* aTarget)
 			aTarget->AppendTakingSolePictureOwnershipL(*source));
 		__UHEAP_RESET;
 		if (ret!=KErrNone)
-			{
 			test(aTarget->DocumentLength()==targetStartLength);
-			}
 		else
 			{// We have succeeded in appending the document.
 			TInt paraDelimiter=(targetStartLength>0) ? 1 : 0;
@@ -664,7 +651,7 @@ void CT_RICHOOM::AppendTest2L(CRichText* aTarget)
 	}
 
 
-void CT_RICHOOM::AppendTestNewL(CRichText* aTarget)
+LOCAL_C void AppendTestNewL(CRichText* aTarget)
 	{
 	const TInt KSmallTextBufferSize=4;
 	TFileName filename=_L("z:\\test\\app-framework\\etext\\richoom2.pml");
@@ -683,9 +670,7 @@ void CT_RICHOOM::AppendTestNewL(CRichText* aTarget)
 			aTarget->AppendTakingSolePictureOwnershipL(*source));
 		__UHEAP_RESET;
 		if (ret!=KErrNone)
-			{
 			test(aTarget->DocumentLength()==targetStartLength);
-			}
 		else
 			{// We have succeeded in appending the document.
 			TInt paraDelimiter=(targetStartLength>0) ? 1 : 0;
@@ -698,7 +683,7 @@ void CT_RICHOOM::AppendTestNewL(CRichText* aTarget)
 	}
 
 
-void CT_RICHOOM::AppendTest3L(CRichText* aTarget)
+LOCAL_C void AppendTest3L(CRichText* aTarget)
 	{
 	const TInt KSmallTextBufferSize=31;
 	TFileName filename=_L("z:\\test\\app-framework\\etext\\richoom2.pml");
@@ -713,9 +698,7 @@ void CT_RICHOOM::AppendTest3L(CRichText* aTarget)
 			aTarget->AppendTakingSolePictureOwnershipL(*source));
 		__UHEAP_RESET;
 		if (ret!=KErrNone)
-			{
 			test(aTarget->DocumentLength()==targetStartLength);
-			}
 		else
 			{// We have succeeded in appending the document.
 			TInt paraDelimiter=(targetStartLength>0) ? 1 : 0;
@@ -728,48 +711,50 @@ void CT_RICHOOM::AppendTest3L(CRichText* aTarget)
 	}
 
 
-void CT_RICHOOM::AppendTakingSolePictureOwnershipOOM()
+LOCAL_C void AppendTakingSolePictureOwnershipOOM()
 //
 	{
-	INFO_PRINTF1(_L("AppendTakingSolePictureOwnershipL() under OOM"));
+	test.Next(_L("AppendTakingSolePictureOwnershipL() under OOM"));
 	//
-	INFO_PRINTF1(_L("Plain text only"));
+	test.Start(_L("Plain text only"));
 	TRAPD(ret,
 	AppendTest1L());
 	test(ret==KErrNone);
 	//
-	INFO_PRINTF1(_L("Plain text + phrase markup, with empty target"));
+	test.Next(_L("Plain text + phrase markup, with empty target"));
 	TRAP(ret,
 	AppendTest2L(STATIC_CAST(CRichText*,NULL)));
 	test(ret==KErrNone);
 	//
-	INFO_PRINTF1(_L("Plain text + phrase markup, with non-empty target"));
+	test.Next(_L("Plain text + phrase markup, with non-empty target"));
 	TFileName filename=_L("z:\\test\\app-framework\\etext\\richoom1.pml");
 	CRichText* target=LoadIntoTextL(filename);
 	TRAP(ret,
 	AppendTest2L(target));
 	test(ret==KErrNone);
 	//
-//	INFO_PRINTF1(_L("Plain text + shared markup, with empty target"));
+//	test.Next(_L("Plain text + shared markup, with empty target"));
 //	TRAP(ret,
 //	AppendTest3L(STATIC_CAST(CRichText*,NULL)));
 //	test(ret==KErrNone);
 	//
-	INFO_PRINTF1(_L("Plain text + shared markup, non-empty target"));
+	test.Next(_L("Plain text + shared markup, non-empty target"));
 	TRAP(ret,
 	AppendTestNewL(STATIC_CAST(CRichText*,NULL)));
 	test(ret==KErrNone);
 	//
-	INFO_PRINTF1(_L("Plain text + shared markup, with non-empty target"));
+	test.Next(_L("Plain text + shared markup, with non-empty target"));
 	filename=_L("z:\\test\\app-framework\\etext\\richoom2.pml");
 	target=LoadIntoTextL(filename);
 	TRAP(ret,
 	AppendTest3L(target));
 	test(ret==KErrNone);
+	//
+	test.End();
 	}
 
 
-void CT_RICHOOM::DoAppendParagraphOOM(CRichText* aRichText,TBool aUnderOOM,TInt aReplicas)
+LOCAL_C void DoAppendParagraphOOM(CRichText* aRichText,TBool aUnderOOM,TInt aReplicas)
 	{
 	if (!aUnderOOM)
 		{
@@ -799,51 +784,53 @@ void CT_RICHOOM::DoAppendParagraphOOM(CRichText* aRichText,TBool aUnderOOM,TInt 
 			test(newParaCount==paraCount+aReplicas);
 			TBuf<30> buf;
 			buf.Format(_L("   allocs=%d\n"),jj);
-			INFO_PRINTF1(buf);
+			test.Printf(buf);
 			break;
 			}
 		}
 	}
 
 
-void CT_RICHOOM::AppendParagraphOOM()
+LOCAL_C void AppendParagraphOOM()
 //	
 	{
 	TInt manyParas=5;
 	TInt singlePara=1;
-	INFO_PRINTF1(_L("AppendParagraphL() under OOM"));
+	test.Next(_L("AppendParagraphL() under OOM"));
 //
-	INFO_PRINTF1(_L("appending normally - text has markup - single para"));
+	test.Start(_L("appending normally - text has markup - single para"));
 	TFileName filename=_L("z:\\test\\app-framework\\etext\\richoom1.pml");
 	CRichText* text=LoadIntoTextL(filename);
 	DoAppendParagraphOOM(text,EFalse,singlePara);
 	delete text;
 	text=NULL;
 
-	INFO_PRINTF1(_L("appending with OOM - text has markup - single para"));
+	test.Next(_L("appending with OOM - text has markup - single para"));
 	text=LoadIntoTextL(filename);
 	DoAppendParagraphOOM(text,ETrue,singlePara);
 	delete text;
 	text=NULL;
 
-	INFO_PRINTF1(_L("appending normally - text has markup - many paras"));
+	test.Next(_L("appending normally - text has markup - many paras"));
 	text=LoadIntoTextL(filename);
 	DoAppendParagraphOOM(text,EFalse,manyParas);
 	delete text;
 	text=NULL;
 
-	INFO_PRINTF1(_L("appending with OOM - text has markup - many paras"));
+	test.Next(_L("appending with OOM - text has markup - many paras"));
 	text=LoadIntoTextL(filename);
 	DoAppendParagraphOOM(text,ETrue,manyParas);
 	delete text;
 	text=NULL;
+
+	test.End();
 	}
 
 
-void CT_RICHOOM::ApplyCharFormatOOM1()
+LOCAL_C void ApplyCharFormatOOM1()
 	{
 // Set up the framework
-	INFO_PRINTF1(_L("ApplyCharFormatL() OOM - no markup"));
+	test.Next(_L("ApplyCharFormatL() OOM - no markup"));
 	CRichText* richText1=CRichText::NewL(GlobalParaFormatLayer,GlobalCharFormatLayer);
 	richText1->InsertL(0,_L("SOME VERY FINE TEXT"));
 
@@ -878,10 +865,10 @@ void CT_RICHOOM::ApplyCharFormatOOM1()
 	}
 
 
-void CT_RICHOOM::ApplyCharFormatOOM2()
+LOCAL_C void ApplyCharFormatOOM2()
 	{
 // Set up the framework
-	INFO_PRINTF1(_L("ApplyCharFormatL() OOM - with markup"));
+	test.Next(_L("ApplyCharFormatL() OOM - with markup"));
 	CRichText* richText1=CRichText::NewL(GlobalParaFormatLayer,GlobalCharFormatLayer);
 	richText1->InsertL(0,_L("SOME TEXT"));
 
@@ -924,7 +911,7 @@ void CT_RICHOOM::ApplyCharFormatOOM2()
 	}
 
 
-void CT_RICHOOM::doMainL()
+LOCAL_C void doMainL()
 	{
  
 	GlobalPictureFactory=new(ELeave) MDemPictureFactory;
@@ -950,6 +937,7 @@ void CT_RICHOOM::doMainL()
 		test(ret==KErrNone);
 	TRAP(ret,ApplyCharFormatOOM2());
 		test(ret==KErrNone);
+	test.End();
 	//
 	delete GlobalPictureFactory;
 	delete GlobalParaFormatLayer;
@@ -958,7 +946,7 @@ void CT_RICHOOM::doMainL()
 	}
 
 
-void CT_RICHOOM::setupCleanup()
+LOCAL_C void setupCleanup()
 //
 // Initialise the cleanup stack.
 //
@@ -975,7 +963,7 @@ void CT_RICHOOM::setupCleanup()
 	}
 
 
-void CT_RICHOOM::DeleteDataFile(const TDesC& aFullName)
+LOCAL_C void DeleteDataFile(const TDesC& aFullName)
 	{
 	RFs fsSession;
 	TInt err = fsSession.Connect();
@@ -1004,30 +992,27 @@ void CT_RICHOOM::DeleteDataFile(const TDesC& aFullName)
 		}
 	}
 
-CT_RICHOOM::CT_RICHOOM()
+GLDEF_C TInt E32Main()
+//
+// Test permanent file store.
+//
     {
-    SetTestStepName(KTestStep_T_RICHOOM);
-    }
-
-TVerdict CT_RICHOOM::doTestStepL()
-    {
-    SetTestStepResult(EFail);
-
-    __UHEAP_MARK;
-
+	test.Title();
 	setupCleanup();
-    
-	INFO_PRINTF1(_L(" @SYMTestCaseID:SYSLIB-TTEXT-LEGACY-T_TRICHOOM-0001 RichText OOM Testing "));
-    TRAPD(error1, doMainL());
-
+	
+	__UHEAP_MARK;
+//
+	test.Start(_L(" @SYMTestCaseID:SYSLIB-TTEXT-LEGACY-T_TRICHOOM-0001 RichText OOM Testing "));
+	TRAPD(ret,doMainL());	
+	test(ret==KErrNone);
+	
+	::DeleteDataFile(KTRichOutputFile);	//deletion of data files must be before call to End() - DEF047652
+	test.End();
+//
+	__UHEAP_MARKEND;
 	delete TheTrapCleanup;
+	test.Close();
 
-    __UHEAP_MARKEND;
-
-    if(error1 == KErrNone)
-        {
-        SetTestStepResult(EPass);
-        }
-
-    return TestStepResult();
+	return KErrNone;
     }
+

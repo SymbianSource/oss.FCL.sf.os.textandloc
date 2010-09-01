@@ -32,15 +32,15 @@ APP_LAYER_SYSTEMINCLUDE_SYMBIAN
 
 START RESOURCE	TForm18030.rss
 HEADER
-TARGETPATH		/resource/apps
+TARGETPATH		\resource\apps
 end
 
 START RESOURCE	TForm18030_reg.rss
-TARGETPATH		/private/10003a3f/apps
+TARGETPATH		\private\10003a3f\apps
 END
 
 START BITMAP	tform18030.mbm
-TARGETPATH		/resource/apps
+TARGETPATH		\resource\apps
 SOURCE			c8,1 icon24.BMP icon2M.BMP icon32.BMP icon3M.BMP icon48.BMP icon4M.BMP
 END
 

@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2009-2010 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -21,12 +21,36 @@
 REM EText tests
 
 #include <etext.iby>
-data=DATAZ_\ETextTest\ETextTests.bat			\ETextTests.bat
-// TEF server
-file=ABI_DIR\BUILD_DIR\TETextServer.exe		\sys\bin\TETextServer.exe
+// batch file that runs all automatic etext tests
+data=ZSYSTEM\test\ETextTests.bat		TEST\ETextTests.bat
 
-// script files
-// - see pkg file ETextTests.pkg
+file=ABI_DIR\BUILD_DIR\t_field1.exe		Test\t_field1.exe
+file=ABI_DIR\BUILD_DIR\t_roman.exe		Test\t_roman.exe
+file=ABI_DIR\BUILD_DIR\t_stream.exe		Test\t_stream.exe
+file=ABI_DIR\BUILD_DIR\trichoom.exe		Test\trichoom.exe
+file=ABI_DIR\BUILD_DIR\trtcopy.exe		Test\trtcopy.exe
+file=ABI_DIR\BUILD_DIR\ttimes1.exe		Test\ttimes1.exe
+file=ABI_DIR\BUILD_DIR\t_convrt.exe		Test\t_convrt.exe
+file=ABI_DIR\BUILD_DIR\t_convs.exe		Test\t_convs.exe
+file=ABI_DIR\BUILD_DIR\t_convs1.exe		Test\t_convs1.exe
+file=ABI_DIR\BUILD_DIR\t_cplain.exe		Test\t_cplain.exe
+file=ABI_DIR\BUILD_DIR\t_cutpst.exe		Test\t_cutpst.exe
+file=ABI_DIR\BUILD_DIR\t_fmt.exe		Test\t_fmt.exe
+file=ABI_DIR\BUILD_DIR\t_fmt1.exe		Test\t_fmt1.exe
+file=ABI_DIR\BUILD_DIR\t_import.exe		Test\t_import.exe
+file=ABI_DIR\BUILD_DIR\t_indter.exe		Test\t_indter.exe
+file=ABI_DIR\BUILD_DIR\t_laydoc.exe		Test\t_laydoc.exe
+file=ABI_DIR\BUILD_DIR\t_parse.exe		Test\t_parse.exe
+file=ABI_DIR\BUILD_DIR\t_picres.exe		Test\t_picres.exe
+file=ABI_DIR\BUILD_DIR\t_rich1a.exe		Test\t_rich1a.exe
+file=ABI_DIR\BUILD_DIR\t_rtclip.exe		Test\t_rtclip.exe
+file=ABI_DIR\BUILD_DIR\t_scandc.exe		Test\t_scandc.exe
+file=ABI_DIR\BUILD_DIR\t_style.exe		Test\t_style.exe
+file=ABI_DIR\BUILD_DIR\t_times.exe		Test\t_times.exe
+file=ABI_DIR\BUILD_DIR\t_tran.exe		Test\t_tran.exe
+file=ABI_DIR\BUILD_DIR\trtcustm.exe		Test\trtcustm.exe
+file=ABI_DIR\BUILD_DIR\TEtextDefect.exe		Test\TEtextDefect.exe
+file=ABI_DIR\BUILD_DIR\tins.dll			system\libs\tins.dll
 
 data=ZSYSTEM\..\test\app-framework\etext\AGGREGAT.PML 	test\app-framework\etext\AGGREGAT.PML
 data=ZSYSTEM\..\test\app-framework\etext\CHARTEST.PML 	test\app-framework\etext\CHARTEST.PML

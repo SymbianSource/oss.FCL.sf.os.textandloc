@@ -26,13 +26,6 @@
 #include "linkedfontsprivate.h"
 #include <graphics/openfontrasterizer.h>
 #include <graphics/gdi/glyphsample.h>
-#include <e32math.h>
-
-#include "OstTraceDefinitions.h"
-#ifdef OST_TRACE_COMPILER_IN_USE
-#include "OPENFONTTraces.h"
-#endif
-
 
 const TInt KSessionCacheEntries = 512;
 const TInt KDefaultSlantFactor = 20480;
@@ -527,8 +520,6 @@ EXPORT_C COpenFont::~COpenFont()
 	{
 	//Delete the shaper
 	delete iShaper;
-
-	File()->GetFontStore()->CleanupCacheOnOpenFontRemoval(this);
 	
 	COpenFontGlyphCache* glyphCache = GetGlyphCache();
 	if (glyphCache != NULL)
@@ -795,54 +786,6 @@ void COpenFont::DeleteShaper() const
 	delete iShaper;
 	}
 
-TInt COpenFont::GetFontTable(TUint32 aTag, TAny*& aTableContent, TInt& aLength) 
-    {
-    // get the extension API for GetTrueTypeTable() if available
-    TAny* ext = NULL;
-    ExtendedInterface(KUidOpenFontTrueTypeExtension, ext);
-    MOpenFontTrueTypeExtension* extensionInterface = 
-        reinterpret_cast<MOpenFontTrueTypeExtension*>(ext);
-
-    TInt ret = KErrNone;
-    if (extensionInterface == NULL)
-        {
-        ret = KErrNotSupported;
-        }
-    else 
-        {
-        TUint32 tag = aTag;
-        TInt len = 0;
-        aTableContent = extensionInterface->GetTrueTypeTable(ret, tag, &len);
-        if (KErrNone == ret) 
-            {
-            aLength = len;
-            }
-        }
-    return ret;
-    }
-
-TInt COpenFont::GetGlyphOutline(TUint aCode, 
-        TBool aHinted, TAny*& aOutline, TInt &aLength) 
-    {
-    // get the extension API for GetTrueTypeTable() if available
-    TAny* ext = NULL;
-    ExtendedInterface(KUidOpenFontGlyphOutlineExtension, ext);
-    MOpenFontGlyphOutlineExtension *extensionInterface = 
-        reinterpret_cast<MOpenFontGlyphOutlineExtension*>(ext);
-
-    TInt ret = KErrNone;
-    if (extensionInterface == NULL)
-        {
-        ret = KErrNotSupported;
-        }
-    else 
-        {
-        ret = extensionInterface->GetGlyphOutline(aCode, ETrue, 
-                aHinted, aOutline, aLength);
-        }
-    return ret;
-    }
-
 
 /**
 A constructor initialised with a TCharacterMetrics object.
@@ -905,13 +848,13 @@ void COpenFont::OnFileDeleted()
     iFileOffset = 0;
 	}
 
-COpenFontGlyphCache* COpenFont::GetGlyphCache() const
+COpenFontGlyphCache* COpenFont::GetGlyphCache()
 	{
     if (iGlyphCacheOffset == 0)
         {
         return NULL;
         }
-    return reinterpret_cast<COpenFontGlyphCache*>(PtrAdd(const_cast<COpenFont*>(this), iGlyphCacheOffset));
+    return reinterpret_cast<COpenFontGlyphCache*>(PtrAdd(this, iGlyphCacheOffset));
 	}
 
 const COpenFontGlyph* COpenFont::Glyph(TInt aSessionHandle, TInt aCode) const
@@ -950,7 +893,7 @@ The cache is now created in COpenFont::Rasterize which can only be called within
 @param aCode The code for the glpyh to look for in the cache
 @return A pointer to the requested glyph if it was found in the glyph cache, NULL if it was not found.
 */
-const COpenFontGlyph* COpenFont::FontCacheGlyph(TInt aCode) const
+const COpenFontGlyph* COpenFont::FontCacheGlyph(TInt aCode)
 	{
 	if (COpenFontGlyphCache* glyphCache = GetGlyphCache())
 		{
@@ -1113,52 +1056,58 @@ void COpenFontSessionCache::Delete(RHeap* aHeap)
     iEntryArray.Close(aHeap);
     }
 
-const COpenFontGlyph* COpenFontSessionCache::Glyph(const COpenFont* aFont, TInt aCode, TInt& aIndex) const
+const COpenFontGlyph* COpenFontSessionCache::Glyph(const COpenFont* aFont, TInt aCode, TInt& aIndex)
 	{
     aIndex = -1;
+    TInt oldest = KMaxTInt;
+    TInt oldest_index = 0;
     TInt numEntries = iEntryArray.Count();
     TInt index = GLYPH_CODE(aCode) % numEntries;   // simple hash function to shorten searches
     for (TInt i = 0; i < numEntries; ++i, ++index)
         {
         if (index >= numEntries)
-            {
             index = 0;
-            }
-        const COpenFontSessionCacheEntry* entry = iEntryArray[index];
+        COpenFontSessionCacheEntry* entry = iEntryArray[index];
         if (entry == NULL)
             {
-            if (aIndex < 0)
-                {
+            if (aIndex == -1)
                 aIndex = index;
+            }
+        else
+            { 
+            if (entry->Font() == aFont && entry->iCode == aCode)
+                {
+                entry->iLastAccess = iLastAccess++;
+                return entry;
+                }
+            if (entry->iLastAccess < oldest)
+                {
+                oldest = entry->iLastAccess;
+                oldest_index = index;
                 }
             }
-        else if (entry->Font() == aFont && entry->iCode == aCode)
-            {
-            return entry;
-            }
         }
+    if (aIndex == -1)
+        aIndex = oldest_index;
     return NULL;
 	}
 
 
 void COpenFontSessionCache::Insert(RHeap* aHeap, COpenFontSessionCacheEntry* aEntry, TInt aIndex)
 	{
-    if (aIndex >= iEntryArray.Count())
+    if (aIndex < 0 || aIndex >= iEntryArray.Count())
         {
         Panic(EFntSessionCacheIndexOutOfRange);
         }
-    if (aIndex < 0)
-        {
-        aIndex = Math::Rand(iRandomSeed) % iEntryArray.Count();
-        }
     COpenFontSessionCacheEntry::Delete(aHeap, iEntryArray[aIndex]);
     iEntryArray.SetAt(aIndex, aEntry);
+    aEntry->iLastAccess = iLastAccess++;
 	}
 
 COpenFontSessionCache::COpenFontSessionCache(TInt aSessionHandle):
     iSessionHandle(aSessionHandle),
-    iRandomSeed(0)
-    {
+    iLastAccess(0)
+    {    
     }
 
 TInt COpenFontSessionCacheList::AddCache(COpenFontSessionCache* aCache)
@@ -1294,16 +1243,8 @@ const TUint32 KTop16Of32Bits = 0xffff0000;
 
 EXPORT_C void TOpenFontMetrics::SetBaselineCorrection(TInt aBaselineCorrection)
 	{
-	if (aBaselineCorrection >= (1<<(KBitsForUnderline-1)))
-	    {
-	    OstTrace1( TRACE_FATAL, TOPENFONTMETRICS_SETBASELINECORRECTION, "aBaselineCorrection=%d, Panic(EFntOverFlow)", aBaselineCorrection );
-	    __ASSERT_DEBUG(0, Panic(EFntOverFlow));
-	    }
-	if (aBaselineCorrection <= (0-(1<<(KBitsForUnderline-1))))
-	    {
-	    OstTrace1( TRACE_FATAL, DUP1_TOPENFONTMETRICS_SETBASELINECORRECTION, "aBaselineCorrection=%d, Panic(EFntOverFlow)", aBaselineCorrection );
-	    __ASSERT_DEBUG(0, Panic(EFntOverFlow));
-	    }
+	__ASSERT_DEBUG(aBaselineCorrection<(1<<(KBitsForUnderline-1)), Panic(EFntOverFlow));
+	__ASSERT_DEBUG(aBaselineCorrection>(0-(1<<(KBitsForUnderline-1))), Panic(EFntOverFlow));
 	
 	TUint16 value = iBaselineCorrection;
 	value &=~KMaskUnderline; //zero all the underline position bits
@@ -1375,11 +1316,6 @@ and the logic is handled in CFontStore::RemoveFile().
 */
 EXPORT_C COpenFontFile::~COpenFontFile()
 	{
-    CFontStore *fs = GetFontStore();
-    if (fs != NULL)
-        {
-        fs->CleanupCacheOnOpenFontFileRemoval(this);
-        }
 	delete iData;
 	}
 
@@ -1947,11 +1883,7 @@ TBool TOpenFontSpec::ApplyRatio(TInt& aValue, TInt aNumerator, TInt aDenominator
 	TInt64 value(aValue);
 	value = (value * aNumerator) / aDenominator;
 	aValue = I64LOW(value);
-	if (I64HIGH(value) != 0)
-	    {
-	    OstTrace1( TRACE_FATAL, TOPENFONTSPEC_APPLYRATIO, "value=%ld, Panic(EFntOverFlow)", value );
-	    __ASSERT_DEBUG(0, Panic(EFntOverFlow));
-	    }
+	__ASSERT_DEBUG(I64HIGH(value) == 0, Panic(EFntOverFlow));
 	return I64HIGH(value) != 0;
 	}
 

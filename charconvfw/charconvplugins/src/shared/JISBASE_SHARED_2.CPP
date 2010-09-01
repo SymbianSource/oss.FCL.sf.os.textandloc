@@ -161,7 +161,6 @@ TInt CnvJisBase::AppendConvertToUnicodeFromJis8(CCnvCharacterSetConverter::TEndi
 
 EXPORT_C TInt CnvJisBase::ConvertToUnicode(CCnvCharacterSetConverter::TEndianness aDefaultEndiannessOfForeignCharacters, TDes16& aUnicode, const TDesC8& aForeign, TInt& aState, TInt& aNumberOfUnconvertibleCharacters, TInt& aIndexOfFirstByteOfFirstUnconvertibleCharacter)
 	{
-    TInt ret =KErrNone;
     TBool pictographsSupported = FeatureManager::FeatureSupported(KFeatureIdJapanesePicto);
     RArray<CnvUtilities::SState> states;
     if ( pictographsSupported )
@@ -170,62 +169,60 @@ EXPORT_C TInt CnvJisBase::ConvertToUnicode(CCnvCharacterSetConverter::TEndiannes
         CnvUtilities::SState state;
         state.iEscapeSequence=&KLit8EscapeSequenceForJisRoman; // Jis-Roman is the default state, so it must come first in the array
         state.iConversionData=&CnvJisRoman::ConversionData();
-        ret |= states.Append(state);
+        states.Append(state);
         state.iEscapeSequence=&KLit8EscapeSequenceForJisRomanIncorrect;
         state.iConversionData=&CnvJisRoman::ConversionData();
-        ret |= states.Append(state);
+        states.Append(state);
         state.iEscapeSequence=&KLit8EscapeSequenceForAscii;
         state.iConversionData=&CCnvCharacterSetConverter::AsciiConversionData();
-        ret |= states.Append(state);
+        states.Append(state);
     
         SetStatesForPictograph(states);
 
         state.iEscapeSequence=&KLit8EscapeSequenceForHalfWidthKatakana;
         state.iConversionData=&halfWidthKatakana7ConversionData;
-        ret |= states.Append(state);
+        states.Append(state);
         state.iEscapeSequence=&KLit8EscapeSequenceForJisC6226_1978;
         state.iConversionData=&CnvJisX0208::ConversionData();
-        ret |= states.Append(state);
+        states.Append(state);
         state.iEscapeSequence=&KLit8EscapeSequenceForJisX0208_1983;
         state.iConversionData=&CnvJisX0208::ConversionData();
-        ret |= states.Append(state);
+        states.Append(state);
         state.iEscapeSequence=&KLit8EscapeSequenceForJisX0208_199x;
         state.iConversionData=&CnvJisX0208::ConversionData();
-        ret |= states.Append(state);
+        states.Append(state);
         state.iEscapeSequence=&KLit8EscapeSequenceForJisX0212_1990;
         state.iConversionData=&CnvJisX0212::ConversionData();
-        ret |= states.Append(state);
+        states.Append(state);
         }
     else
         {            
         CnvUtilities::SState state;
     	state.iEscapeSequence=&KLit8EscapeSequenceForJisRoman; // Jis-Roman is the default state, so it must come first in the array
     	state.iConversionData=&CnvJisRoman::ConversionData();
-    	ret |= states.Append(state);
+        states.Append(state);
         state.iEscapeSequence=&KLit8EscapeSequenceForJisRomanIncorrect;
     	state.iConversionData=&CnvJisRoman::ConversionData();	
-    	ret |= states.Append(state);
+        states.Append(state);
     	state.iEscapeSequence=&KLit8EscapeSequenceForAscii;
     	state.iConversionData=&CCnvCharacterSetConverter::AsciiConversionData();
-    	ret |= states.Append(state);
+        states.Append(state);
     	state.iEscapeSequence=&KLit8EscapeSequenceForHalfWidthKatakana;
     	state.iConversionData=&halfWidthKatakana7ConversionData;
-    	ret |= states.Append(state);
+        states.Append(state);
     	state.iEscapeSequence=&KLit8EscapeSequenceForJisC6226_1978;
     	state.iConversionData=&CnvJisX0208::ConversionData();
-    	ret |= states.Append(state);
+        states.Append(state);
     	state.iEscapeSequence=&KLit8EscapeSequenceForJisX0208_1983;
     	state.iConversionData=&CnvJisX0208::ConversionData();
-    	ret |= states.Append(state);
+        states.Append(state);
     	state.iEscapeSequence=&KLit8EscapeSequenceForJisX0208_199x;
     	state.iConversionData=&CnvJisX0208::ConversionData();
-    	ret |= states.Append(state);
+        states.Append(state);
     	state.iEscapeSequence=&KLit8EscapeSequenceForJisX0212_1990;
     	state.iConversionData=&CnvJisX0212::ConversionData();
-    	ret |= states.Append(state);
+        states.Append(state);
         }
-    __ASSERT_DEBUG(!ret, User::Panic(_L("RArray append failure"), ret));
-    
 	const TArray<CnvUtilities::SState> arrayOfStates(states.Array());
 	aUnicode.SetLength(0);
 	const TUint8* const pointerToFirstByte=aForeign.Ptr();
@@ -316,7 +313,6 @@ EXPORT_C TInt CnvJisBase::ConvertToUnicode(CCnvCharacterSetConverter::TEndiannes
 				const TInt returnValue=(*appendConvertToUnicode)(aDefaultEndiannessOfForeignCharacters, aUnicode, runToConvert, aState, numberOfUnconvertibleCharacters, indexOfFirstByteOfFirstUnconvertibleCharacter, arrayOfStates, outputConversionFlags, inputConversionFlags);
 				if (returnValue<0)
 					{
-                    states.Close();
 					return returnValue; // this is an error-code
 					}
 				if (numberOfUnconvertibleCharacters>0)

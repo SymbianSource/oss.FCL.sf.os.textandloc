@@ -323,7 +323,7 @@ void CTFnt::TestEclipseFallbackWithInvalidFontL()
 	
 	TFileName fileName;
 	fs1->GetFontFilePath(_L("DejaVu Sans Condensed"), fileName);
-
+	
 	TEST(fileName.CompareF(KValidFontPath) == 0);
 		
 	CleanupStack::PopAndDestroy(isolatedFontStore1);

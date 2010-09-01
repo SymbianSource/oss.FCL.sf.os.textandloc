@@ -30,8 +30,8 @@ class TCharFormatX;
 class TCharFormatXMask;
 
 /**
-stores format attributes as bytecode, this class is intended for internal use only. 
-@publishedAll
+stores format attributes as bytecode
+@internalComponent
 */
 class RFormatStream
 	{

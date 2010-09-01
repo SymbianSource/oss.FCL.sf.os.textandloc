@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 1997-2010 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 1997-2009 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -21,31 +21,21 @@
 #include <txtfmlyr.h>
 #include <s32mem.h>
 #include <s32file.h>
+#include <e32test.h>
 #include <fldbase.h>
 #include <fldbltin.h>
 #include <flddef.h>
-#include "T_CONVS.h"
-
-#define test(cond)											\
-	{														\
-	TBool __bb = (cond);									\
-	TEST(__bb);												\
-	if (!__bb)												\
-		{													\
-		ERR_PRINTF1(_L("ERROR: Test Failed"));				\
-		User::Leave(1);										\
-		}													\
-	}
 
 const TInt KTestCleanupStack=0x20;
 const TInt KTestExpandSize=0x20;
 
 LOCAL_D CTrapCleanup* TheTrapCleanup;
+LOCAL_D RTest test(_L("T_CONVS - EditableText Persistence"));
 LOCAL_D	TPtrC bigBuf(_L("This is a very big buffer indeed, containing text and special characters,\
  big enough to fill a segment of an editable text component that employs segmented storage"));
 
 ////////////////////////////////////////////////////////////////////////////////////////////
-class TTestFieldFactoryCONVS : public MTextFieldFactory
+class TTestFieldFactory : public MTextFieldFactory
 	{
 public:
 	// from MTextFieldFactory
@@ -54,7 +44,7 @@ public:
 	// Returns NULL if it does not recognise/support the field type
 	};
 
-CTextField* TTestFieldFactoryCONVS::NewFieldL(TUid aFieldType)
+CTextField* TTestFieldFactory::NewFieldL(TUid aFieldType)
 // Creates a field (in aHeader) of the type specified in aHeader
 // 
 	{
@@ -66,14 +56,14 @@ CTextField* TTestFieldFactoryCONVS::NewFieldL(TUid aFieldType)
 /////////////////////////////////////////////////////////////////////////////////////////////
 
 template <class T>
-void CT_CONVS::testCopy(T &aCopy,const T &anOriginal)
+void testCopy(T &aCopy,const T &anOriginal)
 //
 // Copy anOriginal to aCopy using memory-based streams.
 //
 	{
 	CBufSeg *buf=CBufSeg::NewL(KTestExpandSize);
 	if (buf==NULL)
-		User::Panic(_L("Allocating buffer"), 1234);
+		test.Panic(_L("Allocating buffer"));
 	
 //	Write anOriginal out to the buffer.
 	RBufWriteStream out(*buf);
@@ -81,7 +71,7 @@ void CT_CONVS::testCopy(T &aCopy,const T &anOriginal)
 	test(r==KErrNone);
 	TRAP(r,out.CommitL());
 	if (r!=KErrNone)
-	    User::Panic(_L("Committing write stream"), 1234);
+			test.Panic(_L("Committing write stream"));
 
 //	Read anOriginal in from the buffer.
 	RBufReadStream in(*buf);
@@ -97,7 +87,7 @@ void CT_CONVS::testCopy(T &aCopy,const T &anOriginal)
 
 _LIT(KOutputFile, "c:\\etext\\t_convs.tst");
 template <class T>
-void CT_CONVS::testStoreRestoreL(T& aCopy,const T& aOriginal)
+void testStoreRestoreL(T& aCopy,const T& aOriginal)
 // Test document persistance.
 //
     {
@@ -127,14 +117,14 @@ void CT_CONVS::testStoreRestoreL(T& aCopy,const T& aOriginal)
 
 
 template <class T>
-void CT_CONVS::testCopyChain(T &aCopy,const T &anOriginal,TInt aExcludeCount,const CFormatLayer* aBase)
+void testCopyChain(T &aCopy,const T &anOriginal,TInt aExcludeCount,const CFormatLayer* aBase)
 //
 // Copy anOriginal to aCopy using memory-based streams.
 //
 	{
 	CBufSeg *buf=CBufSeg::NewL(KTestExpandSize);
 	if (buf==NULL)
-	    User::Panic(_L("Allocating buffer"), 1234);
+		test.Panic(_L("Allocating buffer"));
 	
 //	Write anOriginal out to the buffer.
 	RBufWriteStream out(*buf);
@@ -142,7 +132,7 @@ void CT_CONVS::testCopyChain(T &aCopy,const T &anOriginal,TInt aExcludeCount,con
 	test(r==KErrNone);
 	TRAP(r,out.CommitL());
 	if (r!=KErrNone)
-	    User::Panic(_L("Committing write stream"), 1234);
+			test.Panic(_L("Committing write stream"));
 
 //	Read anOriginal in from the buffer.
 	RBufReadStream in(*buf);
@@ -157,7 +147,7 @@ void CT_CONVS::testCopyChain(T &aCopy,const T &anOriginal,TInt aExcludeCount,con
 	}
 
 
-TInt CT_CONVS::IsEqual(const CPlainText* aCopy,const CPlainText* aOriginal)
+LOCAL_C TInt IsEqual(const CPlainText* aCopy,const CPlainText* aOriginal)
 //
 // Returns true if aCopy contents matches aOriginal contents.
 // Takes account of multiple segments of a segmented text component.
@@ -184,35 +174,35 @@ TInt CT_CONVS::IsEqual(const CPlainText* aCopy,const CPlainText* aOriginal)
 	}
 
 
-void CT_CONVS::testPlainTextL(CEditableText::TDocumentStorage aStorage)
+void testPlainTextL(CEditableText::TDocumentStorage aStorage)
 //
 // Test streaming CPlainText.
 //
 	{// Create the plain text components.
-	INFO_PRINTF1(_L("Streaming CPlainText"));
+	test.Start(_L("Streaming CPlainText"));
 	CPlainText* copy=CPlainText::NewL(aStorage);
 	CPlainText* testDoc=CPlainText::NewL(aStorage);
 	//
 	// Set the original - empty
-	INFO_PRINTF1(_L("empty."));
+	test.Start(_L("empty."));
 	testStoreRestoreL(*copy,*testDoc);
 	test(IsEqual(copy,testDoc));
 	//	
-	INFO_PRINTF1(_L("paragraph delimiter"));
+	test.Next(_L("paragraph delimiter"));
 	TRAPD(r,testDoc->InsertL(0,CEditableText::EParagraphDelimiter));
 	test(r==KErrNone);
 	testStoreRestoreL(*copy,*testDoc);	
 	test(IsEqual(copy,testDoc));
 	//
 	// Next test with tons of text guaranteed to force segment break when using segmented storage.	
-	INFO_PRINTF1(_L("big text component"));
+	test.Next(_L("big text component"));
 	testDoc->InsertL(0,bigBuf);
 	testStoreRestoreL(*copy,*testDoc);
 	test(IsEqual(copy,testDoc));
 	//
 	// Now test with field components.
-	INFO_PRINTF1(_L("big text doc with field components."));
-	TTestFieldFactoryCONVS factory;
+	test.Next(_L("big text doc with field components."));
+	TTestFieldFactory factory;
 	testDoc->SetFieldFactory(&factory);
 	copy->SetFieldFactory(&factory);
 	CTextField* field=NULL;
@@ -226,17 +216,18 @@ void CT_CONVS::testPlainTextL(CEditableText::TDocumentStorage aStorage)
 	test(IsEqual(copy,testDoc));
 	//
 	//
+	test.End();
 	delete copy;
 	delete testDoc;
 	}
 
 
-void CT_CONVS::testGlobalTextL(CEditableText::TDocumentStorage aStorage)
+void testGlobalTextL(CEditableText::TDocumentStorage aStorage)
 //
 // Test streaming CGlobalText.
 //
 	{// Create the plain text components.
-	INFO_PRINTF1(_L("Streaming CGlobalText"));
+	test.Next(_L("Streaming CGlobalText"));
 	CParaFormatLayer* paraLayer=CParaFormatLayer::NewL();
 	CCharFormatLayer* charLayer=CCharFormatLayer::NewL();
 	// Set something interesting in the layers:
@@ -253,22 +244,24 @@ void CT_CONVS::testGlobalTextL(CEditableText::TDocumentStorage aStorage)
 	CGlobalText* testDoc=CGlobalText::NewL(paraLayer,charLayer,aStorage);
 
 //	Set the original - empty
-	INFO_PRINTF1(_L("empty."));
+	test.Start(_L("empty."));
 	testStoreRestoreL(*copy,*testDoc);
 	test(IsEqual(copy,testDoc));
 //	
-	INFO_PRINTF1(_L("paragraph delimiter"));
+	test.Next(_L("paragraph delimiter"));
 	TRAPD(r,testDoc->InsertL(0,CEditableText::EParagraphDelimiter));
 	test(r==KErrNone);
 	testStoreRestoreL(*copy,*testDoc);
 	test(IsEqual(copy,testDoc));
 
 //	Next test with tons of text guaranteed to force segment break when using segmented storage.	
-	INFO_PRINTF1(_L("big text component"));
+	test.Next(_L("big text component"));
 	testDoc->InsertL(0,bigBuf);
 	testStoreRestoreL(*copy,*testDoc);
 	test(IsEqual(copy,testDoc));
 		
+	test.End();
+	test.End();
 	delete copy;
 	delete testDoc;
 	delete paraLayer;
@@ -277,7 +270,7 @@ void CT_CONVS::testGlobalTextL(CEditableText::TDocumentStorage aStorage)
 	}
 
 
-TInt CT_CONVS::LayerIsEqual(const CParaFormatLayer* aRestored,const CParaFormatLayer* aOriginal)
+LOCAL_C TInt LayerIsEqual(const CParaFormatLayer* aRestored,const CParaFormatLayer* aOriginal)
 //
 // Returns true if aRestored contents matches aOriginal contents.
 //
@@ -298,7 +291,7 @@ TInt CT_CONVS::LayerIsEqual(const CParaFormatLayer* aRestored,const CParaFormatL
 	}
 
 
-TInt CT_CONVS::LayerIsEqual(const CCharFormatLayer* aRestored,const CCharFormatLayer* aOriginal)
+LOCAL_C TInt LayerIsEqual(const CCharFormatLayer* aRestored,const CCharFormatLayer* aOriginal)
 //
 // Returns true if aRestored contents matches aOriginal contents.
 //
@@ -315,12 +308,12 @@ TInt CT_CONVS::LayerIsEqual(const CCharFormatLayer* aRestored,const CCharFormatL
 	}
 
 
-void CT_CONVS::testFmtLayerStoreL()
+void testFmtLayerStoreL()
 //
 // Test the format layer StoreL().
 //
 	{
-	INFO_PRINTF1(_L("CParaFormatLayer"));
+	test.Start(_L("CParaFormatLayer"));
 //	Create test layers.
 	CParaFormatLayer* pfl1=NULL;
 	CParaFormatLayer* restored=NULL;
@@ -334,13 +327,13 @@ void CT_CONVS::testFmtLayerStoreL()
 	TParaFormatMask pm1;
 	pm1.SetAll();  // Sets all but the compound attributes.
 //	TEST ONE DEFAULT CASES
-	INFO_PRINTF1(_L("Default paragraph format values."));
+	test.Start(_L("Default paragraph format values."));
 	TRAP(r,pfl1->SetL(pf1,pm1));     test(r==KErrNone);
 	testCopy(*restored,*pfl1);
 	test(LayerIsEqual(restored,pfl1));
 	test(restored->SenseBase()==pfl1->SenseBase());  // Both should default to based on NULL
 //	TEST TWO 
-	INFO_PRINTF1(_L("Setting all attributes"));
+	test.Next(_L("Setting all attributes"));
 	pf1->iLeftMarginInTwips=5000; pm1.ClearAll(); pm1.SetAttrib(EAttLeftMargin);
 	pf1->iRightMarginInTwips=5001; pm1.SetAttrib(EAttRightMargin);
 	pf1->iIndentInTwips=5002;pm1.SetAttrib(EAttIndent);
@@ -406,6 +399,7 @@ void CT_CONVS::testFmtLayerStoreL()
 	testCopy(*restored,*pfl1);
 	test(LayerIsEqual(restored,pfl1));
 	test(restored->SenseBase()==pfl1->SenseBase());  // Both should default to based on NULL
+	test.End();
 //
 	delete pf1;
 	delete pfl1;
@@ -413,9 +407,9 @@ void CT_CONVS::testFmtLayerStoreL()
 //
 //	Now the CCharFormatLayer Store/Restore
 //
-	INFO_PRINTF1(_L("CCharFormatLayer"));
+	test.Next(_L("CCharFormatLayer"));
 // 	
-	INFO_PRINTF1(_L("Setting all attributes"));
+	test.Start(_L("Setting all attributes"));
 //	Create test layers.
 	CCharFormatLayer* cfl1=NULL;
 	CCharFormatLayer* cRestored=NULL;
@@ -457,10 +451,11 @@ void CT_CONVS::testFmtLayerStoreL()
 //
 	delete cfl1;
 	delete cRestored;
+	test.End();
 	}
 
 
-TInt CT_CONVS::ChainIsEqual(const CParaFormatLayer* aCopy,const CParaFormatLayer* aOriginal)
+LOCAL_C TInt ChainIsEqual(const CParaFormatLayer* aCopy,const CParaFormatLayer* aOriginal)
 //
 // Tests that the restored chain is identical to the original chain.
 //
@@ -484,7 +479,7 @@ TInt CT_CONVS::ChainIsEqual(const CParaFormatLayer* aCopy,const CParaFormatLayer
 	}
 
 
-TInt CT_CONVS::ChainIsEqual(const CCharFormatLayer* aCopy,const CCharFormatLayer* aOriginal)
+LOCAL_C TInt ChainIsEqual(const CCharFormatLayer* aCopy,const CCharFormatLayer* aOriginal)
 //
 // Tests that the restored chain is identical to the original chain.
 //
@@ -508,13 +503,13 @@ TInt CT_CONVS::ChainIsEqual(const CCharFormatLayer* aCopy,const CCharFormatLayer
 	}
 
 
-void CT_CONVS::DoParaChainL()
+void DoParaChainL()
 //
 // Tests the streaming of a chain of format layers
 //
 	{
-	INFO_PRINTF1(_L("Re/StoreChainL()"));
-	INFO_PRINTF1(_L("CParaFormatLayer"));
+	test.Next(_L("Re/StoreChainL()"));
+	test.Start(_L("CParaFormatLayer"));
 //	Create the chain of para format layers.
 	CParaFormatLayer* l1=CParaFormatLayer::NewL();
 	CParaFormatLayer* l2=CParaFormatLayer::NewL();
@@ -590,12 +585,12 @@ void CT_CONVS::DoParaChainL()
 	}
 
 
-void CT_CONVS::DoCharChainL()
+void DoCharChainL()
 //
 //
 //
 	{
-	INFO_PRINTF1(_L("CCharFormatLayer"));
+	test.Next(_L("CCharFormatLayer"));
 //	Create the chain of character format layers.
 	CCharFormatLayer* cl1=CCharFormatLayer::NewL();
 	CCharFormatLayer* cl2=CCharFormatLayer::NewL();
@@ -635,7 +630,7 @@ void CT_CONVS::DoCharChainL()
 	charMask.SetAttrib(EAttFontTypeface);
 	cl4->SetL(charFormat,charMask);
 //	NOW DO IT
-	INFO_PRINTF1(_L("Chain 4 layers deep, terminating on a based on NULL"));
+	test.Start(_L("Chain 4 layers deep, terminating on a based on NULL"));
 	testCopyChain(*rChar,*cl1,0,(const CFormatLayer*)NULL);
 	TInt restoredChainCount=rChar->ChainCount();
 	test(ChainIsEqual(rChar,cl1));
@@ -656,7 +651,7 @@ void CT_CONVS::DoCharChainL()
 	}
 		
 
-void CT_CONVS::DoCharChainVariant1()
+void DoCharChainVariant1()
 //
 // Case 2: Where the chain does not terminate at a NULL link.
 //
@@ -700,7 +695,7 @@ void CT_CONVS::DoCharChainVariant1()
 	charMask.SetAttrib(EAttFontTypeface);
 	cl4->SetL(charFormat,charMask);
 //	NOW DO IT
-	INFO_PRINTF1(_L("Chain 3 layers deep, terminating on a non-NULL based-on"));
+	test.Next(_L("Chain 3 layers deep, terminating on a non-NULL based-on"));
 	testCopyChain(*rChar,*cl1,1,(const CFormatLayer*)cl4);
 	TInt restoredChainCount=rChar->ChainCount();
 	test(ChainIsEqual(rChar,cl1));
@@ -718,10 +713,14 @@ void CT_CONVS::DoCharChainVariant1()
 	delete cl2;
 	delete cl3;
 	delete cl4;
+	
+	test.End();
+	test.End();
+	test.End();
 	}
 
 
-void CT_CONVS::testFmtLayerStoreChainL()
+void testFmtLayerStoreChainL()
 //
 // Controls the testing of the chainig stuff.
 //
@@ -734,7 +733,7 @@ void CT_CONVS::testFmtLayerStoreChainL()
 	}
 
 
-void CT_CONVS::testFmtLayerL()
+void testFmtLayerL()
 //
 // Tests the streaming of format layers.
 //
@@ -744,7 +743,7 @@ void CT_CONVS::testFmtLayerL()
 	}
 
 
-void CT_CONVS::setupCleanup()
+LOCAL_C void setupCleanup()
 //
 // Initialise the cleanup stack.
 //
@@ -761,7 +760,7 @@ void CT_CONVS::setupCleanup()
 	}
 
 
-void CT_CONVS::DeleteDataFile(const TDesC& aFullName)
+LOCAL_C void DeleteDataFile(const TDesC& aFullName)
 	{
 	RFs fsSession;
 	TInt err = fsSession.Connect();
@@ -790,38 +789,40 @@ void CT_CONVS::DeleteDataFile(const TDesC& aFullName)
 		}
 	}
 
-CT_CONVS::CT_CONVS()
+GLDEF_C TInt E32Main()
+//
+// Test streaming conversions.
+//
     {
-    SetTestStepName(KTestStep_T_CONVS);
+	setupCleanup();
+	test.Title();
+	__UHEAP_MARK;
+	
+	test.Start(_L(" @SYMTestCaseID:SYSLIB-ETEXT-LEGACY-T_CONVS-0001 EText components using Flat Storage ")); 
+	TRAPD(r,testPlainTextL(CEditableText::EFlatStorage));
+	test(r==KErrNone);
+	TRAP(r,testGlobalTextL(CEditableText::EFlatStorage));
+	test(r==KErrNone);
+
+//
+	test.Next(_L("EText components using Segmented storage"));
+	TRAP(r,testPlainTextL(CEditableText::ESegmentedStorage));
+	test(r==KErrNone);
+	TRAP(r,testGlobalTextL(CEditableText::ESegmentedStorage));
+	test(r==KErrNone);
+
+	test.Next(_L("Format Layer components"));
+	TRAP(r,testFmtLayerL());
+	test(r==KErrNone);
+	
+//	test.End();
+	__UHEAP_MARKEND;
+	
+	::DeleteDataFile(KOutputFile);	//deletion of data files must be before call to End() - DEF047652
+	test.End();
+	test.Close();
+	delete TheTrapCleanup;
+
+	return 0;
     }
 
-TVerdict CT_CONVS::doTestStepL()
-    {
-    SetTestStepResult(EFail);
-
-    INFO_PRINTF1(_L("T_CONVS - EditableText Persistence"));
-    setupCleanup();
-    __UHEAP_MARK;
-
-    INFO_PRINTF1(_L(" @SYMTestCaseID:SYSLIB-ETEXT-LEGACY-T_CONVS-0001 EText components using Flat Storage "));
-    TRAPD(error1, testPlainTextL(CEditableText::EFlatStorage));
-    TRAPD(error2, testGlobalTextL(CEditableText::EFlatStorage));
-    
-    INFO_PRINTF1(_L("EText components using Segmented storage"));
-    TRAPD(error3, testPlainTextL(CEditableText::ESegmentedStorage));
-    TRAPD(error4, testGlobalTextL(CEditableText::ESegmentedStorage));
-
-    INFO_PRINTF1(_L("Format Layer components"));
-    TRAPD(error5, testFmtLayerL());
-
-    __UHEAP_MARKEND;
-    DeleteDataFile(KOutputFile);  //deletion of data files must be before call to End() - DEF047652
-    delete TheTrapCleanup;
-
-    if(error1 == KErrNone && error2 == KErrNone && error3 == KErrNone && error4 == KErrNone && error5 == KErrNone)
-        {
-        SetTestStepResult(EPass);
-        }
-
-    return TestStepResult();
-    }

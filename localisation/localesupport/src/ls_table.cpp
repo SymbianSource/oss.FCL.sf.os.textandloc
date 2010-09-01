@@ -62,8 +62,8 @@ EXPORT_C void Locl::LocaleData(SLocaleData *aLocale)
 	aLocale->iStartOfWeek=LLocaleData::StartOfWeek;
 	aLocale->iClockFormat=LLocaleData::ClockFormat;
 	aLocale->iUnitsGeneral=LLocaleData::UnitsGeneral;
-	aLocale->iUnitsDistanceLong=LLocaleData::UnitsDistanceLong;
-	aLocale->iUnitsDistanceShort=LLocaleData::UnitsDistanceShort;
+	aLocale->iUnitsDistanceLong=LLocaleData::UnitsGeneral;
+	aLocale->iUnitsDistanceShort=LLocaleData::UnitsGeneral;
 	aLocale->iExtraNegativeCurrencyFormatFlags=LLocaleData::ExtraNegativeCurrencyFormatFlags;
 	aLocale->iLanguageDowngrade[0] = static_cast<TUint16>(LLocaleData::LanguageDowngrade[0]);
 	aLocale->iLanguageDowngrade[1] = static_cast<TUint16>(LLocaleData::LanguageDowngrade[1]);

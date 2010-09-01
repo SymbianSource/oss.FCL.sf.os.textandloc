@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 1999-2010 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 1999-2009 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -50,7 +50,7 @@ PRJ_EXPORTS
 ../inc/TXTSTYLE.H 		SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(txtstyle.h)
 ../inc/TXTSTYLE.INL 		SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(txtstyle.inl)
 ../inc/TXTMRTSR.H 		SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(txtmrtsr.h)
-../inc/TXTFMSTM.H 		SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(txtfmstm.h)
+../inc/TXTFMSTM.H 		SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(txtfmstm.h)
 ../inc/TXTUIDS.H 		SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(txtuids.h)
 ../inc/FLDBASE.H 		SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(fldbase.h)
 ../inc/FLDBLTIN.H 		SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(fldbltin.h)
@@ -69,38 +69,10 @@ PRJ_EXPORTS
 ../inc/CONPICS.H /epoc32/include/conpics.h    // PRIVATE
 
 PRJ_TESTEXPORTS
-../group/script/ETextTest_All.script	z:/ETextTest/ETextTest_All.script
-../group/script/T_FIELD1.script			z:/ETextTest/T_FIELD1.script
-../group/script/T_ROMAN.script			z:/ETextTest/T_ROMAN.script
-../group/script/T_STREAM.script			z:/ETextTest/T_STREAM.script
-../group/script/T_RICHOOM.script		z:/ETextTest/T_RICHOOM.script
-../group/script/TRTCOPY.script			z:/ETextTest/TRTCOPY.script
-../group/script/TRTCUSTM.script			z:/ETextTest/TRTCUSTM.script
-../group/script/TTIMES1.script			z:/ETextTest/TTIMES1.script
-../group/script/T_CONVRT.script			z:/ETextTest/T_CONVRT.script
-../group/script/T_CONVS.script			z:/ETextTest/T_CONVS.script
-../group/script/T_CONVS1.script			z:/ETextTest/T_CONVS1.script
-../group/script/T_CPLAIN.script			z:/ETextTest/T_CPLAIN.script
-../group/script/T_CUTPST.script			z:/ETextTest/T_CUTPST.script
-../group/script/T_FMT.script			z:/ETextTest/T_FMT.script
-../group/script/T_FMT1.script			z:/ETextTest/T_FMT1.script
-../group/script/T_IMPORT.script			z:/ETextTest/T_IMPORT.script
-../group/script/T_INDTER.script			z:/ETextTest/T_INDTER.script
-../group/script/T_LAYDOC.script			z:/ETextTest/T_LAYDOC.script
-../group/script/T_PARSE.script			z:/ETextTest/T_PARSE.script
-../group/script/T_PICRES.script			z:/ETextTest/T_PICRES.script
-../group/script/T_RICH1A.script			z:/ETextTest/T_RICH1A.script
-../group/script/T_RTCLIP.script			z:/ETextTest/T_RTCLIP.script
-../group/script/T_SCANDC.script			z:/ETextTest/T_SCANDC.script
-../group/script/T_STYLE.script			z:/ETextTest/T_STYLE.script
-../group/script/T_TIMES.script			z:/ETextTest/T_TIMES.script
-../group/script/T_TRAN.script			z:/ETextTest/T_TRAN.script
-../group/script/TEtextDefect.script		z:/ETextTest/TEtextDefect.script
-
 
 // batch file that runs all automatic etext tests on hardware
-../group/ETextTests.bat		z:/ETextTest/ETextTests.bat
-../group/ETextTests.iby		/epoc32/rom/include/ETextTests.iby
+../group/ETextTests.bat		/epoc32/data/z/system/test/etexttests.bat
+../group/ETextTests.iby		/epoc32/rom/include/etexttests.iby
 
 // etext test data
 ../testdata/CLIMB.txt z:/test/app-framework/etext/climb.txt
@@ -134,7 +106,34 @@ PRJ_MMPFILES
 ../group/FIELD.MMP
 
 PRJ_TESTMMPFILES
-../group/TETextServer.MMP
+
+../group/TINS.MMP	support	// not test code
+../tfields/T_FIELD1.MMP
+../tfields/T_ROMAN.MMP
+../tfields/T_STREAM.MMP
+../ttext/TRICHOOM.MMP
+../ttext/TRTCOPY.MMP
+../ttext/TRTCUSTM.MMP
+../ttext/TTIMES1.MMP
+../ttext/T_CONVRT.MMP
+../ttext/T_CONVS.MMP
+../ttext/T_CONVS1.MMP
+../ttext/T_CPLAIN.MMP
+../ttext/T_CUTPST.MMP
+../ttext/T_FMT.MMP
+../ttext/T_FMT1.mmp
+../ttext/T_IMPORT.MMP
+../ttext/T_INDTER.MMP
+../ttext/T_LAYDOC.MMP
+../ttext/T_parse.mmp
+../ttext/T_PICRES.MMP
+../ttext/T_RICH1A.MMP
+../ttext/T_RTCLIP.MMP
+../ttext/T_SCANDC.MMP
+../ttext/T_STYLE.MMP
+../ttext/T_TIMES.MMP
+../ttext/T_TRAN.MMP
+../ttext/TEtextDefect.mmp
 
 PRJ_PLATFORMS
 default winc

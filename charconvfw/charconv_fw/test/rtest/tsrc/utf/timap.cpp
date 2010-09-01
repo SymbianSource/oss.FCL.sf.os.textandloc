@@ -18,22 +18,37 @@
 
 #include <e32std.h>
 #include <e32base.h>
+#include <e32test.h>
 #include <f32file.h>
 #include <charconv.h>
-#include "t_imap.h"
 
+///////////////////////////////////////////////////////////////////////////////////////
 
-#define test(cond)                                          \
-    {                                                       \
-    TBool __bb = (cond);                                    \
-    TEST(__bb);                                             \
-    if (!__bb)                                              \
-        {                                                   \
-        ERR_PRINTF1(_L("ERROR: Test Failed"));              \
-        User::Leave(1);                                     \
-        }                                                   \
-    }
+RTest TheTest(_L("TImap"));
 
+///////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////
+//Tests macroses and functions.
+//If (!aValue) then the test will be panicked, the test data files will be deleted.
+static void Check(TInt aValue, TInt aLine)
+	{
+	if(!aValue)
+		{
+		TheTest(EFalse, aLine);
+		}
+	}
+//If (aValue != aExpected) then the test will be panicked, the test data files will be deleted.
+static void Check(TInt aValue, TInt aExpected, TInt aLine)
+	{
+	if(aValue != aExpected)
+		{
+		RDebug::Print(_L("*** Expected error: %d, got: %d\r\n"), aExpected, aValue);
+		TheTest(EFalse, aLine);
+		}
+	}
+//Use these to test conditions.
+#define TEST(arg) ::Check((arg), __LINE__)
+#define TEST2(aValue, aExpected) ::Check(aValue, aExpected, __LINE__)
 
 ///////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -46,75 +61,74 @@
 @SYMTestExpectedResults Test must not fail
 @SYMREQ                 REQ0000
 */
-void CT_IMAP::TestIMAP()
+LOCAL_C void DoE32MainL()
 	{
 	RFs fileServerSession;
 	CleanupClosePushL(fileServerSession);
 	User::LeaveIfError(fileServerSession.Connect());
 	CCnvCharacterSetConverter* characterSetConverter=CCnvCharacterSetConverter::NewLC();
 	TInt state=CCnvCharacterSetConverter::KStateDefault;
-	INFO_PRINTF1(_L(" @SYMTestCaseID:SYSLIB-CHARCONV-CT-0574 Testing IMAP UTF-7 "));
-	test(characterSetConverter->PrepareToConvertToOrFromL(KCharacterSetIdentifierImapUtf7, fileServerSession)==CCnvCharacterSetConverter::EAvailable);
+	TheTest.Start(_L(" @SYMTestCaseID:SYSLIB-CHARCONV-CT-0574 Testing IMAP UTF-7 "));
+	TEST(characterSetConverter->PrepareToConvertToOrFromL(KCharacterSetIdentifierImapUtf7, fileServerSession)==CCnvCharacterSetConverter::EAvailable);
 	TBuf16<256> originalUnicode;
 	TBuf8<256> generatedUtf7;
 	TBuf16<256> generatedUnicode;
 	//
-	INFO_PRINTF1(_L("Empty descriptor"));
+	TheTest.Next(_L("Empty descriptor"));
 	originalUnicode=_L16("");
-	test(characterSetConverter->ConvertFromUnicode(generatedUtf7, originalUnicode)==0);
-	test(generatedUtf7==_L8(""));
-	test(characterSetConverter->ConvertToUnicode(generatedUnicode, generatedUtf7, state)==0);
-	test(state==CCnvCharacterSetConverter::KStateDefault);
-	test(generatedUnicode==originalUnicode);
-	INFO_PRINTF1(_L("Characters \" +&-~\\\""));
+	TEST(characterSetConverter->ConvertFromUnicode(generatedUtf7, originalUnicode)==0);
+	TEST(generatedUtf7==_L8(""));
+	TEST(characterSetConverter->ConvertToUnicode(generatedUnicode, generatedUtf7, state)==0);
+	TEST(state==CCnvCharacterSetConverter::KStateDefault);
+	TEST(generatedUnicode==originalUnicode);
+	TheTest.Next(_L("Characters \" +&-~\\\""));
 	originalUnicode=_L16(" +&-~\\");
-	test(characterSetConverter->ConvertFromUnicode(generatedUtf7, originalUnicode)==0);
-	test(generatedUtf7==_L8(" +&--~\\"));
-	test(characterSetConverter->ConvertToUnicode(generatedUnicode, generatedUtf7, state)==0);
-	test(state==CCnvCharacterSetConverter::KStateDefault);
-	test(generatedUnicode==originalUnicode);
-	INFO_PRINTF1(_L("Example quoted in RFC 2060 (Section 5.1.3)"));
+	TEST(characterSetConverter->ConvertFromUnicode(generatedUtf7, originalUnicode)==0);
+	TEST(generatedUtf7==_L8(" +&--~\\"));
+	TEST(characterSetConverter->ConvertToUnicode(generatedUnicode, generatedUtf7, state)==0);
+	TEST(state==CCnvCharacterSetConverter::KStateDefault);
+	TEST(generatedUnicode==originalUnicode);
+	TheTest.Next(_L("Example quoted in RFC 2060 (Section 5.1.3)"));
 	originalUnicode.Format(_L16("~peter/mail/%c%c%c/%c%c"), 0x65e5, 0x672c, 0x8a9e, 0x53f0, 0x5317);
-	test(characterSetConverter->ConvertFromUnicode(generatedUtf7, originalUnicode)==0);
-	test(generatedUtf7==_L8("~peter/mail/&ZeVnLIqe-/&U,BTFw-"));
-	test(characterSetConverter->ConvertToUnicode(generatedUnicode, generatedUtf7, state)==0);
-	test(state==CCnvCharacterSetConverter::KStateDefault);
-	test(generatedUnicode==originalUnicode);
-	INFO_PRINTF1(_L("Testing fix for defect EDNDSEF-4KMEUH in \"Symbian Defect Tracking v3.0\""));
+	TEST(characterSetConverter->ConvertFromUnicode(generatedUtf7, originalUnicode)==0);
+	TEST(generatedUtf7==_L8("~peter/mail/&ZeVnLIqe-/&U,BTFw-"));
+	TEST(characterSetConverter->ConvertToUnicode(generatedUnicode, generatedUtf7, state)==0);
+	TEST(state==CCnvCharacterSetConverter::KStateDefault);
+	TEST(generatedUnicode==originalUnicode);
+	TheTest.Next(_L("Testing fix for defect EDNDSEF-4KMEUH in \"Symbian Defect Tracking v3.0\""));
 	originalUnicode.Format(_L16("%c%c%c%c%c%c%c%c%c"), 0x30ad, 0x30e3, 0x30d3, 0x30cd, 0x30c3, 0x30c8, 0x3068, 0x306f, 0xff1f);
-	test(characterSetConverter->ConvertFromUnicode(generatedUtf7, originalUnicode)==0);
-	test(generatedUtf7==_L8("&MK0w4zDTMM0wwzDIMGgwb,8f-"));
-	test(characterSetConverter->ConvertToUnicode(generatedUnicode, generatedUtf7, state)==0);
-	test(state==CCnvCharacterSetConverter::KStateDefault);
-	test(generatedUnicode==originalUnicode);
+	TEST(characterSetConverter->ConvertFromUnicode(generatedUtf7, originalUnicode)==0);
+	TEST(generatedUtf7==_L8("&MK0w4zDTMM0wwzDIMGgwb,8f-"));
+	TEST(characterSetConverter->ConvertToUnicode(generatedUnicode, generatedUtf7, state)==0);
+	TEST(state==CCnvCharacterSetConverter::KStateDefault);
+	TEST(generatedUnicode==originalUnicode);
 	TBuf8<0x14> generatedUtf7_0x14;
-	test(characterSetConverter->ConvertFromUnicode(generatedUtf7_0x14, originalUnicode)==3);
-	test(generatedUtf7_0x14==_L8("&MK0w4zDTMM0wwzDI-"));
-	test(characterSetConverter->ConvertToUnicode(generatedUnicode, generatedUtf7_0x14, state)==0);
-	test(state==CCnvCharacterSetConverter::KStateDefault);
-	test(generatedUnicode==originalUnicode.Left(6));
+	TEST(characterSetConverter->ConvertFromUnicode(generatedUtf7_0x14, originalUnicode)==3);
+	TEST(generatedUtf7_0x14==_L8("&MK0w4zDTMM0wwzDI-"));
+	TEST(characterSetConverter->ConvertToUnicode(generatedUnicode, generatedUtf7_0x14, state)==0);
+	TEST(state==CCnvCharacterSetConverter::KStateDefault);
+	TEST(generatedUnicode==originalUnicode.Left(6));
 	CleanupStack::PopAndDestroy(2); // characterSetConverter and fileServerSession
 	}
 
-CT_IMAP::CT_IMAP()
-    {
-    SetTestStepName(KTestStep_T_IMAP);
-    }
+GLDEF_C TInt E32Main()
+	{
+	__UHEAP_MARK;
 
-TVerdict CT_IMAP::doTestStepL()
-    {
-    SetTestStepResult(EFail);
+	TheTest.Title();
 
-    __UHEAP_MARK;
+	CTrapCleanup* trapCleanup=CTrapCleanup::New();
+	TEST(trapCleanup != NULL);
 
-    TRAPD(error1, TestIMAP());
+	TRAPD(error, DoE32MainL());
+	TEST2(error, KErrNone);
 
-    __UHEAP_MARKEND;
+	delete trapCleanup;
 
-    if(error1 == KErrNone )
-        {
-        SetTestStepResult(EPass);
-        }
+	TheTest.End();
+	TheTest.Close();
 
-    return TestStepResult();
-    }
+	__UHEAP_MARKEND;
+	return KErrNone;
+	}
+

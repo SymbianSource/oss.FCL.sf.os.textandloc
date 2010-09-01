@@ -1,0 +1,103 @@
+/*
+* Copyright (c) 2002-2004 Nokia Corporation and/or its subsidiary(-ies). 
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:    BLD.INF file for Character conversion plugins in charconvplugin
+*                directory 
+*
+*/
+
+
+
+
+#include <platform_paths.hrh>
+
+PRJ_PLATFORMS
+DEFAULT
+
+PRJ_EXPORTS
+//  needed by winscw emulator
+../data/win1250.snm             /epoc32/release/winscw/udeb/z/Resource/charconv/Win1250.snm
+../data/win1251.snm             /epoc32/release/winscw/udeb/z/Resource/charconv/Win1251.snm
+../data/win1252.snm             /epoc32/release/winscw/udeb/z/Resource/charconv/Win1252.snm
+../data/win1253.snm             /epoc32/release/winscw/udeb/z/Resource/charconv/Win1253.snm
+../data/win1254.snm             /epoc32/release/winscw/udeb/z/Resource/charconv/Win1254.snm
+../data/win1255.snm             /epoc32/release/winscw/udeb/z/Resource/charconv/Win1255.snm
+../data/win1256.snm             /epoc32/release/winscw/udeb/z/Resource/charconv/Win1256.snm
+../data/win1257.snm             /epoc32/release/winscw/udeb/z/Resource/charconv/Win1257.snm
+../data/win874.snm             	/epoc32/release/winscw/udeb/z/Resource/charconv/Win874.snm
+../data/TIS_620.snm             /epoc32/release/winscw/udeb/z/Resource/charconv/TIS_620.snm
+../data/koi8u.snm               /epoc32/release/winscw/udeb/z/Resource/charconv/KOI8U.snm
+../data/koi8r.snm               /epoc32/release/winscw/udeb/z/Resource/charconv/KOI8R.snm
+../data/win1258.snm             /epoc32/release/winscw/udeb/z/Resource/charconv/Win1258.snm
+../data/iscii.snm               /epoc32/release/winscw/udeb/z/Resource/charconv/iscii.snm
+../data/EUCKR.snm             	/epoc32/release/winscw/udeb/z/Resource/charconv/EUCKR.snm
+../data/iso2022kr.snm           /epoc32/release/winscw/udeb/z/Resource/charconv/iso2022kr.snm
+../data/ksc5601.snm             /epoc32/release/winscw/udeb/z/Resource/charconv/ksc5601.snm
+
+//  needed by armv5 urel build
+../data/win1250.snm             /epoc32/data/z/Resource/charconv/Win1250.snm
+../data/win1251.snm             /epoc32/data/z/Resource/charconv/Win1251.snm
+../data/win1252.snm             /epoc32/data/z/Resource/charconv/Win1252.snm
+../data/win1253.snm             /epoc32/data/z/Resource/charconv/Win1253.snm
+../data/win1254.snm             /epoc32/data/z/Resource/charconv/Win1254.snm
+../data/win1255.snm             /epoc32/data/z/Resource/charconv/Win1255.snm
+../data/win1256.snm             /epoc32/data/z/Resource/charconv/Win1256.snm
+../data/win1257.snm             /epoc32/data/z/Resource/charconv/Win1257.snm
+../data/win874.snm             	/epoc32/data/z/Resource/charconv/Win874.snm
+../data/TIS_620.snm             /epoc32/data/z/Resource/charconv/TIS_620.snm
+../data/koi8u.snm               /epoc32/data/z/Resource/charconv/KOI8U.snm
+../data/koi8r.snm               /epoc32/data/z/Resource/charconv/KOI8R.snm
+../data/win1258.snm             /epoc32/data/z/Resource/charconv/Win1258.snm
+../data/iscii.snm               /epoc32/data/z/Resource/charconv/iscii.snm
+../data/EUCKR.snm             	/epoc32/data/z/Resource/charconv/EUCKR.snm
+../data/iso2022kr.snm           /epoc32/data/z/Resource/charconv/iso2022kr.snm
+../data/ksc5601.snm             /epoc32/data/z/Resource/charconv/ksc5601.snm
+
+
+// IBY-files
+../rom/CharConvPlugin.iby CORE_MW_LAYER_IBY_EXPORT_PATH(charconvplugin.iby)
+../rom/CharConvPluginPictograph.IBY CORE_MW_LAYER_IBY_EXPORT_PATH(charconvpluginpictograph.iby)
+../rom/CharConvPluginPictograph_Variant.iby CUSTOMER_MW_LAYER_IBY_EXPORT_PATH(charconvpluginpictograph_Variant.iby)
+../rom/CharConvPlugin_Variant.IBY CUSTOMER_MW_LAYER_IBY_EXPORT_PATH(charconvplugin_Variant.iby)
+
+
+
+PRJ_MMPFILES
+
+#ifndef TOOLS
+
+../group/Win1250.mmp
+../group/Win1251.mmp
+../group/Win1252.mmp
+../group/Win1253.mmp
+../group/Win1254.mmp
+../group/Win1255.mmp
+../group/Win1256.mmp
+../group/Win1257.mmp
+../group/Win874.mmp
+../group/TIS_620.mmp
+../group/KOI8U.mmp
+../group/KOI8R.mmp
+../group/Win1258.mmp
+../group/iscii.mmp
+EucJpDirectmap.mmp
+ShiftJisDirectmap.mmp
+../group/CP949table.mmp
+../group/ksc5601.mmp
+../group/iso2022kr.mmp
+../group/cp949.mmp
+../group/EUCKR.mmp
+#endif
+
+// End of File
+

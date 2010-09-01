@@ -1,0 +1,4 @@
+EXPORTS
+	ConversionData__7CnvBig5 @ 1 NONAME R3UNUSED ; CnvBig5::ConversionData(void)
+	ReplacementForUnconvertibleUnicodeCharacters__7CnvBig5 @ 2 NONAME R3UNUSED ; CnvBig5::ReplacementForUnconvertibleUnicodeCharacters(void)
+

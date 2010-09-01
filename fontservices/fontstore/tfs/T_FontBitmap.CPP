@@ -217,7 +217,6 @@ void CTFontBitmap::TestAllL()
 		INFO_PRINTF2(_L("Profit=%d bytes\r\n"), alloc_size_old - alloc_size_new);
 		for(TInt j=0;j<256;j++)
 			{
-            INFO_PRINTF2(_L("Char code %d"),j);
 			const TUint8* bytes_new = NULL;
 			const TUint8* bytes_old = NULL;
 			TBitmapFontCharacterMetrics metrics_new;
@@ -247,6 +246,7 @@ void CTFontBitmap::TestAllL()
 					}
 				}
 			}
+		INFO_PRINTF1(_L(""));
 		CleanupStack::PopAndDestroy(2);  //font_new & font_old
 		}
 	CleanupStack::PopAndDestroy(5);  //fontstorefile & stream - old & new + fontstorefile_C

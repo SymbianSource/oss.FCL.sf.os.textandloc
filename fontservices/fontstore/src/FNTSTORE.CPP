@@ -35,16 +35,6 @@
 #include <graphics/openfontrasterizer.h>
 #include <graphics/openfontconstants.h>
 
-#include "OstTraceDefinitions.h"
-#ifdef OST_TRACE_COMPILER_IN_USE
-#include "FNTSTORETraces.h"
-#endif
-
-
-static const TUint32 KOutlineGlyphIdHashMask = 0x0000ffff;
-static const TUint32 KOutlineFileUidHashMask = 0x00ff0000;
-static const TUint32 KOutlineFaceIndexHashMask = 0x0f000000;
-static const TUint32 KOutlineFontPtrHashMask = 0x0fff0000;
 
 // uncomment to enable some verbose debug prints
 //#define VERBOSE_DEBUG 1
@@ -80,7 +70,7 @@ that any size is okay, because a UI will probably try to create a listbox contai
 
 Array stored in Twips as that is the only form of the value currently used.
 @internalComponent
-*/
+*/ 
 #define POINTSIZE_IN_TWIPS(p)	((p) * 20)
 const TInt gOpenFontSizeInTwipsArray[] =
 	{
@@ -192,41 +182,6 @@ static TUint32 FinishTimingL(TUint32 startTime);
 
 static TBool FileIsOnZ(TParse& aFileName);
 static TBool FileIsInList(TParse& aFileName, RArray<TParse>& aList);
-
-
-/** Helper function for converting a pointer to an offset from the passed
-heap base. Use OffsetToPointer() to convert the returned offset back to a
-useable pointer.
-@param aAny A pointer to be converted to an offset.
-@param aHeapBase The heap base of the current process.
-@return An offset representing the passed pointer that can be converted
-back to a pointer using the function OffsetToPointer(). 
-@see OffsetToPointer()
- */
-LOCAL_C TInt PointerToOffset(const TAny* aAny, TUint8* aHeapBase)
-    {
-    if (aAny && aHeapBase)
-        {
-        return reinterpret_cast<TInt>(aAny) - reinterpret_cast<TInt>(aHeapBase);
-        }
-    return 0;
-    }
-
-/** Helper function for converting an offset (that was calculated using
-PointerToOffset()) back to a pointer relative to the passed heap base.
-@param aOffset The offset to be converted to a pointer.
-@param aHeapBase The heap base of the current process.
-@return A pointer relative to the passed heap base.
-@see PointerToOffset()
- */
-LOCAL_C TAny* OffsetToPointer(TInt aOffset, TUint8* aHeapBase)
-    {
-    if (aOffset && aHeapBase)
-        {
-        return reinterpret_cast<TAny*>(aOffset + reinterpret_cast<TInt>(aHeapBase));
-        }
-    return NULL;
-    }
 
 
 // CTypefaceSupportInfo
@@ -1067,7 +1022,6 @@ void CBitmapFont::InstallOpenFontShaper(COpenFont* aOpenFont, CShaper::TInput& a
 		if (err == KErrNone)
 			{
 			aOpenFont->SetShaper(shaper);
-			OstTrace0( TRACE_IMPORTANT, CBITMAPFONT_INSTALLOPENFONTSHAPER, "A shaper is installed" );
 			break;
 			}
 		}
@@ -1087,11 +1041,7 @@ EXPORT_C void CBitmapFont::DeleteShape(TInt aSessionHandle,TShapeHeader* aHeader
 		//delete any cache entry that is not referenced at all
 		TInt ret=OpenFont()->DecrementCachedRefCount(aSessionHandle,aHeader);
 		//panic in debug mode if trying to delete something that is not there.
-		if ((ret != KErrNone) && (ret != KErrNotFound))
-		    {
-		    OstTrace1( TRACE_FATAL, CBITMAPFONT_DELETESHAPE, "OpenFont()->DecrementCachedRefCount() return %d, Invariant", ret);
-		    __ASSERT_DEBUG(0, User::Invariant());
-		    }
+		__ASSERT_DEBUG(ret==KErrNone || ret==KErrNotFound, User::Invariant());
 		}
 	}
 
@@ -1116,196 +1066,13 @@ TInt CBitmapFont::Height(TInt aNum) const
 CFontBitmap* CBitmapFont::FontBitmap() const
 /** This member is private and not intended for use. */
 	{
-	if (IsOpenFont())
-	    {
-	    OstTrace0( TRACE_FATAL, CBITMAPFONT_FONTBITMAP, "Panic(EFntTypefaceHasNoFontBitmaps)" );
-	    __ASSERT_ALWAYS(0, Panic(EFntTypefaceHasNoFontBitmaps));
-	    }
+    __ASSERT_ALWAYS(!IsOpenFont(),Panic(EFntTypefaceHasNoFontBitmaps));
     if(iFontBitmapOffset)
         return reinterpret_cast<CFontBitmap*>(reinterpret_cast<TInt>(this)+iFontBitmapOffset);
     else
         return NULL;
 	}
 
-/** Gets a font table.
-@param aTag: Input. The name of the font table.
-@param aTableContent: Output. To return the address of the table content.
-@param aLength: Output. To return the length (in bytes) of the table.
-@param aSessionHandle: Input. A handle to the session requesting this table.
-@return KErrNone on success, specific error code on failure.
-@internalTechnology
-*/
-EXPORT_C TInt CBitmapFont::GetFontTable(TUint32 aTag, TAny *&aTableContent, 
-        TInt &aLength, TInt aSessionHandle) 
-    {
-    COpenFont *fontPtr = NULL;
-    if (IsOpenFont())
-        fontPtr = OpenFont();
-    else
-        return KErrNotSupported;
-    
-    // try to find it in cache.
-    CFontStore *fntStore = fontPtr->File()->GetFontStore();
-    TUid fileUid = fontPtr->File()->Uid();
-    TInt ret = fntStore->FindFontTableInCache(fileUid, aTag, aTableContent, aLength);
-    if (KErrNone == ret)
-        {
-        ret = fntStore->IncFontTableRefCount(fileUid, aTag, aSessionHandle);
-        return ret;
-        }
-    
-    // font table not found in cache.
-    ret = fontPtr->GetFontTable(aTag, aTableContent, aLength);
-    if (KErrNone == ret)
-        {
-        ret = fntStore->CacheFontTable(fileUid, aTag, aTableContent, aLength);
-        if (KErrNone == ret)
-            {
-            ret = fntStore->IncFontTableRefCount(fileUid, aTag, aSessionHandle);
-            }
-        else 
-            {
-            aTableContent = NULL;
-            }
-        }
-    
-    return ret;
-    }
-
-/** Release a font table. Decrement its reference count. Remove from cache if 
- * reference decreases to zero.
-@param aTag: Input. The name of the font table to be released.
-@param aSessionHandle: Input. Handle to the session releasing this table.
-@return KErrNone on success, specific error code on failure.
-@internalTechnology
-*/
-EXPORT_C void CBitmapFont::ReleaseFontTable(TUint32 aTag, 
-        TInt aSessionHandle)
-    {
-    COpenFont *fontPtr = NULL;
-    if (IsOpenFont())
-        fontPtr = OpenFont();
-    else
-        return;
-    
-    CFontStore *fntStore = fontPtr->File()->GetFontStore();
-    TUid fileUid = fontPtr->File()->Uid();
-    fntStore->ReleaseFontTable(fileUid, aTag, aSessionHandle);
-    }
-
-
-/** Release a number of glyph outlines. Decrement their reference count.
- * Remove it from cache if reference count decreases to zero.
-@param aCount: Input. Number of outlines to be released.
-@param aCodes: Input. An array of codes. Its interpretation depends on the parameter
-    'aIsGlyphId' (see below).
-@param aIsGlyphId: Input. When aIsGlyphId==ETrue, 'aCodes' is an array of glyph ID's.
-    When aIsGlyphId==EFalse, 'aCodes' is an array of Unicode values.
-@param aHinted: Input. To indicate if the outlines are hinted or unhinted.
-@param aSessionHandle: Input. Handle to the session releasing the outlines.
-@return KErrNone on success, specific error code on failure.
-@internalTechnology
-*/
-EXPORT_C void CBitmapFont::ReleaseGlyphOutlines(TInt aCount, const TUint *aCodes, 
-        TBool aHinted, TInt aSessionHandle)
-    {
-    COpenFont *fontPtr = NULL;
-        if (IsOpenFont())
-            fontPtr = OpenFont();
-        else
-            return;
-    
-    CFontStore *fontStore = fontPtr->File()->GetFontStore();
-    
-    for (TInt i = 0; i < aCount; ++i)
-        {
-        if (aHinted)
-            {
-            THintedOutlineId outlineId(fontPtr, aCodes[i]);
-            fontStore->ReleaseHintedOutline(outlineId, aSessionHandle);
-            }
-        else
-            {
-            TInt faceId = fontPtr->FaceIndex();
-            TUnhintedOutlineId outlineId(fontPtr->File()->Uid(), faceId, aCodes[i]);
-            fontStore->ReleaseUnhintedOutline(outlineId, aSessionHandle);
-            }
-        }
-    }
-
-/** Gets a font table.
-@param aCode: Input. An glyph code. Its interpretation depends on the parameter
-    'aIsGlyphId' (see below).
-@param aIsGlyphId: Input. When aIsGlyphId==ETrue, 'aCode' is a glyph ID.
-    When aIsGlyphId==EFalse, 'aCode' is a Unicode values.
-@param aHinted: Input. To indicate if hinted or unhinted outline is needed.
-@param aOutline: Output. A 'void*' pointer, pointing to the outline in memory.
-@param aLength: Output. A TInt, recording the lenght (in bytes) of the outline.
-@param aSessionHandle: Input. Handle to the session requesting this outline.
-@return KErrNone on success, specific error code on failure.
-@internalTechnology
-*/
-EXPORT_C TInt CBitmapFont::GetGlyphOutline(TUint aCode, 
-        TBool aHinted, TAny *&aOutline, TInt &aLength, TInt aSessionHandle)
-    {
-    COpenFont *fontPtr = NULL;
-        if (IsOpenFont())
-            fontPtr = OpenFont();
-        else
-            return KErrNotSupported;
-    
-    CFontStore *fontStore = fontPtr->File()->GetFontStore();
-    TAny *outlineData = NULL; 
-    TInt len = KErrGeneral;
-    TInt ret = KErrNone;
-    if (!aHinted)
-        {
-        TInt faceId = fontPtr->FaceIndex();
-        TUnhintedOutlineId outlineId(fontPtr->File()->Uid(), faceId, aCode);
-        ret = fontStore->FindUnhintedOutlineInCache(outlineId, outlineData, len);
-        if (KErrNotFound == ret)
-            {
-            TAny* tmpOutline = 0; 
-            TInt tmpLen = 0;
-            ret = fontPtr->GetGlyphOutline(aCode, aHinted, tmpOutline, tmpLen);
-            if (KErrNone == ret)
-                {
-                fontStore->CacheUnhintedOutline(outlineId,
-                        tmpOutline, (TInt)tmpLen, outlineData, len);
-                }
-            User::Free(tmpOutline);
-            }
-        if (KErrNone == ret)
-            {
-            fontStore->IncreaseUnhintedOutlineRefCount(outlineId, aSessionHandle);
-            }
-        }
-    else 
-        {
-        THintedOutlineId outlineId(fontPtr, aCode);
-        ret = fontStore->FindHintedOutlineInCache(outlineId, outlineData, len);
-        if (KErrNotFound == ret)
-            {
-            TAny* tmpOutline = 0; 
-            TInt tmpLen = 0;
-            ret = fontPtr->GetGlyphOutline(aCode, aHinted, tmpOutline, tmpLen);
-            if (KErrNone == ret)
-                {
-                fontStore->CacheHintedOutline(outlineId,
-                        tmpOutline, (TInt)tmpLen, outlineData, len);
-                }
-            User::Free(tmpOutline);
-            }
-        if (KErrNone == ret)
-            {
-            fontStore->IncreaseHintedOutlineRefCount(outlineId, aSessionHandle);
-            }
-        }
-    
-    aOutline = outlineData;
-    aLength = len;    
-    return KErrNone;
-    }
 
 EXPORT_C TUint32 CBitmapFont::UniqueFontId()
 	{
@@ -1356,866 +1123,6 @@ EXPORT_C TInt CBitmapFont::DoExtendedFunction(TUid aFunctionId, TAny* aParam) co
 	}
 
 
-CFontTableCacheItem::CFontTableCacheItem(TUid &aFileUid, const TUint32 aTag, 
-        TInt aOffset, TInt aLength): iFileUid(aFileUid), iTag(aTag),
-        iOffset(aOffset), iLength(aLength)
-    {
-    // a null constructor
-    }
-
-CFontTableCacheItem::~CFontTableCacheItem()
-    {
-    iUsers.ResetAndDestroy();
-    iUsers.Close();
-    }
-    
-TBool CFontTableCacheItem::HasOutstandingRefCount()
-    {
-    TInt count = iUsers.Count();
-    for (TInt j = 0; j < count; ++j)
-        {
-        if (iUsers[j]->iRefCount > 0) 
-            {
-            return ETrue;
-            }
-        }
-    return EFalse;
-    }
-
-
-TInt CFontTableCacheItem::FindUser(TInt aSessionHandle, TInt *id) 
-    {
-    TInt len = iUsers.Count();
-    for (TInt i = 0; i < len; ++i)
-        {
-        if (aSessionHandle == iUsers[i]->iSessionHandle)
-            {
-            *id = i;
-            return KErrNone;
-            }
-        }
-    return KErrNotFound;
-    }
-
-TInt CFontTableCacheItem::DecRefCount(TInt aSessionHandle)
-    {
-    TInt id = 0; 
-    TInt ret = FindUser(aSessionHandle, &id);
-    if (KErrNone == ret)
-        {
-        iUsers[id]->iRefCount--;
-        if (0 == iUsers[id]->iRefCount) 
-            {
-            delete iUsers[id];
-            iUsers.Remove(id);
-            }
-        return iUsers.Count();
-        }
-    return KErrNotFound;
-    }
-
-TInt CFontTableCacheItem::IncRefCount(TInt aSessionHandle)
-    {
-    TInt id = 0; 
-    TInt ret = FindUser(aSessionHandle, &id);
-    if (KErrNone == ret)
-        {
-        iUsers[id]->iRefCount++;
-        }
-    else
-        {
-        TCacheUserInfo *newUser = new TCacheUserInfo(aSessionHandle, 1);
-        if (NULL != newUser)
-            {
-            TRAP(ret, iUsers.AppendL(newUser));
-            }
-        else 
-            {
-            ret = KErrNoMemory;
-            }
-        //coverity[leaked_storage]
-        // The 'newUser' is kept in iUsers. It will be deleted in DecRefCount(). 
-        }
-    return ret;
-    }
-
-TInt CFontTableCache::Append(TUid aFileUid, TUint32 aTag, 
-        TAny *&aContent, TInt aLength) 
-    {
-    TInt ret = 0;
-    if ((TUint32)iCacheMemMon.GetMemUsage() >= KFontTable_GlyphOutline_CacheMaxMem)
-        {
-        RDebug::Printf("Table/Glyph cache full. Unable to add new item.");
-        return KErrNoMemory;
-        }
-    // make a copy of the table content on the shared heap.
-    TAny *sharedCopy = iHeap->Alloc(aLength);
-    if (NULL == sharedCopy) 
-        {
-        return KErrNoMemory;
-        }
-    
-    Mem::Copy(sharedCopy, aContent, aLength);
-
-    CFontTableCacheItem *newItem = NULL;
-    TInt offset = PointerToOffset(sharedCopy, iHeap->Base());
-    TRAP(ret, newItem = new(ELeave) CFontTableCacheItem(aFileUid, aTag, offset, aLength));
-    if (KErrNone != ret)
-        {
-        iHeap->Free(sharedCopy);
-        return ret;
-        }
-    
-    TRAP(ret, iCacheItems.AppendL(newItem));
-    if (KErrNone == ret)
-        {
-        // do not free 'aContent', because the mem is managed by
-        // rasterizer cache.
-        aContent = sharedCopy;
-        iCacheMemMon.Inc(aLength);
-        }
-    else 
-        {
-        iHeap->Free(sharedCopy);
-        }
-#ifdef _DEBUG
-    GetCacheState(__func__);
-#endif
-    return ret;
-    }
-
-TInt CFontTableCache::Find(TUid aFileUid, TUint32 aTag, TAny *&aContent, 
-        TInt &aLength, TInt *id)
-    {
-    *id = KErrNotFound;
-    TInt len = iCacheItems.Count();
-    
-    TInt ret = KErrNotFound;
-    for (TInt i = 0; i < len; ++i)
-        {
-        CFontTableCacheItem *item = iCacheItems[i]; 
-        if (item->iFileUid == aFileUid && item->iTag == aTag) 
-            {
-            aContent = OffsetToPointer(item->iOffset, iHeap->Base());
-            aLength = item->iLength;
-            *id = i;
-            ret = KErrNone;
-            break;
-            }
-        }
-    
-#ifdef _DEBUG
-    GetCacheState(__func__);
-#endif
-    return ret;
-    }
-
-CFontTableCache::CFontTableCache(RHeap *aHeap, TFontTableGlyphOutlineCacheMemMonitor &aMon): 
-    iCacheMemMon(aMon), iHeap(aHeap) 
-    {
-    // null constructor
-    }
-
-CFontTableCache::~CFontTableCache()
-    {
-    for (TInt i = 0; i < iCacheItems.Count(); ++i)
-        {
-        iHeap->Free(OffsetToPointer(iCacheItems[i]->iOffset, iHeap->Base()));
-        }
-    iCacheItems.ResetAndDestroy();
-    iCacheItems.Close();
-    }
-
-TInt CFontTableCache::IncRefCount(TUid aFileUid, TUint32 aTag, TInt aSessionHandle)
-    {
-    TAny *outline = NULL;
-    TInt len = 0;
-    TInt id = 0;
-    
-    TInt ret = Find(aFileUid, aTag, outline, len, &id);
-    if (KErrNone == ret)
-        {
-        ret = iCacheItems[id]->IncRefCount(aSessionHandle);
-        }
-    
-#ifdef _DEBUG
-    GetCacheState(__func__);
-#endif
-    return ret;
-    }
-
-TInt CFontTableCache::DecRefCount(TUid aFileUid, TUint32 aTag, TInt aSessionHandle)
-    {
-    TAny *outline = NULL;
-    TInt len = 0;
-    TInt id = 0;
-    
-    TInt ret = Find(aFileUid, aTag, outline, len, &id);
-    if (KErrNone == ret) 
-        {
-        TInt numUsers = iCacheItems[id]->DecRefCount(aSessionHandle);
-        if (0 == numUsers) 
-            {
-            // There is no outstanding reference to the cache item.
-            iHeap->Free(outline);
-            iCacheMemMon.Dec(len);
-            delete (iCacheItems[id]);
-            iCacheItems.Remove(id);
-            }
-        }
-    
-#ifdef _DEBUG
-    GetCacheState(__func__);
-#endif
-    return ret;
-    }
-
-TBool CFontTableCache::HasOutstandingRefCount() 
-    {
-    TInt len = iCacheItems.Count();
-   
-    for (TInt i = 0; i < len; ++i)
-        {
-        if (iCacheItems[i]->HasOutstandingRefCount())
-            {
-            return ETrue;
-            }
-        }
-    return EFalse;
-    }
-
-TBool CFontTableCache::HasOutstandingRefCountWithUid(TUid aFileUid)
-    {
-    TInt len = iCacheItems.Count();
-   
-    for (TInt i = 0; i < len; ++i)
-        {
-        if (iCacheItems[i]->iFileUid == aFileUid) 
-            {
-            if (iCacheItems[i]->HasOutstandingRefCount())
-                {
-                return ETrue;
-                }
-            }
-        }
-    return EFalse;
-    }
-
-void CFontTableCache::CleanupCacheOnOpenFontFileRemoval(COpenFontFile *)
-    {
-    // In CFontStore::RemoveFile(), a font file is not allowed to be removed if
-    // there are outstanding ref counts on any table in it. If that check passed 
-    // and this function is called, there shall be no cache item for that file.
-    
-    // Currently a cache item having a refcount of 0 is removed immediately.
-    // If this strategy is changed in the future, we may need to do some
-    // cleanup here.
-    }
-
-void CFontTableCache::CleanupCacheOnFbsSessionTermination(TInt aSessionHandle)
-    {
-    TInt len = iCacheItems.Count();
-   
-    for (TInt i = 0; i < len; ++i)
-        {
-        TInt id = -1;
-        if (KErrNone == iCacheItems[i]->FindUser(aSessionHandle, &id))
-            {
-            iCacheItems[i]->iUsers.Remove(id);
-            if (iCacheItems[i]->iUsers.Count() == 0)
-                {
-                iHeap->Free(OffsetToPointer(iCacheItems[i]->iOffset, iHeap->Base()));
-                iCacheMemMon.Dec(iCacheItems[i]->iLength);
-                delete iCacheItems[i];
-                iCacheItems.Remove(i);
-                }
-            }
-        }
-    }
-
-
-#ifdef _DEBUG
-TInt CFontTableCache::GetCacheState(const char *func) 
-    {
-    RDebug::Printf("%s called from %s: ", __func__, func);
-    TBuf<256> buf;
-    
-    int len = iCacheItems.Count();
-    int numTables = 0, numSessions = 0, totalRef = 0;
-    buf.Append(_L("Table cache: "));
-    for (int i = 0; i < len; ++i)
-        {
-        ++numTables;
-        TInt abc = iCacheItems[i]->iUsers.Count();
-        numSessions += abc;
-        for (int j = 0; j < abc; ++j)
-            {
-            totalRef += iCacheItems[i]->iUsers[j]->iRefCount;
-            }
-        }
-    if (0 == iCacheItems.Count())
-        {
-        buf.Append(_L("cache empty. "));
-        }
-    else 
-        {
-        buf.AppendFormat(_L("%d tables referenced by %d sessions, total ref count %d"),
-                numTables, numSessions, totalRef);
-        }
-    RDebug::RawPrint(buf);
-    return 0;
-    }
-#endif
-
-
-
-TInt COutlineCacheItem::FindUser(TInt aSessionHandle, TInt *id) 
-    {
-    TInt len = iUsers.Count();
-    for (TInt i = 0; i < len; ++i)
-        {
-        if (aSessionHandle == iUsers[i]->iSessionHandle)
-            {
-            *id = i;
-            return KErrNone;
-            }
-        }
-    return KErrNotFound;
-    }
-
-COutlineCacheItem::~COutlineCacheItem() 
-    { 
-    iUsers.ResetAndDestroy(); 
-    }
-
-COutlineCacheItem::COutlineCacheItem(TInt aOffset, TInt aLength):
-    iOffset(aOffset), iLength(aLength)
-    {
-    // a null constructor.
-    }
-
-TInt COutlineCacheItem::DecRefCount(TInt aSessionHandle)
-    {
-    TInt id = 0; 
-    TInt ret = FindUser(aSessionHandle, &id);
-    if (KErrNone == ret)
-        {
-        iUsers[id]->iRefCount--;
-        if (0 == iUsers[id]->iRefCount) 
-            {
-            delete iUsers[id];
-            iUsers.Remove(id);
-            }
-        return iUsers.Count();
-        }
-    return KErrNotFound;
-    }
-
-TInt COutlineCacheItem::IncRefCount(TInt aSessionHandle)
-    {
-    TInt id = 0; 
-    TInt ret = FindUser(aSessionHandle, &id);
-    if (KErrNone == ret)
-        {
-        iUsers[id]->iRefCount++;
-        }
-    else
-        {
-        TCacheUserInfo *newUser = new TCacheUserInfo(aSessionHandle, 1);
-        if (NULL != newUser)
-            {
-            TRAP(ret, iUsers.AppendL(newUser));
-            }
-        else 
-            {
-            ret = KErrNoMemory;
-            }
-        //coverity[leaked_storage]
-        // The 'newUser' is kept in iUsers. It will be deleted in DecRefCount().
-        }
-    return ret;
-    }
-
-#ifdef _DEBUG
-TInt CUnhintedOutlineCache::GetCacheState(const char *func)
-    {
-    RDebug::Printf("%s called from %s: ", __func__, func);
-    int numSessions = 0, totalRef = 0;
-    THashMapIter<TUnhintedOutlineId, COutlineCacheItem*> it(iItemIdMap);
-    it.NextValue();
-    while (it.CurrentValue())
-        {
-        COutlineCacheItem **data = it.CurrentValue();
-        int len = (*data)->iUsers.Count();
-        numSessions += len;
-        for (int j = 0; j < len; ++j)
-            {
-            totalRef += (*data)->iUsers[j]->iRefCount;
-            }
-        it.NextValue();
-        }
-    
-    TBuf<256> buf;
-    buf.Append(_L("Unhinted outline cache: "));
-    TInt numItems = iItemIdMap.Count();
-    if (0 == numItems)
-        {
-        buf.Append(_L("empty. "));
-        }
-    else 
-        {
-        buf.AppendFormat(_L("%d glyphs, %d sessions, total refcount %d"),
-                numItems, numSessions, totalRef);
-        }
-        
-    RDebug::RawPrint(buf);
-            
-    return 0;
-    }
-#endif
-
-CUnhintedOutlineCache::CUnhintedOutlineCache(RHeap *aHeap, TFontTableGlyphOutlineCacheMemMonitor &aMon):
-    iCacheMemMon(aMon), iHeap(aHeap), 
-    iItemIdMap(THashFunction32<TUnhintedOutlineId>(CUnhintedOutlineCache::IdHash),
-        TIdentityRelation<TUnhintedOutlineId>(CUnhintedOutlineCache::IdIdentity))
-    { 
-    
-    }
-
-CUnhintedOutlineCache::~CUnhintedOutlineCache()
-    {
-    THashMapIter<TUnhintedOutlineId, COutlineCacheItem*> it(iItemIdMap);
-    it.NextValue();
-    while (it.CurrentValue())
-        {
-        const TUnhintedOutlineId *outlineId = it.CurrentKey();
-        COutlineCacheItem **data = it.CurrentValue();
-        
-        // loop body here!
-        iHeap->Free(OffsetToPointer((*data)->iOffset, iHeap->Base()));
-        delete (*data);
-        iItemIdMap.Remove(*outlineId);
-        // end loop body
-        
-        it.NextValue();
-        }
-    return;
-    }
-
-
-TInt CUnhintedOutlineCache::CleanupCacheOnOpenFontFileRemoval(COpenFontFile *aFontFile)
-    {
-    TUid fileUid = aFontFile->Uid();
-    
-    THashMapIter<TUnhintedOutlineId, COutlineCacheItem*> it(iItemIdMap);
-    it.NextValue();
-    while (it.CurrentValue())
-        {
-        const TUnhintedOutlineId *outlineId = it.CurrentKey();
-        COutlineCacheItem **data = it.CurrentValue();
-        
-        // loop body here!
-        if (outlineId->iFileUid == fileUid)
-            {
-            iHeap->Free(OffsetToPointer((*data)->iOffset, iHeap->Base()));
-            iCacheMemMon.Dec((*data)->iLength);
-            delete (*data);
-            iItemIdMap.Remove(*outlineId);
-            }
-        // end loop body
-        
-        it.NextValue();
-        }
-    return KErrNone;
-    }
-
-TInt CUnhintedOutlineCache::CleanupCacheOnFbsSessionTermination(TInt aSessionHandle)
-    {
-    THashMapIter<TUnhintedOutlineId, COutlineCacheItem*> it(iItemIdMap);
-    it.NextValue();
-    while (it.CurrentValue())
-        {
-        const TUnhintedOutlineId *outlineId = it.CurrentKey();
-        COutlineCacheItem **data = it.CurrentValue();
-        
-        // loop body here!
-        TInt id = 0;
-        TInt ret = (*data)->FindUser(aSessionHandle, &id);
-        if (KErrNone == ret)
-            {
-            delete (*data)->iUsers[id];
-            (*data)->iUsers.Remove(id);
-            if (0 == (*data)->iUsers.Count())
-                {
-                iHeap->Free(OffsetToPointer((*data)->iOffset, iHeap->Base()));
-                iCacheMemMon.Dec((*data)->iLength);
-                delete (*data);
-                iItemIdMap.Remove(*outlineId);
-                }
-            }
-        // end loop body
-        
-        it.NextValue();
-        }
-    return KErrNone;
-    }
-
-
-TInt CUnhintedOutlineCache::CacheUnhintedOutline(const TUnhintedOutlineId &aOutlineId, 
-        TAny* const aData, const TInt aLength, TAny *&aOutline, TInt &aLen)
-    {
-#ifdef _DEBUG
-    GetCacheState(__func__);
-#endif
-    if ((TUint32)iCacheMemMon.GetMemUsage() >= KFontTable_GlyphOutline_CacheMaxMem)
-        {
-        RDebug::Printf("Table/Glyph cache full. Unable to add new item.");
-        return KErrNoMemory;
-        }
-    
-    aLen = KErrGeneral;
-    TInt ret1= KErrNone;
-
-    // make a copy of the outline data on the shared heap.
-    TAny *sharedCopy = iHeap->Alloc(aLength);
-    if (NULL == sharedCopy) 
-        {
-        return KErrNoMemory;
-        }
-    
-    Mem::Copy(sharedCopy, aData, aLength);
-
-    COutlineCacheItem *newItem = NULL;
-    TInt offset = PointerToOffset(sharedCopy, iHeap->Base());
-    TRAP(ret1, newItem = new(ELeave) COutlineCacheItem(offset, aLength));
-    if (KErrNone != ret1)
-        {
-        iHeap->Free(sharedCopy);
-        sharedCopy = NULL;
-        }
-    else 
-        {
-        TRAP(ret1, iItemIdMap.InsertL(aOutlineId, newItem));
-        if (KErrNone != ret1)
-            {
-            delete newItem;
-            iHeap->Free(sharedCopy);
-            sharedCopy = NULL;
-            }
-        else
-            {
-            iCacheMemMon.Inc(aLength);
-            aLen = aLength;
-            }
-        }
-    aOutline = sharedCopy;
-    return ret1;  
-    }
-
-TInt CUnhintedOutlineCache::IncRefCount(const TUnhintedOutlineId &aOutlineId,
-        TInt aSessionHandle)
-    {
-#ifdef _DEBUG
-    GetCacheState(__func__);
-#endif
-    COutlineCacheItem **ret = iItemIdMap.Find(aOutlineId);
-    if (NULL != ret)
-        {
-        (*ret)->IncRefCount(aSessionHandle);
-        }
-    return (NULL==ret?KErrNotFound:KErrNone);
-    }
-
-TInt CUnhintedOutlineCache::DecRefCount(const TUnhintedOutlineId &aOutlineId,
-        TInt aSessionHandle)
-    {
-#ifdef _DEBUG
-    GetCacheState(__func__);
-#endif
-    COutlineCacheItem **ret = iItemIdMap.Find(aOutlineId); 
-    if (NULL != ret) 
-        {
-        TInt numUsers = (*ret)->DecRefCount(aSessionHandle);
-        if (0 == numUsers) 
-            {
-            // There is no outstanding reference to the cache item.
-            iHeap->Free(OffsetToPointer((*ret)->iOffset, iHeap->Base()));
-            iCacheMemMon.Dec((*ret)->iLength);
-            delete (*ret);
-            iItemIdMap.Remove(aOutlineId);
-            }
-        }
-    return (NULL==ret?KErrNotFound:KErrNone);
-    }
-
-TInt CUnhintedOutlineCache::Find(const TUnhintedOutlineId &aOutlineId, TAny *&aData, 
-        TInt &aLength)
-    {
-    COutlineCacheItem **ret = iItemIdMap.Find(aOutlineId);
-    TInt ret2 = KErrNone;
-    if (NULL != ret)
-        {
-        aData = OffsetToPointer((*ret)->iOffset, iHeap->Base());
-        aLength = (*ret)->iLength;
-        }
-    else
-        {
-        ret2 = KErrNotFound;
-        }
-    return ret2;
-    }
-    
-  
-TUint32 CUnhintedOutlineCache::IdHash(const TUnhintedOutlineId &outlineId)
-    {
-    // The hash value: 
-    // bits 0-15: glyph id; 
-    // bits 16-23: lower 8 bit of font file uid
-    // bits 24-27: lower 4 bit of the face index
-    // bit 28: 'isGlyphId'
-    TUint32 ret = 0;
-    ret |= (outlineId.iId & KOutlineGlyphIdHashMask);
-    ret |= (KOutlineFileUidHashMask & (outlineId.iFileUid.iUid << 16));
-    ret |= (KOutlineFaceIndexHashMask & (outlineId.iFaceIndex << 24));
-    ret = (ret % 701);
-    return ret;
-    }
-
-TBool CUnhintedOutlineCache::IdIdentity(const TUnhintedOutlineId &id1, const TUnhintedOutlineId &id2)
-    {
-    return id1.iId == id2.iId && id1.iFaceIndex == id2.iFaceIndex &&
-            id1.iFileUid == id2.iFileUid;
-    }
-
-// hinted outline cache
-#ifdef _DEBUG
-TInt CHintedOutlineCache::GetCacheState(const char *func)
-    {
-    RDebug::Printf("%s called from %s: ", __func__, func);
-    int numSessions = 0, totalRef = 0;
-    THashMapIter<THintedOutlineId, COutlineCacheItem*> it(iItemIdMap);
-    it.NextValue();
-    while (it.CurrentValue())
-        {
-        COutlineCacheItem **data = it.CurrentValue();
-        int len = (*data)->iUsers.Count();
-        numSessions += len;
-        for (int j = 0; j < len; ++j)
-            {
-            totalRef += (*data)->iUsers[j]->iRefCount;
-            }
-        it.NextValue();
-        }
-    
-    TBuf<256> buf;
-    buf.Append(_L("Hinted outline cache: "));
-    TInt numItems = iItemIdMap.Count();
-    if (0 == numItems)
-        {
-        buf.Append(_L("empty. "));
-        }
-    else 
-        {
-        buf.AppendFormat(_L("%d glyphs, %d sessions, total refcount %d"),
-                numItems, numSessions, totalRef);
-        }
-        
-    RDebug::RawPrint(buf);
-            
-    return 0;
-    }
-#endif
-
-TInt CHintedOutlineCache::CleanupCacheOnOpenFontRemoval(COpenFont *aFont)
-    {
-    THashMapIter<THintedOutlineId, COutlineCacheItem*> it(iItemIdMap);
-    it.NextValue();
-    while (it.CurrentValue())
-        {
-        const THintedOutlineId *outlineId = it.CurrentKey();
-        COutlineCacheItem **data = it.CurrentValue();
-        
-        // loop body here!
-        if (outlineId->iFont == aFont)
-            {
-            iCacheMemMon.Dec((*data)->iLength);
-            iHeap->Free(OffsetToPointer((*data)->iOffset, iHeap->Base()));
-            delete (*data);
-            iItemIdMap.Remove(*outlineId);
-            }
-        // end loop body
-        
-        it.NextValue();
-        }
-    return KErrNone;
-    }
-
-TInt CHintedOutlineCache::CleanupCacheOnFbsSessionTermination(TInt aSessionHandle)
-    {
-    THashMapIter<THintedOutlineId, COutlineCacheItem*> it(iItemIdMap);
-    it.NextValue();
-    while (it.CurrentValue())
-        {
-        const THintedOutlineId *outlineId = it.CurrentKey();
-        COutlineCacheItem **data = it.CurrentValue();
-        
-        // loop body here!
-        TInt id = 0; 
-        TInt ret = (*data)->FindUser(aSessionHandle, &id);
-        if (KErrNone == ret)
-            {
-            delete (*data)->iUsers[id];
-            (*data)->iUsers.Remove(id);
-            if (0 == (*data)->iUsers.Count())
-                {
-                iCacheMemMon.Dec((*data)->iLength);
-                iHeap->Free(OffsetToPointer((*data)->iOffset, iHeap->Base()));
-                delete (*data);
-                iItemIdMap.Remove(*outlineId);
-                }
-            }
-        // end loop body
-        
-        it.NextValue();
-        }
-
-    return KErrNone;
-    }
-
-
-CHintedOutlineCache::CHintedOutlineCache(RHeap *aHeap, TFontTableGlyphOutlineCacheMemMonitor &aMon):
-    iCacheMemMon(aMon), iHeap(aHeap), 
-    iItemIdMap(THashFunction32<THintedOutlineId>(CHintedOutlineCache::IdHash),
-        TIdentityRelation<THintedOutlineId>(CHintedOutlineCache::IdIdentity)) 
-    { 
-    // a null constructor
-    }
-
-TInt CHintedOutlineCache::CacheHintedOutline(const THintedOutlineId &aOutlineId,
-        TAny* aData, TInt aLength, TAny *&aOutline, TInt &aLen)
-    {
-#ifdef _DEBUG
-    GetCacheState(__func__);
-#endif
-    if ((TUint32)iCacheMemMon.GetMemUsage() >= KFontTable_GlyphOutline_CacheMaxMem)
-        {
-        RDebug::Printf("Table/Glyph cache full. Unable to add new item.");
-        return KErrNoMemory;
-        }
-    
-    aLen = KErrGeneral;
-    TInt ret = KErrNone;
-    // make a copy of the outline data on the shared heap.
-    TAny *sharedCopy = iHeap->Alloc(aLength);
-    if (NULL == sharedCopy) 
-        {
-        return KErrNoMemory;
-        }
-    
-    Mem::Copy(sharedCopy, aData, aLength);
-
-    COutlineCacheItem *newItem = NULL;
-    TInt offset = PointerToOffset(sharedCopy, iHeap->Base());
-    TRAP(ret, newItem = new(ELeave) COutlineCacheItem(offset, aLength));
-    if (KErrNone != ret)
-        {
-        iHeap->Free(sharedCopy);
-        sharedCopy = NULL;
-        }
-    else 
-        {
-        TRAP(ret, iItemIdMap.InsertL(aOutlineId, newItem));
-        if (KErrNone != ret)
-            {
-            delete newItem;
-            iHeap->Free(sharedCopy);
-            sharedCopy = NULL;
-            }
-        else
-            {
-            iCacheMemMon.Inc(aLength);
-            aLen = aLength;
-            }
-        }
-    aOutline = sharedCopy;
-    return ret;
-    }
-
-TInt CHintedOutlineCache::IncRefCount(const THintedOutlineId &aOutlineId, 
-        TInt aSessionHandle)
-    {
-#ifdef _DEBUG
-    GetCacheState(__func__);
-#endif
-    COutlineCacheItem **data = iItemIdMap.Find(aOutlineId);
-    if (NULL != data)
-        {
-        (*data)->IncRefCount(aSessionHandle);
-        }
-    return (NULL==data?KErrNotFound:KErrNone);
-    }
-
-TInt CHintedOutlineCache::DecRefCount(const THintedOutlineId &aOutlineId,
-        TInt aSessionHandle)
-    {
-#ifdef _DEBUG
-    GetCacheState(__func__);
-#endif
-    COutlineCacheItem **data = iItemIdMap.Find(aOutlineId);
-    if (NULL != data) 
-        {
-        TInt numUsers = (*data)->DecRefCount(aSessionHandle);
-        if (0 == numUsers) 
-            {
-            // There is no outstanding reference to the cache item.
-            iCacheMemMon.Dec((*data)->iLength);
-            iHeap->Free(OffsetToPointer((*data)->iOffset, iHeap->Base()));
-            delete (*data);
-            iItemIdMap.Remove(aOutlineId);
-            }
-        }
-    return (NULL==data?KErrNotFound:KErrNone);
-    }
-
-TInt CHintedOutlineCache::Find(const THintedOutlineId &aOutlineId, 
-        TAny *&aData, TInt &aLength)
-    {
-    COutlineCacheItem **ret = iItemIdMap.Find(aOutlineId);
-    TInt ret2 = KErrNone;
-    if (NULL != ret)
-        {
-        aData = OffsetToPointer((*ret)->iOffset, iHeap->Base());
-        aLength = (*ret)->iLength;
-        }
-    else
-        {
-        ret2 = KErrNotFound;
-        }
-    return ret2;
-    }
-
-
-TUint32 CHintedOutlineCache::IdHash(const THintedOutlineId &outlineId)
-    {
-    // The hash value:
-    // bits 0-15: the outline id
-    // bits 16-27: the lower 12 bits of the font pointer
-    // bit 28: 'isGlyphId'
-    
-    TUint32 ret = 0;
-    ret |= (KOutlineGlyphIdHashMask & outlineId.iId);
-    ret |= (KOutlineFontPtrHashMask & (((TUint32)outlineId.iFont) << 16));
-    ret = ret % 701;
-    return ret;
-    }
-
-TBool CHintedOutlineCache::IdIdentity(const THintedOutlineId &id1, const THintedOutlineId &id2)
-    {
-    return id1.iId == id2.iId && id1.iFont == id2.iFont;
-    }
-// hinted cache
-
-
 CFontStore::CFontStore(RHeap* aHeap):
 	iKPixelWidthInTwips(KDefaultPixelWidthInTwips),
 	iKPixelHeightInTwips(KDefaultPixelHeightInTwips),
@@ -2257,12 +1164,6 @@ void CFontStore::ConstructL()
 
 	if (twipSize.iHeight > 0 && pixelSize.iHeight > 0)
 		iKPixelHeightInTwips = twipSize.iHeight * 1000 / pixelSize.iHeight;
-	
-	iCacheMemMon = new(ELeave) TFontTableGlyphOutlineCacheMemMonitor;
-	iUnhintedOutlineCache = new(ELeave) CUnhintedOutlineCache(iHeap, *iCacheMemMon);
-	iHintedOutlineCache = new(ELeave) CHintedOutlineCache(iHeap, *iCacheMemMon);
-	iFontTableCache = new(ELeave) CFontTableCache(iHeap, *iCacheMemMon);
-	
 	}
 
 /** Creates a new CFontStore object.
@@ -2298,11 +1199,6 @@ EXPORT_C CFontStore::~CFontStore()
 		iHeap->Free(iOpenFontSessionCacheList);
 		}
 	iFs.Close();
-	
-    delete iFontTableCache;
-    delete iUnhintedOutlineCache;
-    delete iHintedOutlineCache;
-    delete iCacheMemMon;
 	}
 
 
@@ -2313,7 +1209,9 @@ void ReadFromFileL(RFile& aFile, TDes8& aDes, TInt aLength)
 	User::LeaveIfError(aFile.Read(aDes, aLength));
 	if (aDes.Length() != aLength)
 		{
-		OstTrace0( TRACE_DUMP, _READFROMFILEL, "EOF reading structure from font file, Leave(KErrCorrupt)" );
+#ifdef _DEBUG
+		RDebug::Print(_L("EOF reading structure from font file\n"));
+#endif
 		User::Leave(KErrCorrupt);
 		}
 	}
@@ -2328,8 +1226,10 @@ TUint TtfTableTagFromBufferL(TDes8& aDes)
 		// must be ASCII character between 32 & 126 inclusive (per Apple's TTF specification document)
 		if ( (temp < 32) || (temp > 126) )
 			{
-			OstTrace1( TRACE_DUMP, _TTFTABLETAGFROMBUFFERL, "invalid ASCII character (0x%x) in ttf table tag, Leave(KErrCorrupt)", temp);
 			User::Leave(KErrCorrupt);
+#ifdef _DEBUG
+			RDebug::Print(_L("invalid ASCII character (0x%x) in ttf table tag\n"), temp);
+#endif
 			}
 		value = (value << 8) | temp;
 		}
@@ -2340,7 +1240,10 @@ TUint TtfTableTagFromBufferL(TDes8& aDes)
 */
 void CFontStore::SanityCheckForTtfL(RFile& aFontFile, TUint aFontFileSize, TBool aStrictChecking)
 	{
-	OstTraceExt2( TRACE_DUMP, CFONTSTORE_SANITYCHECKFORTTFL, "TTF File Size is %u (0x%x) bytes", aFontFileSize, aFontFileSize );
+#if defined(_DEBUG)
+	RDebug::Print(_L("TTF File Size is %u (0x%x) bytes\n"), aFontFileSize, aFontFileSize);
+#endif
+
 	// check the Offset Table at the start of the file
 	TBuf8<16>	fileBuffer;
 
@@ -2354,7 +1257,9 @@ void CFontStore::SanityCheckForTtfL(RFile& aFontFile, TUint aFontFileSize, TBool
 
 	if ( (numTables == 0) || (numTables & 0xF0000000) || (tableStart > aFontFileSize) )
 		{
-		OstTrace1( TRACE_DUMP, DUP1_CFONTSTORE_SANITYCHECKFORTTFL, "# of tables (%d) in ttf is invalid, Leave(KErrCorrupt)", numTables );
+#ifdef _DEBUG
+		RDebug::Print(_L("# of tables (%i) in ttf is invalid\n"), numTables);
+#endif
 		User::Leave(KErrCorrupt);
 		}
 
@@ -2371,8 +1276,10 @@ void CFontStore::SanityCheckForTtfL(RFile& aFontFile, TUint aFontFileSize, TBool
 	if ( (searchRange < 16) || (entrySelector > 24)
 		|| (aStrictChecking && (rangeShift != ( (numTables << 4) - searchRange )) ) )
 		{
-		OstTraceExt4( TRACE_DUMP, DUP2_CFONTSTORE_SANITYCHECKFORTTFL, "searchRange (0x%x), entrySelector (0x%x) or rangeShift (0x%x) invalid for numTables (%d), Leave(KErrCorrupt)", 
-		        searchRange, entrySelector, rangeShift, numTables );
+#ifdef _DEBUG
+		RDebug::Print(_L("searchRange (0x%x), entrySelector (0x%x) or rangeShift (0x%x) invalid for numTables (%i)\n"), 
+			searchRange, entrySelector, rangeShift, numTables);
+#endif
 		User::Leave(KErrCorrupt);
 		}
 
@@ -2380,8 +1287,9 @@ void CFontStore::SanityCheckForTtfL(RFile& aFontFile, TUint aFontFileSize, TBool
 	TUint exp = 1 << entrySelector;		// log to exponent
 	if ( (numTables < exp) || (numTables > (exp << 1)) )
 		{
-		OstTraceExt2( TRACE_DUMP, DUP3_CFONTSTORE_SANITYCHECKFORTTFL, "entrySelector (0x%x) wrong for numTables(%d), Leave(KErrCorrupt)", 
-		        entrySelector, numTables );
+#ifdef _DEBUG
+		RDebug::Print(_L("entrySelector (0x%x) wrong for numTables(%i)\n"), entrySelector, numTables);
+#endif
 		User::Leave(KErrCorrupt);
 		}
 
@@ -2408,8 +1316,10 @@ void CFontStore::SanityCheckForTtfL(RFile& aFontFile, TUint aFontFileSize, TBool
 		// table Tags must be unique & in order
 		if (tableTag <= lastTableTag)
 			{
-			OstTraceExt4( TRACE_DUMP, DUP4_CFONTSTORE_SANITYCHECKFORTTFL, "ttf table tag ('%c%c%c%c') is out of order, Leave(KErrCorrupt)",
-			        tableTag >> 24, (tableTag >> 16) & 0x7F, (tableTag >> 8) & 0x7F, tableTag & 0x7F);
+#ifdef _DEBUG
+			RDebug::Print(_L("ttf table tag ('%c%c%c%c') is out of order\n"), 
+				tableTag >> 24, (tableTag >> 16) & 0x7F, (tableTag >> 8) & 0x7F, tableTag & 0x7F);
+#endif
 			User::Leave(KErrCorrupt);
 			}
 
@@ -2419,8 +1329,9 @@ void CFontStore::SanityCheckForTtfL(RFile& aFontFile, TUint aFontFileSize, TBool
 		TInt end = length + offset;
 		if ( (offset & 3) || (offset < tableStart) || (length == 0) || (end < offset) || (end > aFontFileSize))
 			{
-			OstTraceExt2( TRACE_DUMP, DUP5_CFONTSTORE_SANITYCHECKFORTTFL, "offset (0x%x) or length (0x%x) are bad, Leave(KErrCorrupt)",
-			        offset, length );
+#ifdef _DEBUG
+			RDebug::Print(_L("offset (0x%x) or length (0x%x) are bad\n"), offset, length);
+#endif		
 			User::Leave(KErrCorrupt);
 			}
 
@@ -2441,8 +1352,10 @@ void CFontStore::SanityCheckForTtfL(RFile& aFontFile, TUint aFontFileSize, TBool
 	// for single font files highestTableEnd & totalFontSize should be the same
 	if (highestTableEnd != totalFontSize)
 		{
-		OstTraceExt2( TRACE_DUMP, DUP6_CFONTSTORE_SANITYCHECKFORTTFL, "Total Font Size (0x%x) is different from end of the last table (0x%x), Leave(KErrCorrupt)",
-		        highestTableEnd, totalFontSize);
+#ifdef _DEBUG
+		RDebug::Print(_L("Total Font Size (0x%x) is different from end of the last table (0x%x)\n"), 
+				highestTableEnd, totalFontSize);
+#endif
 		User::Leave(KErrCorrupt);
 		}
 	}
@@ -2765,11 +1678,6 @@ EXPORT_C void CFontStore::RemoveFile(TUid aFileUid)
 				if((*iFontAccess)[i].iAccessCount)
 					return;
 			}
-		if (iFontTableCache && iFontTableCache->HasOutstandingRefCount())
-		    {
-		    // disallow font file removal if any font tables are still cached
-		    return;
-		    }
 		
 		iTypefaceList.ResetAndDestroy();
 		count = iFontBitmapList.Count();
@@ -2804,14 +1712,6 @@ EXPORT_C void CFontStore::RemoveFile(TUid aFileUid)
 		  	  	  			}
 						}
 					} // Safe to proceed with removing file
-				// also check if there are outstanding references to any 
-				// table in that file.
-				if (iFontTableCache && iFontTableCache->HasOutstandingRefCountWithUid(aFileUid))
-				    {
-				    return; // outstanding reference to font table found.
-				    }
-				
-				// Safe to proceed with removing file
 				if (iOpenFontFileList[i]->DecRefCount())
 					{ // unload the font file
 					RemoveTypefacesFromSupportList(iOpenFontFileList[i]);
@@ -3594,9 +2494,7 @@ TInt CFontStore::GetNearestFontInPixels(
 			}
 		else
 			{
-			OstTraceExt2( TRACE_FATAL, CFONTSTORE_GETNEARESTFONTINPIXELS, "GetNearestOpenFontInPixelsL() return %d, openFont is 0x%x, Panic(EFntNoFontFound)",
-			        error, (unsigned int)openFont);
-			__ASSERT_DEBUG(0, Panic(EFntNoFontFound));
+			__ASSERT_DEBUG(false, Panic(EFntNoFontFound));
 			return KErrGeneral;
 			}
 		}
@@ -3746,13 +2644,8 @@ EXPORT_C void CFontStore::TypefaceSupport(TTypefaceSupport &aTypefaceSupport,TIn
 		aTypefaceSupport = *iOpenFontTypefaceSupportList[aTypefaceIndex - iTypefaceList.Count()]->TypefaceSupport();
 		return;
 		}
-	
-	if (!((aTypefaceIndex >= 0) && (aTypefaceIndex < iTypefaceList.Count())))
-	    {
-	    OstTraceExt2( TRACE_FATAL, CFONTSTORE_TYPEFACESUPPORT, "aTypefaceIndex=%d, iTypefaceList.Count()=%d Panic(EFntTypefaceIndexOutOfRange)",
-	            aTypefaceIndex, iTypefaceList.Count());
-	    __ASSERT_DEBUG(0,Panic(EFntTypefaceIndexOutOfRange));
-	    }
+
+	__ASSERT_DEBUG((aTypefaceIndex >= 0) && (aTypefaceIndex < iTypefaceList.Count()),Panic(EFntTypefaceIndexOutOfRange));
 	TTypeface* typeface = iTypefaceList[aTypefaceIndex];
 	aTypefaceSupport.iTypeface = *typeface;
 	TInt count = iTypefaceFontBitmapList.Count();
@@ -3910,11 +2803,7 @@ void CFontStore::InternalizeFontStoreFileL(CFontStoreFile* aFontStoreFile, TInt 
 			TUid uid;
 			stream >> uid;
  			CFontBitmap* fontbitmap = GetFontBitmapById(uid);
- 			if (!fontbitmap)
- 			    {
- 			    OstTrace0( TRACE_FATAL, CFONTSTORE_INTERNALIZEFONTSTOREFILEL, "Panic(EFntFontBitmapNotLoaded)" );
- 			   __ASSERT_DEBUG(0,Panic(EFntFontBitmapNotLoaded));
- 			    }
+			__ASSERT_DEBUG(fontbitmap,Panic(EFntFontBitmapNotLoaded));
 #ifndef _DEBUG
 			User::LeaveIfNull(fontbitmap);
 #endif			
@@ -3973,11 +2862,7 @@ void CFontStore::InternalizeFontStoreFileL(CFontStoreFile* aFontStoreFile, TInt 
 TTypeface* CFontStore::GetNearestTypeface(const TTypeface& aTypeface) const
 	{
 	TInt index,count = iTypefaceList.Count();
-	if (count <= 0)
-	    {
-	    OstTrace1( TRACE_FATAL, CFONTSTORE_GETNEARESTTYPEFACE, "count=%d, Panic(EFntNoTypefaces)", count );
-	    __ASSERT_DEBUG(0,Panic(EFntNoTypefaces));
-	    }
+	__ASSERT_DEBUG(count>0,Panic(EFntNoTypefaces));
 	for (index=0; (index<count) && aTypeface.iName.CompareF(iTypefaceList[index]->iName); index++)	  
 		{ // tries matching	typeface name
 		}
@@ -4017,22 +2902,14 @@ TTypefaceFontBitmap CFontStore::GetNearestTypefaceFontBitmap(const TFontSpec& aF
 	{
 	TTypefaceFontBitmap typefacefontbitmap;
 	TInt count = iTypefaceFontBitmapList.Count();
-	if (count <= 0)
-	    {
-	    OstTrace1( TRACE_FATAL, CFONTSTORE_GETNEARESTTYPEFACEFONTBITMAP, "count=%d, Panic(EFntNoTypefaceFontBitmaps)", count );
-	    __ASSERT_DEBUG(0, Panic(EFntNoTypefaceFontBitmaps));
-	    }
+	__ASSERT_DEBUG(count > 0, Panic(EFntNoTypefaceFontBitmaps));
 	TInt i;
 	TInt j;
 	// Assumes there is at least one fontbitmap per typeface
 	for (i = 0; (i < count) && !(aFontSpecInPixels.iTypeface == *iTypefaceFontBitmapList[i].iTypeface); i++)
 		{  // Finds first fontbitmap with correct typeface
 		}
-	if (i >= count)
-	    {
-	    OstTraceExt2( TRACE_FATAL, DUP1_CFONTSTORE_GETNEARESTTYPEFACEFONTBITMAP, "i=%d, count=%d, Panic(EFntTypefaceHasNoFontBitmaps)", i, count );
-	    __ASSERT_DEBUG(i < count, Panic(EFntTypefaceHasNoFontBitmaps));
-	    }
+	__ASSERT_DEBUG(i < count, Panic(EFntTypefaceHasNoFontBitmaps));
 	TTypeface* typeface = iTypefaceFontBitmapList[i].iTypeface;
 	TInt height = 0;
 	if (aMaxHeight > 0)
@@ -4184,11 +3061,7 @@ TInt CFontStore::VerticalPixelsToTwips(TInt aPixelHeight) const
 // but with a sanity-check cutoff to round up past two-thirds
 TInt CFontStore::VerticalTwipsToPixels(TInt aTwipsHeight) const
 	{
-	if (!iKPixelHeightInTwips)
-	    {
-	    OstTrace0( TRACE_FATAL, CFONTSTORE_VERTICALTWIPSTOPIXELS, "Panic(EFntKPixelHeightInTwipsZero)" );
-	    __ASSERT_DEBUG(0, Panic(EFntKPixelHeightInTwipsZero));
-	    }
+	__ASSERT_DEBUG(iKPixelHeightInTwips,Panic(EFntKPixelHeightInTwipsZero));
 	return ((aTwipsHeight * 1000) + (iKPixelHeightInTwips / 3)) / iKPixelHeightInTwips;  // Rounds down below two-thirds of a twip
 	}
 
@@ -4897,147 +3770,6 @@ EXPORT_C TBool CFontStore::GetFontFilePath(const TDesC& aFontName, TFileName& aF
 		}
 	return EFalse;	
 	}
-
-TInt CFontStore::CacheFontTable(TUid aFileUid, TUint32 aTag, 
-        TAny *&aContent, TInt aLength)
-    {
-    return iFontTableCache->Append(aFileUid, aTag, aContent, aLength);
-    }
-
-TInt CFontStore::FindFontTableInCache(TUid aFileUid, TUint32 aTag, 
-        TAny *&aContent, TInt &aLength)
-    {
-    TInt id;
-    return iFontTableCache->Find(aFileUid, aTag, aContent, aLength, &id);
-    }
-
-TInt CFontStore::IncreaseUnhintedOutlineRefCount(const TUnhintedOutlineId &aOutlineId, 
-        TInt aSessionHandle)
-    {
-    return iUnhintedOutlineCache->IncRefCount(aOutlineId, aSessionHandle);
-    }
-
-TInt CFontStore::IncreaseHintedOutlineRefCount(const THintedOutlineId &aOutlineId,
-        TInt aSessionHandle)
-    {
-    return iHintedOutlineCache->IncRefCount(aOutlineId, aSessionHandle);
-    }
-
-TInt CFontStore::IncFontTableRefCount(TUid aFileUid, TUint32 aTag, 
-        TInt aSessionHandle)
-    {
-    return iFontTableCache->IncRefCount(aFileUid, aTag, aSessionHandle);
-    }
-
-TInt CFontStore::DecFontTableRefCount(TUid aFileUid, TUint32 aTag, 
-        TInt aSessionHandle)
-    {
-    return iFontTableCache->DecRefCount(aFileUid, aTag, aSessionHandle);
-    }
-
-TInt CFontStore::CacheUnhintedOutline(const TUnhintedOutlineId &aOutlineId, TAny * aData, 
-        TInt aLength, TAny *&aOutline, TInt &aLen)
-    {
-    return iUnhintedOutlineCache->CacheUnhintedOutline(aOutlineId, aData, aLength, 
-            aOutline, aLen);
-    }
-
-TInt CFontStore::CacheHintedOutline(const THintedOutlineId &aOutlineId,
-        TAny * aData, TInt aLength, TAny *&aOutline, TInt &aLen)
-    {
-    return iHintedOutlineCache->CacheHintedOutline(aOutlineId, aData, aLength,
-            aOutline, aLen);
-    }
-
-TInt CFontStore::ReleaseUnhintedOutline(const TUnhintedOutlineId &aOutlineId, 
-        TInt aSessionHandle)
-    {
-    return iUnhintedOutlineCache->DecRefCount(aOutlineId, aSessionHandle);    
-    }
-
-TInt CFontStore::ReleaseHintedOutline(const THintedOutlineId &aOutlineId,
-        TInt aSessionHandle)
-    {
-    return iHintedOutlineCache->DecRefCount(aOutlineId, aSessionHandle);    
-    }
-
-TInt CFontStore::ReleaseFontTable(TUid aFileUid, TUint32 aTag, 
-        TInt aSessionHandle)
-    {
-    return iFontTableCache->DecRefCount(aFileUid, aTag, aSessionHandle);
-    }
-
-TInt CFontStore::FindUnhintedOutlineInCache(const TUnhintedOutlineId &aOutlineId, TAny *&aData, 
-        TInt &aLength)
-    {
-    return iUnhintedOutlineCache->Find(aOutlineId, aData, aLength);
-    }
-
-TInt CFontStore::FindHintedOutlineInCache(const THintedOutlineId &aOutlineId, 
-        TAny *&aData, TInt &aLength)
-    {
-    return iHintedOutlineCache->Find(aOutlineId, aData, aLength);
-    }
-
-void CFontStore::CleanupCacheOnOpenFontRemoval(COpenFont *aFont)
-    {
-    iHintedOutlineCache->CleanupCacheOnOpenFontRemoval(aFont);
-    //iUnhintedOutlineCache.OnOpenFontRemoval(aFont);
-    }
-
-void CFontStore::CleanupCacheOnOpenFontFileRemoval(COpenFontFile *aFontFile) 
-    {
-    iUnhintedOutlineCache->CleanupCacheOnOpenFontFileRemoval(aFontFile);
-    iFontTableCache->CleanupCacheOnOpenFontFileRemoval(aFontFile);
-    }
-
-/** Clean up font table and glyph outline caches when an FBS session is terminated.
- * All the reference counts related to that session are cleared.
-@param aSession: Input. A pointer to the terminating session.
-@return always returns KErrNone.
-@internalTechnology
-*/
-EXPORT_C
-void CFontStore::CleanupCacheOnFbsSessionTermination(TInt aSessionHandle)
-    {
-    iHintedOutlineCache->CleanupCacheOnFbsSessionTermination(aSessionHandle);
-    iUnhintedOutlineCache->CleanupCacheOnFbsSessionTermination(aSessionHandle);
-    iFontTableCache->CleanupCacheOnFbsSessionTermination(aSessionHandle);
-    }
-
-
-void TFontTableGlyphOutlineCacheMemMonitor::Inc(TInt aBytes)
-    {
-    iBytes += aBytes;
-    }
-
-void TFontTableGlyphOutlineCacheMemMonitor::Dec(TInt aBytes)
-    {
-    iBytes -= aBytes;
-    }
-
-TInt TFontTableGlyphOutlineCacheMemMonitor::GetMemUsage()
-    {
-    return iBytes;
-    }
-
-TFontTableGlyphOutlineCacheMemMonitor::TFontTableGlyphOutlineCacheMemMonitor(): 
-    iBytes(0) 
-    {
-    // null constructor
-    }
-
-TUnhintedOutlineId::TUnhintedOutlineId(TUid aFileUid, TInt aFaceIndex, TUint aId):
-iFileUid(aFileUid), iFaceIndex(aFaceIndex), iId(aId)
-    {
-    // a null constructor;
-    }
-
-THintedOutlineId::THintedOutlineId(COpenFont *aFont, TUint aId):
-iFont(aFont), iId(aId)
-    {
-    // a null constructor;
-    }
 
 #ifdef _DEBUG
 /**

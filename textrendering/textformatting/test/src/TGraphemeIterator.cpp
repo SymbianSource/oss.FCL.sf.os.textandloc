@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2003-2010 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 2003-2009 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -21,77 +21,69 @@
 #include "TGraphicsContext.h"
 #include "TMINTERP.H"
 
-#include "tgraphemeiterator.h"
-
-namespace LocalToTGraphemeIterator
-{
-CTGraphemeIteratorStep* TestStep;
-#define TESTPOINT(p) TestStep->testpoint(p,(TText8*)__FILE__,__LINE__)
-#define TESTPRINT(p) TestStep->print(p,(TText8*)__FILE__,__LINE__)
+#include <e32test.h>
 
 struct TTransliteration
-    {
-    const TText* iString;
-    TInt iChar;
-    };
+	{
+	const TText* iString;
+	TInt iChar;
+	};
 static const TTransliteration KArabicTransliteration[] =
-    {
-    { reinterpret_cast<const TText*>(L"?"), 0x61F },
-    { reinterpret_cast<const TText*>(L"`"), 0x621 },    // in-line hamza
-    { reinterpret_cast<const TText*>(L"a"), 0x627 },    // alif
-    { reinterpret_cast<const TText*>(L"b"), 0x628 },
-    { reinterpret_cast<const TText*>(L"A"), 0x629 },    // teh marbuta
-    { reinterpret_cast<const TText*>(L"t"), 0x62A },
-    { reinterpret_cast<const TText*>(L"th"), 0x62B },
-    { reinterpret_cast<const TText*>(L"j"), 0x62C },
-    { reinterpret_cast<const TText*>(L"H"), 0x62D },    // hah
-    { reinterpret_cast<const TText*>(L"kh"), 0x62E },
-    { reinterpret_cast<const TText*>(L"d"), 0x62F },
-    { reinterpret_cast<const TText*>(L"dh"), 0x630 },
-    { reinterpret_cast<const TText*>(L"r"), 0x631 },
-    { reinterpret_cast<const TText*>(L"z"), 0x632 },
-    { reinterpret_cast<const TText*>(L"s"), 0x633 },
-    { reinterpret_cast<const TText*>(L"sh"), 0x634 },
-    { reinterpret_cast<const TText*>(L"S"), 0x635 },
-    { reinterpret_cast<const TText*>(L"D"), 0x636 },
-    { reinterpret_cast<const TText*>(L"T"), 0x637 },
-    { reinterpret_cast<const TText*>(L"Z"), 0x638 },    // zah
-    { reinterpret_cast<const TText*>(L"'"), 0x639 },    // ain
-    { reinterpret_cast<const TText*>(L"g"), 0x63A },
-    { reinterpret_cast<const TText*>(L"_"), 0x640 },    // kashida
-    { reinterpret_cast<const TText*>(L"f"), 0x641 },
-    { reinterpret_cast<const TText*>(L"q"), 0x642 },
-    { reinterpret_cast<const TText*>(L"k"), 0x643 },
-    { reinterpret_cast<const TText*>(L"l"), 0x644 },    // lam
-    { reinterpret_cast<const TText*>(L"m"), 0x645 },
-    { reinterpret_cast<const TText*>(L"n"), 0x646 },
-    { reinterpret_cast<const TText*>(L"h"), 0x647 },    // heh
-    { reinterpret_cast<const TText*>(L"w"), 0x648 },
-    { reinterpret_cast<const TText*>(L"y"), 0x64A },
-    { reinterpret_cast<const TText*>(L"^F"), 0x64B },   // fathatan
-    { reinterpret_cast<const TText*>(L"^D"), 0x64C },   // dammatan
-    { reinterpret_cast<const TText*>(L"^K"), 0x64D },   // kasratan
-    { reinterpret_cast<const TText*>(L"^f"), 0x64E },   // fatha
-    { reinterpret_cast<const TText*>(L"^d"), 0x64F },   // damma
-    { reinterpret_cast<const TText*>(L"^k"), 0x650 },   // kasra
-    { reinterpret_cast<const TText*>(L"^s"), 0x651 },   // shadda
-    { reinterpret_cast<const TText*>(L"^h"), 0x652 },   // sukun
-    { reinterpret_cast<const TText*>(L"^~"), 0x653 },   // maddah
-    { reinterpret_cast<const TText*>(L"^`"), 0x654 },   // hamza above
-    { reinterpret_cast<const TText*>(L"_`"), 0x653 },   // hamza below
-    { reinterpret_cast<const TText*>(L"0"), 0x660 },
-    { reinterpret_cast<const TText*>(L"1"), 0x661 },
-    { reinterpret_cast<const TText*>(L"2"), 0x662 },
-    { reinterpret_cast<const TText*>(L"3"), 0x663 },
-    { reinterpret_cast<const TText*>(L"4"), 0x664 },
-    { reinterpret_cast<const TText*>(L"5"), 0x665 },
-    { reinterpret_cast<const TText*>(L"6"), 0x666 },
-    { reinterpret_cast<const TText*>(L"7"), 0x667 },
-    { reinterpret_cast<const TText*>(L"8"), 0x668 },
-    { reinterpret_cast<const TText*>(L"9"), 0x669 }
-    };
-}
-using namespace LocalToTGraphemeIterator;
+	{
+	{ reinterpret_cast<const TText*>(L"?"), 0x61F },
+	{ reinterpret_cast<const TText*>(L"`"), 0x621 },	// in-line hamza
+	{ reinterpret_cast<const TText*>(L"a"), 0x627 },	// alif
+	{ reinterpret_cast<const TText*>(L"b"), 0x628 },
+	{ reinterpret_cast<const TText*>(L"A"), 0x629 },	// teh marbuta
+	{ reinterpret_cast<const TText*>(L"t"), 0x62A },
+	{ reinterpret_cast<const TText*>(L"th"), 0x62B },
+	{ reinterpret_cast<const TText*>(L"j"), 0x62C },
+	{ reinterpret_cast<const TText*>(L"H"), 0x62D },	// hah
+	{ reinterpret_cast<const TText*>(L"kh"), 0x62E },
+	{ reinterpret_cast<const TText*>(L"d"), 0x62F },
+	{ reinterpret_cast<const TText*>(L"dh"), 0x630 },
+	{ reinterpret_cast<const TText*>(L"r"), 0x631 },
+	{ reinterpret_cast<const TText*>(L"z"), 0x632 },
+	{ reinterpret_cast<const TText*>(L"s"), 0x633 },
+	{ reinterpret_cast<const TText*>(L"sh"), 0x634 },
+	{ reinterpret_cast<const TText*>(L"S"), 0x635 },
+	{ reinterpret_cast<const TText*>(L"D"), 0x636 },
+	{ reinterpret_cast<const TText*>(L"T"), 0x637 },
+	{ reinterpret_cast<const TText*>(L"Z"), 0x638 },	// zah
+	{ reinterpret_cast<const TText*>(L"'"), 0x639 },	// ain
+	{ reinterpret_cast<const TText*>(L"g"), 0x63A },
+	{ reinterpret_cast<const TText*>(L"_"), 0x640 },	// kashida
+	{ reinterpret_cast<const TText*>(L"f"), 0x641 },
+	{ reinterpret_cast<const TText*>(L"q"), 0x642 },
+	{ reinterpret_cast<const TText*>(L"k"), 0x643 },
+	{ reinterpret_cast<const TText*>(L"l"), 0x644 },	// lam
+	{ reinterpret_cast<const TText*>(L"m"), 0x645 },
+	{ reinterpret_cast<const TText*>(L"n"), 0x646 },
+	{ reinterpret_cast<const TText*>(L"h"), 0x647 },	// heh
+	{ reinterpret_cast<const TText*>(L"w"), 0x648 },
+	{ reinterpret_cast<const TText*>(L"y"), 0x64A },
+	{ reinterpret_cast<const TText*>(L"^F"), 0x64B },	// fathatan
+	{ reinterpret_cast<const TText*>(L"^D"), 0x64C },	// dammatan
+	{ reinterpret_cast<const TText*>(L"^K"), 0x64D },	// kasratan
+	{ reinterpret_cast<const TText*>(L"^f"), 0x64E },	// fatha
+	{ reinterpret_cast<const TText*>(L"^d"), 0x64F },	// damma
+	{ reinterpret_cast<const TText*>(L"^k"), 0x650 },	// kasra
+	{ reinterpret_cast<const TText*>(L"^s"), 0x651 },	// shadda
+	{ reinterpret_cast<const TText*>(L"^h"), 0x652 },	// sukun
+	{ reinterpret_cast<const TText*>(L"^~"), 0x653 },	// maddah
+	{ reinterpret_cast<const TText*>(L"^`"), 0x654 },	// hamza above
+	{ reinterpret_cast<const TText*>(L"_`"), 0x653 },	// hamza below
+	{ reinterpret_cast<const TText*>(L"0"), 0x660 },
+	{ reinterpret_cast<const TText*>(L"1"), 0x661 },
+	{ reinterpret_cast<const TText*>(L"2"), 0x662 },
+	{ reinterpret_cast<const TText*>(L"3"), 0x663 },
+	{ reinterpret_cast<const TText*>(L"4"), 0x664 },
+	{ reinterpret_cast<const TText*>(L"5"), 0x665 },
+	{ reinterpret_cast<const TText*>(L"6"), 0x666 },
+	{ reinterpret_cast<const TText*>(L"7"), 0x667 },
+	{ reinterpret_cast<const TText*>(L"8"), 0x668 },
+	{ reinterpret_cast<const TText*>(L"9"), 0x669 }
+	};
 
 TText TransliterateSingle(const TText*& aInput, const TText* aEnd)
 	{
@@ -155,7 +147,8 @@ void Transliterate(const TDesC& aIn, TDes& aOut)
 Tests RTmGraphemeEdgeIterator::DocPosMatches for this document position and
 edge.
 */
-void TestDocPosMatchesCase(const TTmGraphemeEdgeInfo& aEdgeInfo,
+void TestDocPosMatchesCase(RTest& aTest,
+	const TTmGraphemeEdgeInfo& aEdgeInfo,
 	TTmDocPosSpec& aPosSpec,
 	RTmGraphemeEdgeIterator::TGraphemeMatch aExpectedMatchType)
 	{
@@ -169,16 +162,16 @@ void TestDocPosMatchesCase(const TTmGraphemeEdgeInfo& aEdgeInfo,
 		++end;
 		}
 	aPosSpec.iPos = start - 1;
-	TESTPOINT(RTmGraphemeEdgeIterator::DocPosMatches(aPosSpec, aEdgeInfo)
+	aTest(RTmGraphemeEdgeIterator::DocPosMatches(aPosSpec, aEdgeInfo)
 		== RTmGraphemeEdgeIterator::ENoMatch);
 	for (TInt i = start; i != end; ++i)
 		{
 		aPosSpec.iPos = i;
-		TESTPOINT(RTmGraphemeEdgeIterator::DocPosMatches(aPosSpec, aEdgeInfo)
+		aTest(RTmGraphemeEdgeIterator::DocPosMatches(aPosSpec, aEdgeInfo)
 			== aExpectedMatchType);
 		}
 	aPosSpec.iPos = end;
-	TESTPOINT(RTmGraphemeEdgeIterator::DocPosMatches(aPosSpec, aEdgeInfo)
+	aTest(RTmGraphemeEdgeIterator::DocPosMatches(aPosSpec, aEdgeInfo)
 		== RTmGraphemeEdgeIterator::ENoMatch);
 	}
 
@@ -186,7 +179,8 @@ void TestDocPosMatchesCase(const TTmGraphemeEdgeInfo& aEdgeInfo,
 Tests RTmGraphemeEdgeIterator::DocPosMatches for this edge and all relevant
 document position specifications.
 */
-void TestDocPosMatchesAllSpecs(const TTmGraphemeEdgeInfo& aEdgeInfo)
+void TestDocPosMatchesAllSpecs(RTest& aTest,
+	const TTmGraphemeEdgeInfo& aEdgeInfo)
 	{
 	TTmDocPosSpec posSpec;
 	RTmGraphemeEdgeIterator::TGraphemeMatch expected;
@@ -194,29 +188,29 @@ void TestDocPosMatchesAllSpecs(const TTmGraphemeEdgeInfo& aEdgeInfo)
 	expected = aEdgeInfo.iPos.iRightToLeft?
 		RTmGraphemeEdgeIterator::EPositionOnly
 		: RTmGraphemeEdgeIterator::ETotalMatch;
-	TestDocPosMatchesCase(aEdgeInfo, posSpec, expected);
+	TestDocPosMatchesCase(aTest, aEdgeInfo, posSpec, expected);
 	posSpec.iType = TTmDocPosSpec::ERightToLeft;
 	expected = aEdgeInfo.iPos.iRightToLeft?
 		RTmGraphemeEdgeIterator::ETotalMatch
 		: RTmGraphemeEdgeIterator::EPositionOnly;
-	TestDocPosMatchesCase(aEdgeInfo, posSpec, expected);
+	TestDocPosMatchesCase(aTest, aEdgeInfo, posSpec, expected);
 	posSpec.iType = TTmDocPosSpec::ETrailing;
 	expected = aEdgeInfo.iPos.iDocPos.iLeadingEdge?
 		RTmGraphemeEdgeIterator::ENoMatch
 		: RTmGraphemeEdgeIterator::ETotalMatch;
-	TestDocPosMatchesCase(aEdgeInfo, posSpec, expected);
+	TestDocPosMatchesCase(aTest, aEdgeInfo, posSpec, expected);
 	posSpec.iType = TTmDocPosSpec::ELeading;
 	expected = aEdgeInfo.iPos.iDocPos.iLeadingEdge?
 		RTmGraphemeEdgeIterator::ETotalMatch
 		: RTmGraphemeEdgeIterator::ENoMatch;
-	TestDocPosMatchesCase(aEdgeInfo, posSpec, expected);
+	TestDocPosMatchesCase(aTest, aEdgeInfo, posSpec, expected);
 	}
 
 /**
 Tests RTmGraphemeEdgeIterator::DocPosMatches for a variety of edges and
 positions.
 */
-void TestDocPosMatches()
+void TestDocPosMatches(RTest& aTest)
 	{
 	TTmGraphemeEdgeInfo edgeInfo;
 	edgeInfo.iPos.iDocPos.iPos = 5;
@@ -225,13 +219,13 @@ void TestDocPosMatches()
 		{
 		edgeInfo.iPos.iDocPos.iLeadingEdge = ETrue;
 		edgeInfo.iPos.iRightToLeft = EFalse;
-		TestDocPosMatchesAllSpecs(edgeInfo);
+		TestDocPosMatchesAllSpecs(aTest, edgeInfo);
 		edgeInfo.iPos.iDocPos.iLeadingEdge = EFalse;
-		TestDocPosMatchesAllSpecs(edgeInfo);
+		TestDocPosMatchesAllSpecs(aTest, edgeInfo);
 		edgeInfo.iPos.iRightToLeft = ETrue;
-		TestDocPosMatchesAllSpecs(edgeInfo);
+		TestDocPosMatchesAllSpecs(aTest, edgeInfo);
 		edgeInfo.iPos.iDocPos.iLeadingEdge = ETrue;
-		TestDocPosMatchesAllSpecs(edgeInfo);
+		TestDocPosMatchesAllSpecs(aTest, edgeInfo);
 		}
 	}
 
@@ -557,53 +551,53 @@ TBool ExpectedEdgesCoincide(const TEdge* aA, const TEdge* aB)
 /**
 Tests that the edge information matches the expected edge.
 */
-void TestExpectedEdge(const TTmPosInfo2& aEdgeInfo,
+void TestExpectedEdge(RTest& aTest, const TTmPosInfo2& aEdgeInfo,
 	const TEdge* aExpected)
 	{
-	TESTPOINT(aEdgeInfo.iRightToLeft?
+	aTest(aEdgeInfo.iRightToLeft?
 		aExpected->iRightToLeft : !aExpected->iRightToLeft);
-	TESTPOINT(aEdgeInfo.iDocPos.iPos == aExpected->iPos);
-	TESTPOINT(aEdgeInfo.iDocPos.iLeadingEdge?
+	aTest(aEdgeInfo.iDocPos.iPos == aExpected->iPos);
+	aTest(aEdgeInfo.iDocPos.iLeadingEdge?
 		aExpected->iLeading : !aExpected->iLeading);
 	}
 
 /**
 Tests that the edge information matches one of the expected edges.
 */
-void TestEdgeExists(const TTmPosInfo2& aEdgeInfo,
+void TestEdgeExists(RTest& aTest, const TTmPosInfo2& aEdgeInfo,
 	const TEdge* aExpected, TInt aNumExpected)
 	{
 	TTmDocPos pos(aEdgeInfo.iDocPos);
 	const TEdge* edge = FindExpectedEdge(pos, aExpected, aNumExpected);
-	TESTPOINT(edge != 0);
-	TestExpectedEdge(aEdgeInfo, edge);
+	aTest(edge != 0);
+	TestExpectedEdge(aTest, aEdgeInfo, edge);
 	}
 
 /**
 Tests that the visual position matches one of the expected edges.
 */
-void TestVisualPositionExists(const TTmVisualDocPos& aPos,
+void TestVisualPositionExists(RTest& aTest, const TTmVisualDocPos& aPos,
 	const TEdge* aExpected, TInt aNumExpected)
 	{
-    TESTPOINT(aPos.Ambiguity() != TTmVisualDocPos::ENotFound);
+	aTest(aPos.Ambiguity() != TTmVisualDocPos::ENotFound);
 	TTmDocPos posLeft(aPos.LeftEdge().iDocPos);
 	const TEdge* left = FindExpectedEdge(posLeft, aExpected, aNumExpected);
-	TestExpectedEdge(aPos.LeftEdge(), left);
+	TestExpectedEdge(aTest, aPos.LeftEdge(), left);
 	TTmDocPos posRight(aPos.RightEdge().iDocPos);
 	const TEdge* right = FindExpectedEdge(posRight, aExpected, aNumExpected);
-	TestExpectedEdge(aPos.RightEdge(), right);
-	TESTPOINT( (aPos.Ambiguity() == TTmVisualDocPos::EAmbiguous
+	TestExpectedEdge(aTest, aPos.RightEdge(), right);
+	aTest( (aPos.Ambiguity() == TTmVisualDocPos::EAmbiguous
 			&& left->iAmbiguity && right->iAmbiguity)
 		|| (aPos.Ambiguity() != TTmVisualDocPos::EAmbiguous
 			&& !left->iAmbiguity && !right->iAmbiguity) );
-	TESTPOINT(ExpectedEdgesCoincide(left, right));
+	aTest(ExpectedEdgesCoincide(left, right));
 	}
 
 /**
 Tests that a RTmGraphemeEdgeIterator iterates through all the positions in a
 line from left to right.
 */
-void TestLayoutSimplePass(CTestTmTextLayout& aLayout,
+void TestLayoutSimplePass(RTest& aTest, CTestTmTextLayout& aLayout,
 	const TEdge* aExpected, TInt aNumExpected)
 	{
 	CTmTextLayout& layout = aLayout.Layout();
@@ -616,12 +610,12 @@ void TestLayoutSimplePass(CTestTmTextLayout& aLayout,
 	for (TInt i = 0; i != aNumExpected; ++i)
 		{
 		const TEdge& expected = aExpected[i];
-		TESTPOINT(expected.iPos == last.iDocPos.iPos);
-		TESTPOINT(expected.iLeading == last.iDocPos.iLeadingEdge);
+		aTest(expected.iPos == last.iDocPos.iPos);
+		aTest(expected.iLeading == last.iDocPos.iLeadingEdge);
 		it.Next();
 		if (it.AtEnd())
 			{
-            TESTPOINT(expected.iNext == EEdgeNewline);
+			aTest(expected.iNext == EEdgeNewline);
 			while (interp.Op() != TTmInterpreter::EOpLine && interp.Next())
 				{}
 			if (i + 1 != aNumExpected)
@@ -633,12 +627,12 @@ void TestLayoutSimplePass(CTestTmTextLayout& aLayout,
 		else
 			{
 			TTmPosInfo2 thisOne = it.GetInfo();
-			TestEdgeExists(thisOne, aExpected, aNumExpected);
-			TESTPOINT(expected.iNext != EEdgeNewline);
+			TestEdgeExists(aTest, thisOne, aExpected, aNumExpected);
+			aTest(expected.iNext != EEdgeNewline);
 			if (expected.iNext == EEdgeSame)
-			    TESTPOINT(last.iEdge.iX == thisOne.iEdge.iX);
+				aTest(last.iEdge.iX == thisOne.iEdge.iX);
 			else if (expected.iNext == EEdgeDifferent)
-			    TESTPOINT(last.iEdge.iX != thisOne.iEdge.iX);
+				aTest(last.iEdge.iX != thisOne.iEdge.iX);
 			last = thisOne;
 			}
 		}
@@ -650,7 +644,7 @@ void TestLayoutSimplePass(CTestTmTextLayout& aLayout,
 Tests that FindXPos returns the edge 'closest' to the input co-ordinate
 where there is no ambiguity.
 */
-void TestLayoutFindXPosEdges(TInt aLine,
+void TestLayoutFindXPosEdges(RTest& aTest, TInt aLine,
 	CTestTmTextLayout& aLayout,
 	const TEdge* aExpected, TInt aNumExpected)
 	{
@@ -678,10 +672,10 @@ void TestLayoutFindXPosEdges(TInt aLine,
 				RTmGraphemeEdgeIterator it;
 				it.Begin(interp);
 				it.FindXPos(posInfo.iEdge.iX, visPos);
-				TESTPOINT(visPos.Ambiguity() != TTmVisualDocPos::EAmbiguous);
-				TESTPOINT(visPos.Ambiguity() != TTmVisualDocPos::ENotFound);
-				TESTPOINT(visPos.LeftEdge().iDocPos.iPos == expectedL.iPos);
-				TESTPOINT(visPos.LeftEdge().iDocPos.iLeadingEdge?
+				aTest(visPos.Ambiguity() != TTmVisualDocPos::EAmbiguous);
+				aTest(visPos.Ambiguity() != TTmVisualDocPos::ENotFound);
+				aTest(visPos.LeftEdge().iDocPos.iPos == expectedL.iPos);
+				aTest(visPos.LeftEdge().iDocPos.iLeadingEdge?
 					expectedL.iLeading : !expectedL.iLeading);
 				it.Close();
 				interp.Close();
@@ -697,10 +691,10 @@ void TestLayoutFindXPosEdges(TInt aLine,
 				RTmGraphemeEdgeIterator it;
 				it.Begin(interp);
 				it.FindXPos(posInfo.iEdge.iX - 1, visPos);
-				TESTPOINT(visPos.Ambiguity() != TTmVisualDocPos::EAmbiguous);
-				TESTPOINT(visPos.Ambiguity() != TTmVisualDocPos::ENotFound);
-				TESTPOINT(visPos.LeftEdge().iDocPos.iPos == expectedR.iPos);
-				TESTPOINT(visPos.LeftEdge().iDocPos.iLeadingEdge?
+				aTest(visPos.Ambiguity() != TTmVisualDocPos::EAmbiguous);
+				aTest(visPos.Ambiguity() != TTmVisualDocPos::ENotFound);
+				aTest(visPos.LeftEdge().iDocPos.iPos == expectedR.iPos);
+				aTest(visPos.LeftEdge().iDocPos.iLeadingEdge?
 					expectedR.iLeading : !expectedR.iLeading);
 				it.Close();
 				interp.Close();
@@ -713,7 +707,7 @@ void TestLayoutFindXPosEdges(TInt aLine,
 Tests that RTmGraphemeEdgeIterator::FindXPos finds document positions that
 match the positions they are supposed to be in.
 */
-void TestLayoutFindXPos(TInt aLine,
+void TestLayoutFindXPos(RTest& aTest, TInt aLine,
 	CTestTmTextLayout& aLayout,
 	const TEdge* aExpected, TInt aNumExpected)
 	{
@@ -730,31 +724,31 @@ void TestLayoutFindXPos(TInt aLine,
 		RTmGraphemeEdgeIterator it;
 		it.Begin(interp);
 		it.FindXPos(x, visPos);
-		TestVisualPositionExists(visPos, aExpected, aNumExpected);
-		TESTPOINT(visPos.Ambiguity() != TTmVisualDocPos::ENotFound);
-		TESTPOINT(visPos.LeftEdge().iEdge.iX <= visPos.RightEdge().iEdge.iX);
-		TESTPOINT(visPos.Ambiguity() == TTmVisualDocPos::EAmbiguous
+		TestVisualPositionExists(aTest, visPos, aExpected, aNumExpected);
+		aTest(visPos.Ambiguity() != TTmVisualDocPos::ENotFound);
+		aTest(visPos.LeftEdge().iEdge.iX <= visPos.RightEdge().iEdge.iX);
+		aTest(visPos.Ambiguity() == TTmVisualDocPos::EAmbiguous
 			|| visPos.LeftEdge().iEdge.iX == visPos.RightEdge().iEdge.iX);
-		TESTPOINT(lastLeftX <= visPos.LeftEdge().iEdge.iX);
+		aTest(lastLeftX <= visPos.LeftEdge().iEdge.iX);
 		if (lastLeftX == visPos.LeftEdge().iEdge.iX)
 			{
-            TESTPOINT(lastRightX == visPos.RightEdge().iEdge.iX);
+			aTest(lastRightX == visPos.RightEdge().iEdge.iX);
 			while (aExpected->iPos != visPos.LeftEdge().iDocPos.iPos
 				|| aExpected->iLeading != visPos.LeftEdge().iDocPos.iLeadingEdge)
 				{
-                TESTPOINT(aExpected->iNext == EEdgeSame);
-                TESTPOINT(0 < aNumExpected);
+				aTest(aExpected->iNext == EEdgeSame);
+				aTest(0 < aNumExpected);
 				++aExpected;
 				--aNumExpected;
 				}
 			}
 		else
 			{
-            TESTPOINT(lastRightX <= visPos.LeftEdge().iEdge.iX);
+			aTest(lastRightX <= visPos.LeftEdge().iEdge.iX);
 			while (aExpected->iPos != visPos.LeftEdge().iDocPos.iPos
 				|| aExpected->iLeading != visPos.LeftEdge().iDocPos.iLeadingEdge)
 				{
-                TESTPOINT(0 < aNumExpected);
+				aTest(0 < aNumExpected);
 				++aExpected;
 				--aNumExpected;
 				}
@@ -766,8 +760,8 @@ void TestLayoutFindXPos(TInt aLine,
 		}
 	while (aExpected->iNext != EEdgeNewline)
 		{
-        TESTPOINT(aExpected->iNext == EEdgeSame);
-        TESTPOINT(0 < aNumExpected);
+		aTest(aExpected->iNext == EEdgeSame);
+		aTest(0 < aNumExpected);
 		++aExpected;
 		--aNumExpected;
 		}
@@ -796,7 +790,7 @@ TBool FindEdgeFromLayout(CTestTmTextLayout& aLayout, TInt aLine,
 Tests that RTmGraphemeEdgeIterator::FindEdge finds the edges in the layout with
 specifications of leading or trailing edges.
 */
-void TestLayoutFindEdgesInVisualOrder(TInt aLine,
+void TestLayoutFindEdgesInVisualOrder(RTest& aTest, TInt aLine,
 	CTestTmTextLayout& aLayout,
 	const TEdge* aExpected, TInt aNumExpected)
 	{
@@ -808,12 +802,12 @@ void TestLayoutFindEdgesInVisualOrder(TInt aLine,
 		TTmDocPosSpec posSpec(aExpected->iPos, aExpected->iLeading?
 			TTmDocPosSpec::ELeading : TTmDocPosSpec::ETrailing);
 		FindEdgeFromLayout(aLayout, aLine, posSpec, posInfo);
-		TestEdgeExists(posInfo, aExpected, aNumExpected);
-		TESTPOINT(aExpected->iLeading?
+		TestEdgeExists(aTest, posInfo, aExpected, aNumExpected);
+		aTest(aExpected->iLeading?
 			posInfo.iDocPos.iLeadingEdge : !posInfo.iDocPos.iLeadingEdge);
-		TESTPOINT(aExpected->iPos == posInfo.iDocPos.iPos);
-		TESTPOINT(sameExpected || posInfo.iEdge.iX != lastX);
-		TESTPOINT(!sameExpected || posInfo.iEdge.iX == lastX);
+		aTest(aExpected->iPos == posInfo.iDocPos.iPos);
+		aTest(sameExpected || posInfo.iEdge.iX != lastX);
+		aTest(!sameExpected || posInfo.iEdge.iX == lastX);
 		lastX = posInfo.iEdge.iX;
 		sameExpected = aExpected->iNext == EEdgeSame? ETrue : EFalse;
 		++aExpected;
@@ -825,7 +819,7 @@ void TestLayoutFindEdgesInVisualOrder(TInt aLine,
 Tests that RTmGraphemeEdgeIterator::FindEdge finds the edges in the layout with
 specifications of directionality.
 */
-void TestLayoutFindEdgesByDirectionality(TInt aLine,
+void TestLayoutFindEdgesByDirectionality(RTest& aTest, TInt aLine,
 	CTestTmTextLayout& aLayout,
 	const TEdge* aExpected, TInt aNumExpected)
 	{
@@ -842,14 +836,14 @@ void TestLayoutFindEdgesByDirectionality(TInt aLine,
 		TBool lToRFound = FindEdgeFromLayout(aLayout, aLine, lToRPosSpec, lToRPosInfo);
 		if (!lToRFound)
 			{
-            TESTPOINT(!rToLFound);
-            TESTPOINT(pos < lineStart || lineEnd <= pos);
+			aTest(!rToLFound);
+			aTest(pos < lineStart || lineEnd <= pos);
 			}
 		else
 			{
-            TESTPOINT(rToLFound);
-			TestEdgeExists(rToLPosInfo, aExpected, aNumExpected);
-			TestEdgeExists(lToRPosInfo, aExpected, aNumExpected);
+			aTest(rToLFound);
+			TestEdgeExists(aTest, rToLPosInfo, aExpected, aNumExpected);
+			TestEdgeExists(aTest, lToRPosInfo, aExpected, aNumExpected);
 			// Now find the nearest edges in the expected range
 			TTmDocPosSpec trailingPosSpec(pos, TTmDocPosSpec::ETrailing);
 			const TEdge* trailingExpected
@@ -865,17 +859,17 @@ void TestLayoutFindEdgesByDirectionality(TInt aLine,
 				= FindExpectedEdge(rToLPosInfo.iDocPos, aExpected, aNumExpected);
 			const TEdge* lToRPosEdge
 				= FindExpectedEdge(lToRPosInfo.iDocPos, aExpected, aNumExpected);
-			TESTPOINT(leadingExpected != 0);
-			TESTPOINT(trailingExpected != 0);
-			TESTPOINT(ExpectedEdgesCoincide(leadingExpected, rToLPosEdge)
+			aTest(leadingExpected != 0);
+			aTest(trailingExpected != 0);
+			aTest(ExpectedEdgesCoincide(leadingExpected, rToLPosEdge)
 				|| ExpectedEdgesCoincide(trailingExpected, rToLPosEdge));
-			TESTPOINT(ExpectedEdgesCoincide(leadingExpected, lToRPosEdge)
+			aTest(ExpectedEdgesCoincide(leadingExpected, lToRPosEdge)
 				|| ExpectedEdgesCoincide(trailingExpected, lToRPosEdge));
 			// Also check that the "found" ones are at least as good as the
 			// "expected" ones.
-			TESTPOINT(rToLPosInfo.iRightToLeft
+			aTest(rToLPosInfo.iRightToLeft
 				|| (!leadingExpected->iRightToLeft && !trailingExpected->iRightToLeft));
-			TESTPOINT(!lToRPosInfo.iRightToLeft
+			aTest(!lToRPosInfo.iRightToLeft
 				|| (leadingExpected->iRightToLeft && trailingExpected->iRightToLeft));
 			}
 		}
@@ -885,7 +879,7 @@ void TestLayoutFindEdgesByDirectionality(TInt aLine,
 Tests RTmGraphemeEdgeIterator::FindEdgeRightwards or
 RTmGraphemeEdgeIterator::FindEdgeLeftwards.
 */
-void TestLayoutFindEdgesLeftRight(TInt aLine,
+void TestLayoutFindEdgesLeftRight(RTest& aTest, TInt aLine,
 	CTestTmTextLayout& aLayout, TBool aRightwards,
 	const TEdge* aExpected, TInt aNumExpected)
 	{
@@ -968,27 +962,27 @@ void TestLayoutFindEdgesLeftRight(TInt aLine,
 			// Does what we got match what we expect?
 			if (!leadingExpected)
 				{
-                TESTPOINT(result == RTmGraphemeEdgeIterator::ENone);
+				aTest(result == RTmGraphemeEdgeIterator::ENone);
 				}
 			else
 				{
-                TESTPOINT(result == RTmGraphemeEdgeIterator::ENearestOnly
+				aTest(result == RTmGraphemeEdgeIterator::ENearestOnly
 					|| result == RTmGraphemeEdgeIterator::ENearestAndNext);
 				TTmDocPosSpec nearestPos(nearest.iDocPos);
 				const TEdge* nearestEdge
 					= FindExpectedEdge(nearestPos, aExpected, aNumExpected);
-				TestExpectedEdge(nearest, nearestEdge);
+				TestExpectedEdge(aTest, nearest, nearestEdge);
 				const TEdge* matchingEdge = leadingExpected;
 				if (posSpec.iType == TTmDocPosSpec::ELeading)
-				    TESTPOINT(ExpectedEdgesCoincide(leadingExpected, nearestEdge));
+					aTest(ExpectedEdgesCoincide(leadingExpected, nearestEdge));
 				else if (posSpec.iType == TTmDocPosSpec::ETrailing)
 					{
-                    TESTPOINT(ExpectedEdgesCoincide(trailingExpected, nearestEdge));
+					aTest(ExpectedEdgesCoincide(trailingExpected, nearestEdge));
 					matchingEdge = trailingExpected;
 					}
 				else
 					{
-                    TESTPOINT(ExpectedEdgesCoincide(leadingExpected, nearestEdge)
+					aTest(ExpectedEdgesCoincide(leadingExpected, nearestEdge)
 						|| ExpectedEdgesCoincide(trailingExpected, nearestEdge));
 					if (ExpectedEdgesCoincide(trailingExpected, nearestEdge))
 						matchingEdge = trailingExpected;
@@ -997,7 +991,7 @@ void TestLayoutFindEdgesLeftRight(TInt aLine,
 					TBool foundCorrectDirectionality
 						= posSpec.iType == TTmDocPosSpec::ERightToLeft?
 							nearest.iRightToLeft : !nearest.iRightToLeft;
-					TESTPOINT(foundCorrectDirectionality || directionalitiesMatch);
+					aTest(foundCorrectDirectionality || directionalitiesMatch);
 					}
 
 				// Find next edge in expected list
@@ -1014,18 +1008,18 @@ void TestLayoutFindEdgesLeftRight(TInt aLine,
 					}
 				}
 			if (!nextExpected)
-			    TESTPOINT(result == RTmGraphemeEdgeIterator::ENone
+				aTest(result == RTmGraphemeEdgeIterator::ENone
 					|| result == RTmGraphemeEdgeIterator::ENearestOnly);
 			else
 				{
-                TESTPOINT(result == RTmGraphemeEdgeIterator::ENearestAndNext);
-				TestVisualPositionExists(next, aExpected, aNumExpected);
-				TESTPOINT(next.Ambiguity() != TTmVisualDocPos::ENotFound);
+				aTest(result == RTmGraphemeEdgeIterator::ENearestAndNext);
+				TestVisualPositionExists(aTest, next, aExpected, aNumExpected);
+				aTest(next.Ambiguity() != TTmVisualDocPos::ENotFound);
 				TTmDocPosSpec nextPosLeft(next.LeftEdge().iDocPos);
-				TESTPOINT(ExpectedEdgesCoincide(nextExpected,
+				aTest(ExpectedEdgesCoincide(nextExpected,
 					FindExpectedEdge(nextPosLeft, aExpected, aNumExpected)));
 				TTmDocPosSpec nextPosRight(next.RightEdge().iDocPos);
-				TESTPOINT(ExpectedEdgesCoincide(nextExpected,
+				aTest(ExpectedEdgesCoincide(nextExpected,
 					FindExpectedEdge(nextPosRight, aExpected, aNumExpected)));
 				}
 			it.Close();
@@ -1036,22 +1030,22 @@ void TestLayoutFindEdgesLeftRight(TInt aLine,
 /**
 Tests RTmGraphemeEdgeIterator::FindEdgeRightwards.
 */
-void TestLayoutFindEdgesRightwards(TInt aLine,
+void TestLayoutFindEdgesRightwards(RTest& aTest, TInt aLine,
 	CTestTmTextLayout& aLayout,
 	const TEdge* aExpected, TInt aNumExpected)
 	{
-	TestLayoutFindEdgesLeftRight(aLine, aLayout, ETrue,
+	TestLayoutFindEdgesLeftRight(aTest, aLine, aLayout, ETrue,
 		aExpected, aNumExpected);
 	}
 
 /**
 Tests RTmGraphemeEdgeIterator::FindEdgeLeftwards.
 */
-void TestLayoutFindEdgesLeftwards(TInt aLine,
+void TestLayoutFindEdgesLeftwards(RTest& aTest, TInt aLine,
 	CTestTmTextLayout& aLayout,
 	const TEdge* aExpected, TInt aNumExpected)
 	{
-	TestLayoutFindEdgesLeftRight(aLine, aLayout, EFalse,
+	TestLayoutFindEdgesLeftRight(aTest, aLine, aLayout, EFalse,
 		aExpected, aNumExpected);
 	}
 
@@ -1060,7 +1054,7 @@ Tests RTmGraphemeEdgeIterator::NextPosition. Expected behaviour is to find the
 smallest number 'n' that is a position in the same line greater than the input 'i',
 where the positions <i, leading> and <n, trailing> are not coincident.
 */
-void TestLayoutFindEdgesForwards(TInt aLine,
+void TestLayoutFindEdgesForwards(RTest& aTest, TInt aLine,
 	CTestTmTextLayout& aLayout,
 	const TEdge* aExpected, TInt aNumExpected)
 	{
@@ -1089,42 +1083,42 @@ void TestLayoutFindEdgesForwards(TInt aLine,
 			const TEdge* outEdge = FindExpectedEdge(out,
 				aExpected, aNumExpected);
 			// ...and test that we failed.
-			TESTPOINT(!inEdge || inEdge->iPos <= i);
-			TESTPOINT(!outEdge || outEdge->iPos <= i);
+			aTest(!inEdge || inEdge->iPos <= i);
+			aTest(!outEdge || outEdge->iPos <= i);
 			}
 		else
 			{
-            TESTPOINT(i < result);
+			aTest(i < result);
 			TTmDocPosSpec in(i, TTmDocPosSpec::ELeading);
 			const TEdge* inEdge = FindExpectedEdge(in,
 				aExpected, aNumExpected);
 			TTmDocPosSpec out(result, TTmDocPosSpec::ETrailing);
 			const TEdge* outEdge = FindExpectedEdge(out,
 				aExpected, aNumExpected);
-			TESTPOINT(outEdge != 0);
+			aTest(outEdge != 0);
 			if (inEdge)
 				{
-                TESTPOINT(lineStart <= i);
-                TESTPOINT(!ExpectedEdgesCoincide(inEdge, outEdge));
+				aTest(lineStart <= i);
+				aTest(!ExpectedEdgesCoincide(inEdge, outEdge));
 				for (TInt j = i + 1; j != result; ++j)
 					{
 					TTmDocPosSpec between(j, TTmDocPosSpec::ETrailing);
 					const TEdge* betweenEdge = FindExpectedEdge(between,
 						aExpected, aNumExpected);
-					TESTPOINT(betweenEdge != 0);
+					aTest(betweenEdge != 0);
 					// Test that, if there actually is a <j, trailing> edge, it is
 					// coincident with <i, leading>. If the edge does not exist
 					// it does not matter. We can find out if it exists by checking
 					// whether the returned expected edge has the same position
 					// we asked for.
-					TESTPOINT(ExpectedEdgesCoincide(inEdge, betweenEdge)
+					aTest(ExpectedEdgesCoincide(inEdge, betweenEdge)
 						|| j != betweenEdge->iPos);
 					}
 				}
 			else
 				{
 				// before the start means finding the first trailing edge
-				TESTPOINT (i < lineStart);
+				aTest (i < lineStart);
 				TInt leastTrailingEdge = KMaxTInt;
 				for (const TEdge* e = aExpected; e != aExpected + aNumExpected;
 					++e)
@@ -1132,7 +1126,7 @@ void TestLayoutFindEdgesForwards(TInt aLine,
 					if (!e->iLeading && e->iPos < leastTrailingEdge)
 						leastTrailingEdge = e->iPos;
 					}
-				TESTPOINT(leastTrailingEdge == result);
+				aTest(leastTrailingEdge == result);
 				}
 			}
 		it.Close();
@@ -1144,7 +1138,7 @@ Tests RTmGraphemeEdgeIterator::PreviousPosition. Expected behaviour is to find t
 largest number 'n' that is a position in the same line smaller than the input 'i',
 where the positions <i, trailing> and <n, leading> are not coincident.
 */
-void TestLayoutFindEdgesBackwards(TInt aLine,
+void TestLayoutFindEdgesBackwards(RTest& aTest, TInt aLine,
 	CTestTmTextLayout& aLayout,
 	const TEdge* aExpected, TInt aNumExpected)
 	{
@@ -1167,15 +1161,15 @@ void TestLayoutFindEdgesBackwards(TInt aLine,
 			// Must be at or before the line's beginning.
 			// Could possibly be that there are no leading edges in the line, but
 			// we'll ignore that possibility.
-			TESTPOINT(i <= lineStart);
+			aTest(i <= lineStart);
 			}
 		else
 			{
-			TESTPOINT(result < i);
+			aTest(result < i);
 			TTmDocPosSpec out(result, TTmDocPosSpec::ELeading);
 			const TEdge* outEdge = FindExpectedEdge(out,
 				aExpected, aNumExpected);
-			TESTPOINT(outEdge != 0);
+			aTest(outEdge != 0);
 			TTmDocPosSpec in(i, TTmDocPosSpec::ETrailing);
 			const TEdge* inEdge = FindExpectedEdge(in,
 				aExpected, aNumExpected);
@@ -1183,20 +1177,20 @@ void TestLayoutFindEdgesBackwards(TInt aLine,
 			// were beyond the end of the line.
 			if (inEdge && !inEdge->iLeading)
 				{
-				TESTPOINT(inEdge != 0);
-				TESTPOINT(!ExpectedEdgesCoincide(inEdge, outEdge));
+				aTest(inEdge != 0);
+				aTest(!ExpectedEdgesCoincide(inEdge, outEdge));
 				for (TInt j = result + 1; j != i; ++j)
 					{
 					TTmDocPosSpec between(j, TTmDocPosSpec::ELeading);
 					const TEdge* betweenEdge = FindExpectedEdge(between,
 						aExpected, aNumExpected);
-					TESTPOINT(betweenEdge != 0);
+					aTest(betweenEdge != 0);
 					// Test that, if there actually is a <j, trailing> edge, it is
 					// coincident with <i, leading>. If the edge does not exist
 					// it does not matter. We can find out if it exists by checking
 					// whether the returned expected edge has the same position
 					// we asked for.
-					TESTPOINT(ExpectedEdgesCoincide(inEdge, betweenEdge)
+					aTest(ExpectedEdgesCoincide(inEdge, betweenEdge)
 						|| j != betweenEdge->iPos);
 					}
 				}
@@ -1210,21 +1204,21 @@ void TestLayoutFindEdgesBackwards(TInt aLine,
 					if (e->iLeading && greatestLeadingEdge < e->iPos)
 						greatestLeadingEdge = e->iPos;
 					}
-				TESTPOINT(greatestLeadingEdge == result);
+				aTest(greatestLeadingEdge == result);
 				}
 			}
 		it.Close();
 		}
 	}
 
-typedef void FTestLine(TInt aLine,
+typedef void FTestLine(RTest& aTest, TInt aLine,
 	CTestTmTextLayout& aLayout,
 	const TEdge* aExpected, TInt aNumExpected);
 
 /**
 Runs a particular test for each line in the input data.
 */
-void TestEachLine(FTestLine* aFn,
+void TestEachLine(RTest& aTest, FTestLine* aFn,
 	CTestTmTextLayout& aLayout, const TEdge* aExpected, TInt aNumExpected)
 	{
 	TInt line = 0;
@@ -1233,7 +1227,7 @@ void TestEachLine(FTestLine* aFn,
 		{
 		if (aExpected[end - 1].iNext == EEdgeNewline)
 			{
-			aFn(line, aLayout, aExpected + start, end - start);
+			aFn(aTest, line, aLayout, aExpected + start, end - start);
 			start = end;
 			++line;
 			}
@@ -1244,96 +1238,107 @@ void TestEachLine(FTestLine* aFn,
 Tests TTmGraphemeIterator and supporting functionality for the specified
 layout.
 */
-void TestLayoutL(CTestTmTextLayout& aLayout,
+void TestLayoutL(RTest& aTest, CTestTmTextLayout& aLayout,
 	const TEdge* aExpected, TInt aNumExpected)
 	{
-	TESTPRINT(_L("Simple iteration"));
-	TestLayoutSimplePass(aLayout, aExpected, aNumExpected);
-	TESTPRINT(_L("FindXPos"));
-	TestEachLine(TestLayoutFindXPos,
+	aTest.Start(_L("Simple iteration"));
+	TestLayoutSimplePass(aTest, aLayout, aExpected, aNumExpected);
+	aTest.Next(_L("FindXPos"));
+	TestEachLine(aTest, TestLayoutFindXPos,
 		aLayout, aExpected, aNumExpected);
-	TESTPRINT(_L("FindXPos (unambiguous edges)"));
-	TestEachLine(TestLayoutFindXPosEdges,
+	aTest.Next(_L("FindXPos (unambiguous edges)"));
+	TestEachLine(aTest, TestLayoutFindXPosEdges,
 		aLayout, aExpected, aNumExpected);
-	TESTPRINT(_L("FindEdge"));
-	TestEachLine(TestLayoutFindEdgesInVisualOrder,
+	aTest.Next(_L("FindEdge"));
+	TestEachLine(aTest, TestLayoutFindEdgesInVisualOrder,
 		aLayout, aExpected, aNumExpected);
-	TestEachLine(TestLayoutFindEdgesByDirectionality,
+	TestEachLine(aTest, TestLayoutFindEdgesByDirectionality,
 		aLayout, aExpected, aNumExpected);
-	TESTPRINT(_L("FindEdgeRightwards"));
-	TestEachLine(TestLayoutFindEdgesRightwards,
+	aTest.Next(_L("FindEdgeRightwards"));
+	TestEachLine(aTest, TestLayoutFindEdgesRightwards,
 		aLayout, aExpected, aNumExpected);
-	TESTPRINT(_L("FindEdgeLeftwards"));
-	TestEachLine(TestLayoutFindEdgesLeftwards,
+	aTest.Next(_L("FindEdgeLeftwards"));
+	TestEachLine(aTest, TestLayoutFindEdgesLeftwards,
 		aLayout, aExpected, aNumExpected);
-	TESTPRINT(_L("NextPosition"));
-	TestEachLine(TestLayoutFindEdgesForwards,
+	aTest.Next(_L("NextPosition"));
+	TestEachLine(aTest, TestLayoutFindEdgesForwards,
 		aLayout, aExpected, aNumExpected);
-	TESTPRINT(_L("PreviousPosition"));
-	TestEachLine(TestLayoutFindEdgesBackwards,
+	aTest.Next(_L("PreviousPosition"));
+	TestEachLine(aTest, TestLayoutFindEdgesBackwards,
 		aLayout, aExpected, aNumExpected);
+	aTest.End();
 	}
 
 /**
 Tests TTmGraphemeIterator and supporting functionality for each piece of text.
 */
-TVerdict CTGraphemeIteratorStep::doTestStepL()
+void RunTestsL(RTest& aTest)
 	{
-    SetTestStepResult(EPass);
-    TestStep = this;
-    TESTPRINT(_L("RTmGraphemeEdgeIterator unit"));
-    
-    TESTPRINT(_L(" @SYMTestCaseID:SYSLIB-FORM-LEGACY-GRAPHEMEITERATOR-0001 DocPosMatches "));
-	TestDocPosMatches();
-	TESTPRINT(_L("Simple Latin"));
+	aTest.Start(_L(" @SYMTestCaseID:SYSLIB-FORM-LEGACY-GRAPHEMEITERATOR-0001 DocPosMatches "));
+	TestDocPosMatches(aTest);
+	aTest.Next(_L("Simple Latin"));
 	CTestTmTextLayout* latin1 = CTestTmTextLayout::NewLC(
 		KLatin1, 100, Transliterate);
-	TestLayoutL( *latin1, KLatin1Edges,
+	TestLayoutL(aTest, *latin1, KLatin1Edges,
 		sizeof(KLatin1Edges)/sizeof(KLatin1Edges[0]));
 	CleanupStack::PopAndDestroy(latin1);
 
-	TESTPRINT(_L("Simple Arabic"));
+	aTest.Next(_L("Simple Arabic"));
 	CTestTmTextLayout* arabic1 = CTestTmTextLayout::NewLC(
 		KArabic1, 100, Transliterate);
-	TestLayoutL(*arabic1, KArabic1Edges,
+	TestLayoutL(aTest, *arabic1, KArabic1Edges,
 		sizeof(KArabic1Edges)/sizeof(KArabic1Edges[0]));
 	CleanupStack::PopAndDestroy(arabic1);
 
-	TESTPRINT(_L("Latin with combining marks and zero width characters"));
+	aTest.Next(_L("Latin with combining marks and zero width characters"));
 	CTestTmTextLayout* combiners1 = CTestTmTextLayout::NewLC(
 		KCombiners1, 20, Transliterate);
-	TestLayoutL(*combiners1, KCombiners1Edges,
+	TestLayoutL(aTest, *combiners1, KCombiners1Edges,
 		sizeof(KCombiners1Edges)/sizeof(KCombiners1Edges[0]));
 	CleanupStack::PopAndDestroy(combiners1);
 
-	TESTPRINT(_L("Bidirectional text with combining marks"));
+	aTest.Next(_L("Bidirectional text with combining marks"));
 	CTestTmTextLayout* bidi1 = CTestTmTextLayout::NewLC(
 		KBidi1, 60, Transliterate);
-	TestLayoutL( *bidi1, KBidi1Edges,
+	TestLayoutL(aTest, *bidi1, KBidi1Edges,
 		sizeof(KBidi1Edges)/sizeof(KBidi1Edges[0]));
 	CleanupStack::PopAndDestroy(bidi1);
 
-	TESTPRINT(_L("Bidirectional text with combining marks and 'amtriguity'"));
+	aTest.Next(_L("Bidirectional text with combining marks and 'amtriguity'"));
 	CTestTmTextLayout* bidi2 = CTestTmTextLayout::NewLC(
 		KBidi2, 60, Transliterate);
-	TestLayoutL(*bidi2, KBidi2Edges,
+	TestLayoutL(aTest, *bidi2, KBidi2Edges,
 		sizeof(KBidi2Edges)/sizeof(KBidi2Edges[0]));
 	CleanupStack::PopAndDestroy(bidi2);
 
-	TESTPRINT(_L("Small paragraphs of alternating directionality"));
+	aTest.Next(_L("Small paragraphs of alternating directionality"));
 	CTestTmTextLayout* paragraphs1 = CTestTmTextLayout::NewLC(
 		KParagraphs1, 20, Transliterate);
-	TestLayoutL(*paragraphs1, KParagraphs1Edges,
+	TestLayoutL(aTest, *paragraphs1, KParagraphs1Edges,
 		sizeof(KParagraphs1Edges)/sizeof(KParagraphs1Edges[0]));
 	CleanupStack::PopAndDestroy(paragraphs1);
 
-	TESTPRINT(_L("Lines ending over or next to embedded runs"));
+	aTest.Next(_L("Lines ending over or next to embedded runs"));
 	CTestTmTextLayout* embedded1 = CTestTmTextLayout::NewLC(
 		KEmbedded1, 20, Transliterate);
-	TestLayoutL( *embedded1, KEmbedded1Edges,
+	TestLayoutL(aTest, *embedded1, KEmbedded1Edges,
 		sizeof(KEmbedded1Edges)/sizeof(KEmbedded1Edges[0]));
 	CleanupStack::PopAndDestroy(embedded1);
 
-	return TestStepResult();
+	aTest.End();
+	}
+
+/**
+Tests TTmGraphemeIterator and supporting functionality.
+*/
+TInt E32Main()
+	{
+	RTest rtest(_L("RTmGraphemeEdgeIterator unit"));
+	CTrapCleanup* TrapCleanup = CTrapCleanup::New();
+	rtest.Title();
+	TRAPD(err, RunTestsL(rtest));
+	rtest.Close();
+	delete TrapCleanup;
+	return err;
 	}
 

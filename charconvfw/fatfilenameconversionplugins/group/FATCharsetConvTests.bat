@@ -1,5 +1,5 @@
 @rem
-@rem Copyright (c) 2009-2010 Nokia Corporation and/or its subsidiary(-ies).
+@rem Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
 @rem All rights reserved.
 @rem This component and the accompanying materials are made available
 @rem under the terms of "Eclipse Public License v1.0"
@@ -14,5 +14,18 @@
 @rem Description: 
 @rem
 
-testexecute.exe z:\FATCharsetConv\T_All_FatCharsetConv.script
-
+T_CP1250.exe
+T_CP1251.exe
+T_CP1252.exe
+T_CP1253.exe
+T_CP1254.exe
+T_CP1255.exe
+T_CP1256.exe
+T_CP1257.exe
+T_CP1258.exe
+T_CP874.exe
+T_CP932.exe
+T_CP936.exe
+T_CP54936.exe
+T_CP949.exe
+T_CP950.exe

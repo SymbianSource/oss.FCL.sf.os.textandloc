@@ -20,11 +20,6 @@
 #include <txtfrmat.h>
 #include <txtetext.h>
 #include "TMSTD.H"
-#include "OstTraceDefinitions.h"
-#ifdef OST_TRACE_COMPILER_IN_USE
-#include "TMTEXTTraces.h"
-#endif
-
 
 /**
  * Creates a CTmText object using the specified device map and formatting parameters.
@@ -194,10 +189,6 @@ void CTmTextImp::InsertL(TInt aPos,const TDesC& aText,
 						 const TTmCharFormat* aCharFormat,const RTmParFormat* aParFormat,
 						 TRect* aRedrawRect,TInt* aScroll)
 	{
-	if (0 > aPos)
-	    {
-	    OstTrace0( TRACE_DUMP, CTMTEXTIMP_INSERTL, "EBadArg" );
-	    }
 	__ASSERT_DEBUG(0 <= aPos, TmPanic(EBadArg));
 
 	// Don't insert zero-length text.
@@ -351,10 +342,6 @@ void CTmTextImp::GetText(TInt aPos,TPtrC& aText,TTmCharFormat& aFormat) const
 	static const TText end_par = CEditableText::EParagraphDelimiter;
 	TInt index = 0;
 	TInt textLength = iText.Length();
-	if (aPos > textLength + 1)
-	    {
-	    OstTrace0( TRACE_DUMP, CTMTEXTIMP_GETTEXT, "EIndexOutOfRange" );
-	    }
 	__ASSERT_DEBUG(aPos <= textLength + 1, TmPanic(EIndexOutOfRange));
 	if (aPos < textLength)
 		{
@@ -388,10 +375,6 @@ void CTmTextImp::GetText(TInt aPos,TPtrC& aText,TTmCharFormat& aFormat) const
 
 void CTmTextImp::GetParagraphFormatL(TInt aPos,RTmParFormat& aFormat) const
 	{
-	if (0 > aPos || aPos > iText.Length())
-	    {
-	    OstTrace0( TRACE_DUMP, CTMTEXTIMP_GETPARAGRAPHFORMATL, "EBadArg" );
-	    }
 	__ASSERT_DEBUG(0 <= aPos && aPos <= iText.Length(), TmPanic(EBadArg));
 	TInt textLength = iText.Length();
 	if (0 == textLength)
@@ -503,11 +486,10 @@ The position at the start of a run is NOT in the run, but in the preceding run, 
 */
 void CTmTextImp::RRunArray::FindRun(TInt aPos,TInt& aRunIndex,TInt& aOffset) const
 	{
-	TInt error = FindRunNonstrict(aPos, aRunIndex, aOffset);
-	if (error)
-	    {
-	    OstTrace0( TRACE_DUMP, RRUNARRAY_FINDRUN, "ETextRunNotFound" );
-	    }
+#ifdef _DEBUG
+	TInt error =
+#endif
+	FindRunNonstrict(aPos, aRunIndex, aOffset);
 	__ASSERT_DEBUG(!error, TmPanic(ETextRunNotFound));
 	}
 
@@ -518,15 +500,7 @@ TInt CTmTextImp::RRunArray::FindRunNonstrict(TInt aPos,TInt& aRunIndex,TInt& aOf
 	int end = 0;
 	for (int i = 0; i < n; i++)
 		{
-		if (0 > iRun[i].iLength)
-		    {
-		    OstTrace0( TRACE_DUMP, RRUNARRAY_FINDRUNNONSTRICT, "EInvalidTextRunLength" );
-		    }
 		__ASSERT_DEBUG(0 <= iRun[i].iLength, TmPanic(EInvalidTextRunLength));
-		if (0 > iRun[i].iIndex)
-		    {
-		    OstTrace0( TRACE_DUMP, DUP1_RRUNARRAY_FINDRUNNONSTRICT, "EInvalidTextRunIndex" );
-		    }
 		__ASSERT_DEBUG(0 <= iRun[i].iIndex, TmPanic(EInvalidTextRunIndex));
 		end += iRun[i].iLength;
 		if (end >= aPos)
@@ -548,10 +522,6 @@ TInt CTmTextImp::RRunArray::FindRunNonstrict(TInt aPos,TInt& aRunIndex,TInt& aOf
 TInt CTmTextImp::RRunArray::RunAndStartPos(TInt aPos, TRun& aRunOut) const
 	{
 	TInt runs = iRun.Count();
-	if (0 >= runs)
-	    {
-	    OstTrace0( TRACE_DUMP, RRUNARRAY_RUNANDSTARTPOS, "ETextRunNotFound" );
-	    }
 	__ASSERT_DEBUG(0 < runs, TmPanic(ETextRunNotFound));
 	TInt start = 0;
 	TInt end = 0;
@@ -567,15 +537,7 @@ TInt CTmTextImp::RRunArray::RunAndStartPos(TInt aPos, TRun& aRunOut) const
 // Insert a run of length aLength and attribute aIndex at aPos; if aIndex is < 0, use the index at aPos.
 TInt CTmTextImp::RRunArray::Insert(TInt aPos,TInt aLength,TInt aIndex)
 	{
-	if (0 >= aLength)
-	    {
-	    OstTrace0( TRACE_DUMP, RRUNARRAY_INSERT, "EInvalidTextRunLength" );
-	    }
 	__ASSERT_DEBUG(0 < aLength, TmPanic(EInvalidTextRunLength));
-	if (0 > aIndex && 0 >= iRun.Count())
-	    {
-	    OstTrace0( TRACE_DUMP, DUP1_RRUNARRAY_INSERT, "EParagraphFormatRequired" );
-	    }
 	__ASSERT_DEBUG(0 <= aIndex || 0 < iRun.Count(), TmPanic(EParagraphFormatRequired));
 
 	int error = 0;
@@ -599,10 +561,6 @@ TInt CTmTextImp::RRunArray::Insert(TInt aPos,TInt aLength,TInt aIndex)
 		}
 	TRun& run = iRun[run_index];
 
-	if (0 > offset || offset > run.iLength)
-	    {
-	    OstTrace0( TRACE_DUMP, DUP2_RRUNARRAY_INSERT, "EInvariant" );
-	    }
 	__ASSERT_DEBUG(0 <= offset && offset <= run.iLength, TmPanic(EInvariant));
 
 	// If aIndex is negative, it means don't change the attribute.
@@ -636,15 +594,7 @@ TInt CTmTextImp::RRunArray::Insert(TInt aPos,TInt aLength,TInt aIndex)
 
 TInt CTmTextImp::RRunArray::Set(TInt aPos,TInt aLength,TInt aIndex)
 	{
-	if (0 > aLength)
-	    {
-	    OstTrace0( TRACE_DUMP, RRUNARRAY_SET, "EInvalidTextRunLength" );
-	    }
 	__ASSERT_DEBUG(0 <= aLength, TmPanic(EInvalidTextRunLength));
-	if (0 > aIndex)
-	    {
-	    OstTrace0( TRACE_DUMP, DUP1_RRUNARRAY_SET, "EInvalidTextRunIndex" );
-	    }
 	__ASSERT_DEBUG(0 <= aIndex, TmPanic(EInvalidTextRunIndex));
 
 	if (aLength == 0)
@@ -723,10 +673,6 @@ TInt CTmTextImp::RRunArray::Set(TInt aPos,TInt aLength,TInt aIndex)
 
 void CTmTextImp::RRunArray::Delete(TInt aPos,TInt aLength)
 	{
-	if (0 > aLength)
-	    {
-	    OstTrace0( TRACE_DUMP, RRUNARRAY_DELETE, "EInvalidTextRunLength" );
-	    }
 	__ASSERT_DEBUG(0 <= aLength, TmPanic(EInvalidTextRunLength));
 
 	if (aLength == 0)

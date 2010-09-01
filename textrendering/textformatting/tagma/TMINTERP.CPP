@@ -23,11 +23,6 @@
 #include "TmHighlightSource.h"
 #include <s32mem.h>
 #include <frmtlay.h>
-#include "OstTraceDefinitions.h"
-#ifdef OST_TRACE_COMPILER_IN_USE
-#include "TMINTERPTraces.h"
-#endif
-
 
 TTmInterpreterParam::TTmInterpreterParam(const CTmTextLayout& aTextLayout):
 	iByteCode(&aTextLayout.Code()),
@@ -326,11 +321,7 @@ RTmGeneralInterpreter::RTmGeneralInterpreter(MTmSource& aSource,
 		{
 		iTmTextDrawExt = &iTmTextDrawExtDefault;
 		}
-	if(!iTmTextDrawExt)
-	    {
-        OstTrace0( TRACE_FATAL, RTMGENERALINTERPRETER_RTMGENERALINTERPRETER, "ENotImplemented" );
-        __ASSERT_ALWAYS(0, Panic(ENotImplemented));
-	    }
+	__ASSERT_ALWAYS(iTmTextDrawExt != NULL, Panic(ENotImplemented));
 	}
 
 /**
@@ -380,10 +371,6 @@ TInt TTmInterpreter::Lines()
 	{
 	while (Next())
 		{
-		if (Op() != EOpLine)
-		    {
-		    OstTrace0( TRACE_FATAL, TTMINTERPRETER_LINES, "ECorrupt" );
-		    }
 		__ASSERT_ALWAYS(Op() == EOpLine, Panic(ECorrupt));
 		Skip();
 		}
@@ -399,10 +386,6 @@ TInt TTmInterpreter::Paragraphs()
 	{
 	while (Next())
 		{
-		if (Op() != EOpLine)
-		    {
-		    OstTrace0( TRACE_FATAL, TTMINTERPRETER_PARAGRAPHS, "ECorrupt" );
-		    }
 		__ASSERT_ALWAYS(Op() == EOpLine, Panic(ECorrupt));
 		Skip();
 		}
@@ -427,20 +410,12 @@ TBool TTmInterpreter::DocPosToLine(const TTmDocPosSpec& aDocPos)
 
 	if (!Next())
 		return EFalse;
-	if (Op() != EOpLine)
-	    {
-	    OstTrace0( TRACE_FATAL, TTMINTERPRETER_DOCPOSTOLINE, "ECorrupt" );
-	    }
 	__ASSERT_ALWAYS(Op() == EOpLine, Panic(ECorrupt));
 	while  (!PosIsInLine(doc_pos))
 		{
 		Skip();
 		if (!Next())
 			return EFalse;
-		if (Op() != EOpLine)
-		    {
-		    OstTrace0( TRACE_FATAL, DUP1_TTMINTERPRETER_DOCPOSTOLINE, "ECorrupt" );
-		    }
 		__ASSERT_ALWAYS(Op() == EOpLine, Panic(ECorrupt));
 		}
 
@@ -477,10 +452,6 @@ TBool TTmInterpreter::LineNumberToLine(TInt aLineNumber)
 	{
 	while (Next())
 		{
-		if (Op() != EOpLine)
-		    {
-		    OstTrace0( TRACE_FATAL, TTMINTERPRETER_LINENUMBERTOLINE, "ECorrupt" );
-		    }
 		__ASSERT_ALWAYS(Op() == EOpLine, Panic(ECorrupt));
 		if (iLineInfo.iLineNumber == aLineNumber)
 			return TRUE;
@@ -506,10 +477,6 @@ TBool TTmInterpreter::ParNumberToLine(TInt aParNumber,TInt aLineInPar)
 	{
 	while (Next())
 		{
-		if (Op() != EOpLine)
-		    {
-		    OstTrace0( TRACE_FATAL, TTMINTERPRETER_PARNUMBERTOLINE, "ECorrupt" );
-		    }
 		__ASSERT_ALWAYS(Op() == EOpLine, Panic(ECorrupt));
 		if (iLineInfo.iParNumber == aParNumber)
 			{
@@ -531,10 +498,6 @@ TBool TTmInterpreter::YPosToLine(TInt aYPos)
 	{
 	while (Next())
 		{
-		if (Op() != EOpLine)
-		    {
-		    OstTrace0( TRACE_FATAL, TTMINTERPRETER_YPOSTOLINE, "ECorrupt" );
-		    }
 		__ASSERT_ALWAYS(Op() == EOpLine, Panic(ECorrupt));
 		if (iLineInfo.iOuterRect.iTl.iY <= aYPos && iLineInfo.iOuterRect.iBr.iY > aYPos)
 			return TRUE;
@@ -559,10 +522,6 @@ TInt TTmInterpreter::WidthOfWidestLine(TInt aTop,TInt aBottom)
 	int width = 0;
 	while (Next())
 		{
-		if (Op() != EOpLine)
-		    {
-		    OstTrace0( TRACE_FATAL, TTMINTERPRETER_WIDTHOFWIDESTLINE, "ECorrupt" );
-		    }
 		__ASSERT_ALWAYS(Op() == EOpLine, Panic(ECorrupt));
 		// Quit if below the range.
 		if (iLineInfo.iOuterRect.iTl.iY >= aBottom)
@@ -603,10 +562,6 @@ void TTmInterpreter::HorizontalExtremes(TInt &aLeft, TInt &aRight,
 		return;
 	while (iLineInfo.iOuterRect.iBr.iY < aTopY)
 		{
-		if (Op() != EOpLine)
-		    {
-		    OstTrace0( TRACE_FATAL, TTMINTERPRETER_HORIZONTALEXTREMES, "ECorrupt" );
-		    }
 		__ASSERT_ALWAYS(Op() == EOpLine, Panic(ECorrupt));
 		Skip();
 		if (!Next())
@@ -614,10 +569,6 @@ void TTmInterpreter::HorizontalExtremes(TInt &aLeft, TInt &aRight,
 		}
 	while (iLineInfo.iOuterRect.iTl.iY <= aBottomY)
 		{
-		if (Op() != EOpLine)
-		    {
-		    OstTrace0( TRACE_FATAL, DUP1_TTMINTERPRETER_HORIZONTALEXTREMES, "ECorrupt" );
-		    }
 		__ASSERT_ALWAYS(Op() == EOpLine, Panic(ECorrupt));
 		if (iLineInfo.iInnerRect.iTl.iX < aLeft)
 			aLeft = iLineInfo.iInnerRect.iTl.iX;
@@ -765,10 +716,6 @@ void RTmGraphemeInTextChunkIterator::Begin(
 	if (!aByteCodeIterator.VisualEndOfLineIsAmbiguous())
 		iIgnorePosition = aByteCodeIterator.LineInfo().iEnd;
 
-	if (aByteCodeIterator.Op() != TTmInterpreter::EOpText)
-	    {
-	    OstTrace0( TRACE_DUMP, DUP1_RTMGRAPHEMEINTEXTCHUNKITERATOR_BEGIN, "EInvariant" );
-	    }
 	__ASSERT_DEBUG(aByteCodeIterator.Op() == TTmInterpreter::EOpText, TmPanic(EInvariant));
 
 	if (iFont)
@@ -841,10 +788,6 @@ Begin will be overwritten with the results.
 */
 TInt RTmGraphemeInTextChunkIterator::Next()
 	{
-	if (AtEnd())
-	    {
-	    OstTrace0( TRACE_DUMP, RTMGRAPHEMEINTEXTCHUNKITERATOR_NEXT, "EBadArg" );
-	    }
 	__ASSERT_DEBUG(!AtEnd(), TmPanic(EBadArg));
 	TInt previousPositionInBuffer = iPosition.iPosInText;
 	TInt previousPosition = iReverse?
@@ -863,10 +806,6 @@ TInt RTmGraphemeInTextChunkIterator::Next()
 	TInt numCodePoints = iPosition.iPosInText - previousPositionInBuffer;
 	TInt currentPosition = iReverse?
 		iEndChar - iPosition.iPosInText : iStartChar + iPosition.iPosInText;
-	if (currentPosition == previousPosition)
-	    {
-	    OstTrace0( TRACE_DUMP, DUP1_RTMGRAPHEMEINTEXTCHUNKITERATOR_NEXT, "EInvariant" );
-	    }
 	__ASSERT_DEBUG(currentPosition != previousPosition, TmPanic(EInvariant));
 
 	TInt cachePos = 0;
@@ -898,10 +837,6 @@ TInt RTmGraphemeInTextChunkIterator::Next()
 			}
 		++cachePos;
 		}
-	if (0 >= cachePos)
-	    {
-	    OstTrace0( TRACE_DUMP, DUP2_RTMGRAPHEMEINTEXTCHUNKITERATOR_NEXT, "EInvariant" );
-	    }
 	__ASSERT_DEBUG(0 < cachePos, TmPanic(EInvariant));
 	return cachePos;
 	}
@@ -933,10 +868,6 @@ Advances the iteration to the next edge.
 */
 void RTmGraphemeInTextChunkIteratorNice::Next()
 	{
-	if (AtEnd())
-	    {
-	    OstTrace0( TRACE_DUMP, RTMGRAPHEMEINTEXTCHUNKITERATORNICE_NEXT, "EBadArg" );
-	    }
 	__ASSERT_DEBUG(!AtEnd(), TmPanic(EBadArg));
 	// Return if we have not finished moving through the cache.
 	if (++iCurrent != iEnd)
@@ -979,10 +910,6 @@ grapheme cluster in the chunk, even if the specific edge does not exist.
 */
 void RTmGraphemeInTextChunkIteratorNice::FindEdge(const TTmDocPos& aDocPos)
 	{
-	if (AtEnd())
-	    {
-	    OstTrace0( TRACE_DUMP, RTMGRAPHEMEINTEXTCHUNKITERATORNICE_FINDEDGE, "EBadArg" );
-	    }
 	__ASSERT_DEBUG(!AtEnd(), TmPanic(EBadArg));
 	while (RTmGraphemeEdgeIterator::ETotalMatch !=
 		RTmGraphemeEdgeIterator::DocPosMatches(aDocPos, *Get()))
@@ -1129,10 +1056,6 @@ Begin must be called before this function can be used.
 */
 void RTmGraphemeEdgeIterator::Next()
 	{
-	if (AtEnd())
-	    {
-	    OstTrace0( TRACE_DUMP, RTMGRAPHEMEEDGEITERATOR_NEXT, "EBadArg" );
-	    }
 	__ASSERT_DEBUG(!AtEnd(), TmPanic(EBadArg));
 	--iCacheSize;
 	if (0 != iCacheSize)
@@ -1155,10 +1078,6 @@ void RTmGraphemeEdgeIterator::Next()
 		{
 		// The WHILE loop assures that there is always sufficientByteCode avaliable.
 		TBool haveSufficientByteCode = iByteCodeIterator->Next();
-		if (!haveSufficientByteCode)
-		    {
-		    OstTrace0( TRACE_DUMP, DUP1_RTMGRAPHEMEEDGEITERATOR_NEXT, "EBadArg" );
-		    }
 		__ASSERT_DEBUG(haveSufficientByteCode, TmPanic(EBadArg));
 
 		iByteCodeIterator->Skip();
@@ -1700,10 +1619,6 @@ TBool RTmGeneralInterpreter::GetDisplayedTextL(TInt aLineNumber,TDes& aText,TUin
 						: RTmTextCache::ELeftToRight;
 				User::LeaveIfError(iTextCache.GetDisplayedText(StartChar(), EndChar(),
 					directionality, buffer,aContextChar, 0, &font));
-				if (!font)
-				    {
-				    OstTrace0( TRACE_DUMP, RTMGENERALINTERPRETER_GETDISPLAYEDTEXTL, "EInvariant" );
-				    }
 				__ASSERT_DEBUG(font, TmPanic(EInvariant));
 				CFont::TPositionParam p;
 				int length = EndChar() - StartChar() + 1;
@@ -2051,10 +1966,6 @@ TBool RTmDrawingInterpreter::GetNextHighlightClipRect(RTmBoundingRectInterpreter
 
 TBool RTmDrawingInterpreter::GetAdjustedHighlightClipRegion(const TRect& aClipRect, RRegion& aHighlightRegion) const
 	{
-	if (NULL == iHighlightExtensions)
-	    {
-	    OstTrace0( TRACE_DUMP, RTMDRAWINGINTERPRETER_GETADJUSTEDHIGHLIGHTCLIPREGION, "EInvariant" );
-	    }
 	__ASSERT_DEBUG(NULL != iHighlightExtensions, TmPanic(EInvariant));
 
 	aHighlightRegion.Clear();
@@ -2112,10 +2023,6 @@ TBool RTmDrawingInterpreter::GetAdjustedHighlightClipRegion(const TRect& aClipRe
 TBool RTmDrawingInterpreter::GetFirstAdjustedHighlightClipRect(RTmBoundingRectInterpreter& aInterpreter,
 															   const TRect& aClipRect, TRect& aRect) const
 	{
-	if (NULL == iHighlightExtensions)
-	    {
-	    OstTrace0( TRACE_DUMP, RTMDRAWINGINTERPRETER_GETFIRSTADJUSTEDHIGHLIGHTCLIPRECT, "EInvariant" );
-	    }
 	__ASSERT_DEBUG(NULL != iHighlightExtensions, TmPanic(EInvariant));
 
 	if (iHighlightEndPos > iHighlightStartPos)
@@ -2156,15 +2063,7 @@ TBool RTmDrawingInterpreter::GetFirstAdjustedHighlightClipRect(RTmBoundingRectIn
 TBool RTmDrawingInterpreter::GetNextAdjustedHighlightClipRect(RTmBoundingRectInterpreter& aInterpreter,
 															  const TRect& aClipRect, TRect& aRect) const
 	{
-	if (NULL == iHighlightExtensions)
-	    {
-	    OstTrace0( TRACE_DUMP, RTMDRAWINGINTERPRETER_GETNEXTADJUSTEDHIGHLIGHTCLIPRECT, "EInvariant" );
-	    }
 	__ASSERT_DEBUG(NULL != iHighlightExtensions, TmPanic(EInvariant));
-	if (iHighlightEndPos <= iHighlightStartPos)
-	    {
-	    OstTrace0( TRACE_DUMP, DUP1_RTMDRAWINGINTERPRETER_GETNEXTADJUSTEDHIGHLIGHTCLIPRECT, "EInvariant" );
-	    }
 	__ASSERT_DEBUG(iHighlightEndPos > iHighlightStartPos, TmPanic(EInvariant));
 
 	TBool found = aInterpreter.NextRect(aRect);
@@ -3246,11 +3145,6 @@ iEndBdState if both pointers are non-null.
 TBool TTmByteCodeFinder::FindByteCode(TBool aToParStart,TBool aToParEnd,TInt aMaxExtraLines,TInfo& aInfo,
 									  TBidirectionalContext* aStartBdState,TBidirectionalContext* aEndBdState)
 	{
-	if (!((aStartBdState && aEndBdState)
-	        || (!aStartBdState && !aEndBdState)))
-	    {
-	    OstTrace0( TRACE_DUMP, TTMBYTECODEFINDER_FINDBYTECODE, "EBadArg" );
-	    }
 	__ASSERT_DEBUG((aStartBdState && aEndBdState)
 		|| (!aStartBdState && !aEndBdState), TmPanic(EBadArg));
 	if (aStartBdState)
@@ -3269,10 +3163,6 @@ TBool TTmByteCodeFinder::FindByteCode(TBool aToParStart,TBool aToParEnd,TInt aMa
 	TBool get_info = EFalse;
 	while (Next())
 		{
-		if (Op() != EOpLine)
-		    {
-		    OstTrace0( TRACE_DUMP, DUP1_TTMBYTECODEFINDER_FINDBYTECODE, "ECorrupt" );
-		    }
 		__ASSERT_ALWAYS(Op() == EOpLine, Panic(ECorrupt));
 		contextChar = LineContextCharChar();
 		foundStart = iStartDocPos >= StartChar() && iStartDocPos < EndChar();
@@ -3306,10 +3196,6 @@ TBool TTmByteCodeFinder::FindByteCode(TBool aToParStart,TBool aToParEnd,TInt aMa
 	do
 		{
 		// Operators must all be EOpLine because we're skipping from line to line
-		if (Op() != EOpLine)
-		    {
-		    OstTrace0( TRACE_FATAL, DUP3_TTMBYTECODEFINDER_FINDBYTECODE, "ECorrupt" );
-		    }
 		__ASSERT_ALWAYS(Op() == EOpLine, Panic(ECorrupt));
 		aInfo.iBounds.iBr = LineInfo().iOuterRect.iBr;
 		aInfo.iEndCodePos = EndCodePos();
@@ -3347,10 +3233,6 @@ TBool TTmByteCodeFinder::FindByteCodeAtEnd(TInfo& aInfo, TInt aMaxHeight, TInt a
 	TInt heightToSkip = aTotalHeight - aMaxHeight;
 	TInt cumulativeHeight = 0;
 	
-	if (!((aStartBdState && aEndBdState) || (!aStartBdState && !aEndBdState)))
-	    {
-	    OstTrace0( TRACE_DUMP, TTMBYTECODEFINDER_FINDBYTECODEATEND, "EBadArg" );
-	    }
 	__ASSERT_DEBUG((aStartBdState && aEndBdState) || (!aStartBdState && !aEndBdState), TmPanic(EBadArg));
 	if (aStartBdState)
 		{
@@ -3364,10 +3246,6 @@ TBool TTmByteCodeFinder::FindByteCodeAtEnd(TInfo& aInfo, TInt aMaxHeight, TInt a
 	TBool foundStart = EFalse;
 	while (Next())
 		{
-		if (Op() != EOpLine)
-		    {
-		    OstTrace0( TRACE_FATAL, DUP1_TTMBYTECODEFINDER_FINDBYTECODEATEND, "ECorrupt" );
-		    }
 		__ASSERT_ALWAYS(Op() == EOpLine, Panic(ECorrupt));
 		if (cumulativeHeight > heightToSkip)
 			{
@@ -3389,10 +3267,6 @@ TBool TTmByteCodeFinder::FindByteCodeAtEnd(TInfo& aInfo, TInt aMaxHeight, TInt a
 	TBool foundEnd = EFalse;	
 	while (Next())
 		{
-		if (Op() != EOpLine)
-		    {
-		    OstTrace0( TRACE_FATAL, DUP2_TTMBYTECODEFINDER_FINDBYTECODEATEND, "ECorrupt" );
-		    }
 		__ASSERT_ALWAYS(Op() == EOpLine, Panic(ECorrupt));
 		foundEnd = ETrue;
 		aInfo.iBounds.iBr = LineInfo().iOuterRect.iBr;

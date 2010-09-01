@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2001-2010 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 2001-2009 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -29,19 +29,15 @@
 #include "TMINTERP.H"
 #include "TmText.h"
 #include "InlineText.h"
-#include "ttagmaimp.h"
 
-namespace LocalToTTagmaImp
+namespace LocalToFile
 {
 enum TTagmaImpPanic { EAccessOutsideText = 1 };
 void Panic(TTagmaImpPanic)
 	{
 	User::Panic(_L("TTagmaImp"), EAccessOutsideText);
 	}
-
-CTTagmaImpStep* TestStep = NULL;
-#define TESTPOINT(p) TestStep->testpoint(p,(TText8*)__FILE__,__LINE__)
-#define TESTPRINT(p) TestStep->print(p,(TText8*)__FILE__,__LINE__)
+RTest test(_L("Tagma internals tests"));
 
 const TInt KPictureCharacter = 0xFFFC;
 
@@ -150,8 +146,9 @@ class THandleTester
 	{
 	TInt iProcessHandles;
 	TInt iThreadHandles;
+	RTest& iTest;
 public:
-	THandleTester()
+	THandleTester(RTest& rt) : iTest(rt)
 		{
 		RThread().HandleCount(iProcessHandles, iThreadHandles);
 		}
@@ -161,8 +158,8 @@ public:
 		TInt t;
 		RThread().HandleCount(p, t);
 // this seems to break at random...
-//		TestStep->test(p == iProcessHandles);
-		TESTPOINT(t == iThreadHandles);
+//		iTest(p == iProcessHandles);
+		iTest(t == iThreadHandles);
 		}
 	};
 
@@ -285,15 +282,14 @@ public:
 	};
 
 }
-using namespace LocalToTTagmaImp;
+using namespace LocalToFile;
 
 
 class CTagmaImpTest : public CBase
 	{
 public:
-	CTagmaImpTest(CTTagmaImpStep* aStep) : iDevice(0), iGc(0)
+	CTagmaImpTest() : iDevice(0), iGc(0)
 		{
-        TestStep = aStep;
 		}
 	void ConstructL()
 		{
@@ -355,9 +351,9 @@ TInt CTagmaImpTest::CheckLots(CTmCode& aCode, TInt aIndex,
 		TInt num = reader.ReadNumber();
 		TRect rect = reader.ReadRect();
 		TRect testRect(aStartValue + 2, aStartValue + 3, aStartValue + 4, aStartValue + 5);
-		TESTPOINT(byte == static_cast<TUint8>(aStartValue));
-		TESTPOINT(num == aStartValue + 1);
-		TESTPOINT(rect == testRect);
+		test(byte == static_cast<TUint8>(aStartValue));
+		test(num == aStartValue + 1);
+		test(rect == testRect);
 		}
 	return reader.CodePos();
 	}
@@ -430,7 +426,7 @@ void CTagmaImpTest::ExerciseCTmCodeL()
 	code->Delete(size1, size4);
 	CheckLots(*code, 0, 0, count1);
 	CheckLots(*code, size1, 0, count2);
-	TESTPOINT(code2->Size() == 0);
+	test(code2->Size() == 0);
 	CleanupStack::PopAndDestroy(code2);
 	CleanupStack::PopAndDestroy(code);
 	}
@@ -441,7 +437,7 @@ void CTagmaImpTest::CTmCodeOOML()
 	TInt err;
 	TInt failAt = 1;
 	do {
-		THandleTester h();
+		THandleTester h(test);
 
 		__UHEAP_MARK;
 		__UHEAP_SETFAIL(RHeap::EDeterministic, failAt);
@@ -451,7 +447,7 @@ void CTagmaImpTest::CTmCodeOOML()
 
 		++failAt;
 		} while (err == KErrNoMemory);
-	TESTPOINT(err == KErrNone);
+	test(err == KErrNone);
 	}
 
 CTestSource* CTagmaImpTest::NewTestSourceLC()
@@ -501,7 +497,7 @@ void CTagmaImpTest::FormatOOML()
 	TInt err;
 	TInt failAt = 1;
 	do {
-		THandleTester h();
+		THandleTester h(test);
 
 		__UHEAP_MARK;
 		__UHEAP_SETFAIL(RHeap::EDeterministic, failAt);
@@ -511,7 +507,7 @@ void CTagmaImpTest::FormatOOML()
 
 		++failAt;
 		} while (err == KErrNoMemory);
-	TESTPOINT(err == KErrNone);
+	test(err == KErrNone);
 	}
 
 void CTagmaImpTest::ExerciseRTmTextCacheWidthL()
@@ -536,7 +532,7 @@ void CTagmaImpTest::RTmTextCacheWidthOOM()
 	TInt err;
 	TInt failAt = 1;
 	do {
-		THandleTester h();
+		THandleTester h(test);
 
 		__UHEAP_MARK;
 		__UHEAP_SETFAIL(RHeap::EDeterministic, failAt);
@@ -546,7 +542,7 @@ void CTagmaImpTest::RTmTextCacheWidthOOM()
 
 		++failAt;
 		} while (err == KErrNoMemory);
-	TESTPOINT(err == KErrNone);
+	test(err == KErrNone);
 	}
 
 void CTagmaImpTest::ExerciseRTmGeneralInterpreterGetDisplayedTextL()
@@ -577,7 +573,7 @@ void CTagmaImpTest::RTmGeneralInterpreterGetDisplayedTextOOM()
 	TInt err;
 	TInt failAt = 1;
 	do {
-		THandleTester h();
+		THandleTester h(test);
 
 		__UHEAP_MARK;
 		__UHEAP_SETFAIL(RHeap::EDeterministic, failAt);
@@ -587,7 +583,7 @@ void CTagmaImpTest::RTmGeneralInterpreterGetDisplayedTextOOM()
 
 		++failAt;
 		} while (err == KErrNoMemory);
-	TESTPOINT(err == KErrNone);
+	test(err == KErrNone);
 	}
 
 void CTagmaImpTest::WEP_55BHBF_DefectL()
@@ -643,7 +639,7 @@ void CTagmaImpTest::INC_044969_DefectL()
 
 	// check that format has found the break at 11 characters
 	// This is at the end of "this is a "
-	TESTPOINT(info.iFirstLineEndChar == 11 );
+	test( info.iFirstLineEndChar == 11 );
 
 	// get the text that would be displayed into displayBuffer
 	TTmInterpreterParam interpreter_param(*code);
@@ -660,8 +656,8 @@ void CTagmaImpTest::INC_044969_DefectL()
 	// The defect caused this buffer to be missing the final 'a'
 	// from "...this is a" at the end of the line
 	// When this defect happens noCharsToDisplay != info.iFirstLineEndChar
-	TESTPOINT( info.iFirstLineEndChar == noCharsToDisplay );
-	TESTPOINT( displayBuffer[9] == 'a' );
+	test( info.iFirstLineEndChar == noCharsToDisplay );
+	test( displayBuffer[9] == 'a' );
 
 	interpreter.Close();
 	CleanupStack::PopAndDestroy(layout);
@@ -706,9 +702,9 @@ void CTagmaImpTest::DEF_073838_DefectL()
 	CTmFormatContext::FormatL(*source1, formatParam1, *code, info1, layout);
 
 	// check that format didn't found any breaks
-	TESTPOINT( info1.iFirstLineEndChar == KTest1().Length());
-	TESTPOINT( info1.iLastLineStartChar == 0 );
-	TESTPOINT( info1.iHeight == 12 ); // just 1 line
+	test( info1.iFirstLineEndChar == KTest1().Length());
+	test( info1.iLastLineStartChar == 0 );
+	test( info1.iHeight == 12 ); // just 1 line
 
 
 
@@ -731,9 +727,9 @@ void CTagmaImpTest::DEF_073838_DefectL()
 	CTmFormatContext::FormatL(*source2, formatParam2, *code, info2, layout);
 
 	// check that format didn't found any breaks
-	TESTPOINT( info2.iFirstLineEndChar == KTest2().Length());
-	TESTPOINT( info2.iLastLineStartChar == 0 );
-	TESTPOINT( info2.iHeight == 12 ); // just 1 line
+	test( info2.iFirstLineEndChar == KTest2().Length());
+	test( info2.iLastLineStartChar == 0 );
+	test( info2.iHeight == 12 ); // just 1 line
 
 
 
@@ -756,9 +752,9 @@ void CTagmaImpTest::DEF_073838_DefectL()
 	CTmFormatContext::FormatL(*source3, formatParam3, *code, info3, layout);
 
 	// check that format didn't found any breaks
-	TESTPOINT( info3.iFirstLineEndChar == 54 );
-	TESTPOINT( info3.iLastLineStartChar == 108 );
-	TESTPOINT( info3.iHeight == 36 ); // 3 lines
+	test( info3.iFirstLineEndChar == 54 );
+	test( info3.iLastLineStartChar == 108 );
+	test( info3.iHeight == 36 ); // 3 lines
 
 	CleanupStack::PopAndDestroy(source3);
 	CleanupStack::PopAndDestroy(source2);
@@ -899,33 +895,33 @@ void CTagmaImpTest::EXT_5ATF8D_DefectL()
 
 	text->GetText(0, testText, cft);
 	text->GetParagraphFormatL(0, pft);
-	TESTPOINT(testText.Length() == 14);
-	TESTPOINT(testText.Compare(_L("first line\x2029sec")) == 0);
-	TESTPOINT(cft == cf1);
-	TESTPOINT(pft == pf1);
+	test(testText.Length() == 14);
+	test(testText.Compare(_L("first line\x2029sec")) == 0);
+	test(cft == cf1);
+	test(pft == pf1);
 
 	text->GetText(11, testText, cft);
 	text->GetParagraphFormatL(11, pft);
-	TESTPOINT(testText.Length() == 3);
-	TESTPOINT(testText.Compare(_L("sec")) == 0);
-	TESTPOINT(cft == cf1);
-	TESTPOINT(pft == pf2);
+	test(testText.Length() == 3);
+	test(testText.Compare(_L("sec")) == 0);
+	test(cft == cf1);
+	test(pft == pf2);
 
 	text->GetText(14, testText, cft);
 	text->GetParagraphFormatL(14, pft);
-	TESTPOINT(testText.Length() == 3);
-	TESTPOINT(testText.Compare(_L("t p")) == 0);
-	TESTPOINT(cft == cf2);
-	TESTPOINT(pft == pf2);
+	test(testText.Length() == 3);
+	test(testText.Compare(_L("t p")) == 0);
+	test(cft == cf2);
+	test(pft == pf2);
 
 	text->GetText(17, testText, cft);
 	text->GetParagraphFormatL(17, pft);
-	TESTPOINT(cft == cf1);
-	TESTPOINT(pft == pf2);
+	test(cft == cf1);
+	test(pft == pf2);
 
 	text->GetText(21, testText, cft);
 	text->GetParagraphFormatL(21, pft);
-	TESTPOINT(pft == pf2);
+	test(pft == pf2);
 	CleanupStack::PopAndDestroy(&pft);
 	CleanupStack::PopAndDestroy(&pf2);
 	CleanupStack::PopAndDestroy(&pf1);
@@ -934,7 +930,7 @@ void CTagmaImpTest::EXT_5ATF8D_DefectL()
 
 void CTagmaImpTest::GetIndices(TDes8& aBuf, const CTmTextImp::RRunArray& aRunArray)
 	{
-    TESTPOINT(aRunArray.Index(0) == aRunArray.Index(1));
+	test(aRunArray.Index(0) == aRunArray.Index(1));
 	aBuf.Zero();
 	TInt index;
 	for (TInt i = 1; 0 <= (index = aRunArray.Index(i)); ++i)
@@ -966,7 +962,7 @@ void CTagmaImpTest::TestAPIL()
 
 	TInt memUsed = text->MemoryUsed();
 	text->ChangeFormatL(formatParam);
-	TESTPOINT(text->MemoryUsed()==memUsed);
+	test(text->MemoryUsed()==memUsed);
 
 	TTmFormatParam formatParam1;
 	formatParam1.iStartChar = 0;
@@ -979,12 +975,12 @@ void CTagmaImpTest::TestAPIL()
 	//Setting the format of the text
 	text->ChangeFormatL(formatParam1);
 	//After changing the format, memory used by the text differs from the initial value
-	TESTPOINT(text->MemoryUsed()!=memUsed);
+	test(text->MemoryUsed()!=memUsed);
 	TRgb color1(100,10,20);
 	TRgb color2;
 	//Setting the system colour with an index representing the system background colour
 	color2 = text->SystemColor(TLogicalRgb::ESystemBackgroundIndex,color1);
-	TESTPOINT(color2==color1);
+	test(color2==color1);
 
 	_LIT(KBody, "Body");
 	_LIT(KLabel, "Label, Longer than Body");
@@ -996,7 +992,7 @@ void CTagmaImpTest::TestAPIL()
 
 	//Setting the system colour with an index representing the system foreground colour
 	color2 = text->SystemColor(TLogicalRgb::ESystemSelectionForegroundIndex,color1);
-	TESTPOINT(color2!=color1);
+	test(color2!=color1);
 	CleanupStack::PopAndDestroy(&pf1);
 	CleanupStack::PopAndDestroy(text);
 	}
@@ -1007,50 +1003,50 @@ void CTagmaImpTest::CTmTextImp_RRunArrayL()
 	CTmTextImp::RRunArray ra;
 	CleanupClosePushL(ra);
 	GetIndices(indexBuf, ra);
-	TESTPOINT(0 == indexBuf.Compare(_L8("")));
+	test(0 == indexBuf.Compare(_L8("")));
 	ra.Insert(0, 10, 0);
 	GetIndices(indexBuf, ra);
-	TESTPOINT(0 == indexBuf.Compare(_L8("0000000000")));
+	test(0 == indexBuf.Compare(_L8("0000000000")));
 	ra.Insert(5, 10, 1);
 	GetIndices(indexBuf, ra);
-	TESTPOINT(0 == indexBuf.Compare(_L8("00000111111111100000")));
+	test(0 == indexBuf.Compare(_L8("00000111111111100000")));
 	ra.Delete(13, 4);
 	GetIndices(indexBuf, ra);
-	TESTPOINT(0 == indexBuf.Compare(_L8("0000011111111000")));
+	test(0 == indexBuf.Compare(_L8("0000011111111000")));
 	ra.Delete(2, 12);
 	GetIndices(indexBuf, ra);
-	TESTPOINT(0 == indexBuf.Compare(_L8("0000")));
+	test(0 == indexBuf.Compare(_L8("0000")));
 	ra.Delete(0, 4);
 	GetIndices(indexBuf, ra);
-	TESTPOINT(0 == indexBuf.Compare(_L8("")));
+	test(0 == indexBuf.Compare(_L8("")));
 	ra.Insert(0, 20, 0);
 	ra.Set(5, 10, 1);
 	GetIndices(indexBuf, ra);
-	TESTPOINT(0 == indexBuf.Compare(_L8("00000111111111100000")));
+	test(0 == indexBuf.Compare(_L8("00000111111111100000")));
 	ra.Set(6, 4, 2);
 	GetIndices(indexBuf, ra);
-	TESTPOINT(0 == indexBuf.Compare(_L8("00000122221111100000")));
+	test(0 == indexBuf.Compare(_L8("00000122221111100000")));
 	ra.Set(10, 4, 3);
 	GetIndices(indexBuf, ra);
-	TESTPOINT(0 == indexBuf.Compare(_L8("00000122223333100000")));
+	test(0 == indexBuf.Compare(_L8("00000122223333100000")));
 	ra.Set(9, 2, 1);
 	GetIndices(indexBuf, ra);
-	TESTPOINT(0 == indexBuf.Compare(_L8("00000122211333100000")));
+	test(0 == indexBuf.Compare(_L8("00000122211333100000")));
 	ra.Set(6, 1, 1);
 	GetIndices(indexBuf, ra);
-	TESTPOINT(0 == indexBuf.Compare(_L8("00000112211333100000")));
+	test(0 == indexBuf.Compare(_L8("00000112211333100000")));
 	ra.Set(8, 1, 1);
 	GetIndices(indexBuf, ra);
-	TESTPOINT(0 == indexBuf.Compare(_L8("00000112111333100000")));
+	test(0 == indexBuf.Compare(_L8("00000112111333100000")));
 	ra.Set(7, 1, 1);
 	GetIndices(indexBuf, ra);
-	TESTPOINT(0 == indexBuf.Compare(_L8("00000111111333100000")));
+	test(0 == indexBuf.Compare(_L8("00000111111333100000")));
 	ra.Set(7, 2, 2);
 	GetIndices(indexBuf, ra);
-	TESTPOINT(0 == indexBuf.Compare(_L8("00000112211333100000")));
+	test(0 == indexBuf.Compare(_L8("00000112211333100000")));
 	ra.Set(1, 19, 1);
 	GetIndices(indexBuf, ra);
-	TESTPOINT(0 == indexBuf.Compare(_L8("01111111111111111111")));
+	test(0 == indexBuf.Compare(_L8("01111111111111111111")));
 	CleanupStack::PopAndDestroy(&ra);
 	}
 
@@ -1067,34 +1063,34 @@ void CTagmaImpTest::ExerciseCopyL()
 	CleanupStack::PushL(pF);
 	RTmParFormat rPF;
 
-	TESTPOINT(RTmParFormat::EAlignNormalBidirectional == rPF.iAlignment);
+	test(RTmParFormat::EAlignNormalBidirectional == rPF.iAlignment);
 
 	rPF.CopyL(*pF);
-	TESTPOINT(RTmParFormat::EAlignNormal == rPF.iAlignment);
+	test(RTmParFormat::EAlignNormal == rPF.iAlignment);
 
 	pF->iHorizontalAlignment = CParaFormat::ELeftAlign;
 	rPF.CopyL(*pF);
-	TESTPOINT(RTmParFormat::EAlignNormal == rPF.iAlignment);
+	test(RTmParFormat::EAlignNormal == rPF.iAlignment);
 
 	pF->iHorizontalAlignment = CParaFormat::ECenterAlign;
 	rPF.CopyL(*pF);
-	TESTPOINT(RTmParFormat::EAlignCenter == rPF.iAlignment);
+	test(RTmParFormat::EAlignCenter == rPF.iAlignment);
 
 	pF->iHorizontalAlignment = CParaFormat::ERightAlign;
 	rPF.CopyL(*pF);
-	TESTPOINT(RTmParFormat::EAlignReverse == rPF.iAlignment);
+	test(RTmParFormat::EAlignReverse == rPF.iAlignment);
 
 	pF->iHorizontalAlignment = CParaFormat::EJustifiedAlign;
 	rPF.CopyL(*pF);
-	TESTPOINT(RTmParFormat::EAlignJustify == rPF.iAlignment);
+	test(RTmParFormat::EAlignJustify == rPF.iAlignment);
 
 	pF->iHorizontalAlignment = CParaFormat::EAbsoluteLeftAlign;
 	rPF.CopyL(*pF);
-	TESTPOINT(RTmParFormat::EAlignAbsoluteLeft == rPF.iAlignment);
+	test(RTmParFormat::EAlignAbsoluteLeft == rPF.iAlignment);
 
 	pF->iHorizontalAlignment = CParaFormat::EAbsoluteRightAlign;
 	rPF.CopyL(*pF);
-	TESTPOINT(RTmParFormat::EAlignAbsoluteRight == rPF.iAlignment);
+	test(RTmParFormat::EAlignAbsoluteRight == rPF.iAlignment);
 
 	rPF.Close();
 	CleanupStack::PopAndDestroy(); //pF
@@ -1106,31 +1102,31 @@ void CTagmaImpTest::ExerciseGetCParaFormatL()
 	CleanupStack::PushL(pF);
 	RTmParFormat rPF;
 
-	TESTPOINT(pF->iHorizontalAlignment == CParaFormat::ELeftAlign);
+	test(pF->iHorizontalAlignment == CParaFormat::ELeftAlign);
 
 	rPF.iAlignment = RTmParFormat::EAlignNormal;
 	rPF.GetCParaFormatL(*pF);
-	TESTPOINT(CParaFormat::ELeftAlign == pF->iHorizontalAlignment);
+	test(CParaFormat::ELeftAlign == pF->iHorizontalAlignment);
 
 	rPF.iAlignment = RTmParFormat::EAlignCenter;
 	rPF.GetCParaFormatL(*pF);
-	TESTPOINT(CParaFormat::ECenterAlign == pF->iHorizontalAlignment);
+	test(CParaFormat::ECenterAlign == pF->iHorizontalAlignment);
 
 	rPF.iAlignment = RTmParFormat::EAlignReverse;
 	rPF.GetCParaFormatL(*pF);
-	TESTPOINT(CParaFormat::ERightAlign == pF->iHorizontalAlignment);
+	test(CParaFormat::ERightAlign == pF->iHorizontalAlignment);
 
 	rPF.iAlignment = RTmParFormat::EAlignJustify;
 	rPF.GetCParaFormatL(*pF);
-	TESTPOINT(CParaFormat::EJustifiedAlign == pF->iHorizontalAlignment);
+	test(CParaFormat::EJustifiedAlign == pF->iHorizontalAlignment);
 
 	rPF.iAlignment = RTmParFormat::EAlignAbsoluteLeft;
 	rPF.GetCParaFormatL(*pF);
-	TESTPOINT(CParaFormat::EAbsoluteLeftAlign == pF->iHorizontalAlignment);
+	test(CParaFormat::EAbsoluteLeftAlign == pF->iHorizontalAlignment);
 
 	rPF.iAlignment = RTmParFormat::EAlignAbsoluteRight;
 	rPF.GetCParaFormatL(*pF);
-	TESTPOINT(CParaFormat::EAbsoluteRightAlign == pF->iHorizontalAlignment);
+	test(CParaFormat::EAbsoluteRightAlign == pF->iHorizontalAlignment);
 
 	rPF.Close();
 	CleanupStack::PopAndDestroy(); // pF
@@ -1147,7 +1143,7 @@ public:
 	TTestCustomFormattingSource(MGraphicsDeviceMap* aDevice,
 		const TDesC& aBody, TInt aCustomFormatType)
 		: iDevice(aDevice)
-        {
+		{
 		iCustomFormatType = aCustomFormatType;
 		iBody.Set(aBody.Ptr(), aBody.Length());
 		iCurrent = &iBody;
@@ -1225,9 +1221,7 @@ public:
 				aNext.iLeadingEdge = EFalse;
 				if (aNext.iPos - aFrom.iPos < aMaxLength + (aNext.iLeadingEdge ? 0 : 1))
 					return KErrNotFound;
-				TBuf<256> buf;
-				buf.AppendFormat(_L("GetPos-InlineTextAt-%d %c-From-%d\n"),aNext.iPos, aNext.iLeadingEdge ? 'L' : 'T', aFrom.iPos);
-				TESTPRINT(buf);
+	 test.Printf(_L("GetPos-InlineTextAt-%d %c-From-%d\n"), aNext.iPos, aNext.iLeadingEdge ? 'L' : 'T', aFrom.iPos);
 				return KErrNone;
 				}
 			return KErrNotFound;
@@ -1252,9 +1246,7 @@ public:
 					aNext.iLeadingEdge = ETrue;
 					if (aNext.iPos - aFrom.iPos < aMaxLength + (aNext.iLeadingEdge ? 0 : 1))
 						return KErrNotFound;
-					TBuf<256> buf;
-					buf.AppendFormat(_L("GetPos-InlineTextAt-%d %c-From-%d\n"), aNext.iPos, aNext.iLeadingEdge ? 'L' : 'T', aFrom.iPos);
-					TESTPRINT(buf);
+	test.Printf(_L("GetPos-InlineTextAt-%d %c-From-%d\n"), aNext.iPos, aNext.iLeadingEdge ? 'L' : 'T', aFrom.iPos);
 					return KErrNone;
 					}
 				// if it gets here search position is after the first break space
@@ -1264,9 +1256,7 @@ public:
 					aNext.iLeadingEdge = EFalse;
 					if (aNext.iPos - aFrom.iPos < aMaxLength + (aNext.iLeadingEdge ? 0 : 1))
 						return KErrNotFound;
-					TBuf<256> buf;
-					buf.AppendFormat(_L("GetPos-InlineTextAt-%d %c-From-%d\n"), aNext.iPos, aNext.iLeadingEdge ? 'L' : 'T', aFrom.iPos);
-					TESTPRINT(buf);
+	test.Printf(_L("GetPos-InlineTextAt-%d %c-From-%d\n"), aNext.iPos, aNext.iLeadingEdge ? 'L' : 'T', aFrom.iPos);
 					return KErrNone;
 					}
 				}
@@ -1276,9 +1266,7 @@ public:
 		}
 	TPtrC GetInlineText(const TTmDocPos& aAt)
 		{
-	    TBuf<256> buf;
-	    buf.AppendFormat(_L("QueryTextAt-%d %c\n"), aAt.iPos, aAt.iLeadingEdge ? 'L' : 'T');
-	    TESTPRINT(buf);
+	test.Printf(_L("QueryTextAt-%d %c\n"), aAt.iPos, aAt.iLeadingEdge ? 'L' : 'T');
 		if (iCustomFormatType == 0)
 			{
 			return iNullText;
@@ -1299,9 +1287,7 @@ public:
 					{
 					_LIT(KCFS3, "?");
 					TPtrC tPtrC(KCFS3);
-					TBuf<256> buf;
-					buf.AppendFormat(_L("GetText-QuestionMark-%d\n"), aAt.iPos);
-					TESTPRINT(buf);
+	test.Printf(_L("GetText-QuestionMark-%d\n"), aAt.iPos);
 					return tPtrC;
 					}
 				}
@@ -1324,10 +1310,7 @@ public:
 					{ // search position is on the first break space
 					_LIT(KCFS4, " ");
 					TPtrC tPtrC(KCFS4);
-					
-                    TBuf<256> buf;
-                    buf.AppendFormat(_L("GetText-Space-%d-L\n"), aAt.iPos);
-                    TESTPRINT(buf);
+	test.Printf(_L("GetText-Space-%d-L\n"), aAt.iPos);
 					return tPtrC;
 					}
 				// if it gets here search position is not on the first break space
@@ -1335,9 +1318,7 @@ public:
 					{ // but it is on the second
 					_LIT(KCFS4, " ");
 					TPtrC tPtrC(KCFS4);
-					TBuf<256> buf;
-					buf.AppendFormat(_L("GetText-Space-%d-T\n"), aAt.iPos);
-					TESTPRINT(buf);
+	test.Printf(_L("GetText-Space-%d-T\n"), aAt.iPos);
 					return tPtrC;
 					}
 				}
@@ -1354,7 +1335,7 @@ void CTagmaImpTest::CustomFormattingL()
 	// Test one
 	// ========
 	// First test is where inline text is enabled but where there is none to insert
-	_LIT(KBody0, "This is a bunch of boring plain text that doesn't get any inline text inserted.\x2029"); 
+	_LIT(KBody0, "This is a bunch of boring plain text that doesn't get any inline text inserted.\x2029");
 	TTestCustomFormattingSource s0(iDevice, KBody0, 0);	// No inline text
 	CTmTextLayout* lay0 = new(ELeave) CTmTextLayout;
 	TTmFormatParam fp0;
@@ -1427,11 +1408,11 @@ void CTagmaImpTest::PDEF_101464_DefectL()
 	text->GetDisplayedText(0,buffer,needed);
 
 	//Verify that the text is formatted correctly
-	TESTPOINT(buffer == KDisplayedLatinZWJ);
+	test(buffer == KDisplayedLatinZWJ);
 
 	//Verify that the length of the string is as expected
 	textLength = (text->EndChar()) - (text->StartChar());
-	TESTPOINT(textLength == KExpectedTextLength);
+	test(textLength == KExpectedTextLength);
 	text->Clear();
 
 	//Test the sample text with ZWJ in the middle of the string
@@ -1439,11 +1420,11 @@ void CTagmaImpTest::PDEF_101464_DefectL()
 	text->GetDisplayedText(0,buffer,needed);
 
 	//Verify that the text is formatted correctly
-	TESTPOINT(buffer == KDisplayedLatinZWJ);
+	test(buffer == KDisplayedLatinZWJ);
 
 	//Verify that the length of the string is as expected
 	textLength = (text->EndChar()) - (text->StartChar());
-	TESTPOINT(textLength == KExpectedTextLength);
+	test(textLength == KExpectedTextLength);
 	text->Clear();
 
 	//Test the sample text with ZWJ at the end of the string
@@ -1451,11 +1432,11 @@ void CTagmaImpTest::PDEF_101464_DefectL()
 	text->GetDisplayedText(0,buffer,needed);
 
 	//Verify that the text is formatted correctly
-	TESTPOINT(buffer == KDisplayedLatinZWJ);
+	test(buffer == KDisplayedLatinZWJ);
 
 	//Verify that the length of the string is as expected
 	textLength = (text->EndChar()) - (text->StartChar());
-	TESTPOINT(textLength == KExpectedTextLength);
+	test(textLength == KExpectedTextLength);
 	text->Clear();
 
 	CleanupStack::PopAndDestroy(); // text
@@ -1493,11 +1474,11 @@ void CTagmaImpTest::DEF101994_DefectL()
 	text->GetDisplayedText(0,buffer,needed);
 
 	//Verify that the text is formatted correctly
-	TESTPOINT(buffer == KDisplayedKannadaTamil);
+	test(buffer == KDisplayedKannadaTamil);
 
 	//Verify that the length of the string is as expected
 	textLength = (text->EndChar()) - (text->StartChar());
-	TESTPOINT(textLength == KExpectedTextLength);
+	test(textLength == KExpectedTextLength);
 	text->Clear();
 
 	CleanupStack::PopAndDestroy(); // text
@@ -1544,27 +1525,27 @@ void CTagmaImpTest::DEF101994_DefectL()
 		chunk.SetL(*formatContext,0,0,10,533,0,chunkInfo);
 		TUint context = chunk.iContextCharInByteCode;
 		// Test that the first chunk's context has been recognised as not needing supplied context.
-		TESTPOINT(0 == context);
+		test(0 == context);
 		chunk.SetL(*formatContext,3,0,10,533,0,chunkInfo);
 		context = chunk.iContextCharInByteCode;
 		// Test that the next chunk retains the Hindi context.
-		TESTPOINT(2325 == context);
+		test(2325 == context);
 		chunk.SetL(*formatContext,4,0,10,533,0,chunkInfo);
 		context = chunk.iContextCharInByteCode;
 		// Test that the next chunk retains the Hindi context.
-		TESTPOINT(2325 == context);
+		test(2325 == context);
 		chunk.SetL(*formatContext,5,0,10,533,0,chunkInfo);
 		context = chunk.iContextCharInByteCode;
 		// Test that the next chunk retains the Hindi context.
-		TESTPOINT(2325 == context);
+		test(2325 == context);
 		chunk.SetL(*formatContext,6,0,10,533,0,chunkInfo);
 		context = chunk.iContextCharInByteCode;
 		// Test that the next chunk has been recognised as not needing supplied context.
-		TESTPOINT(0 == context);
+		test(0 == context);
 		chunk.SetL(*formatContext,9,0,10,533,0,chunkInfo);
 		context = chunk.iContextCharInByteCode;
 		// Test that the next chunk retains the Latin context.
-		TESTPOINT(99 == context);
+		test(99 == context);
 		
 		
 		CleanupStack::PopAndDestroy(formatContext); // formatContext
@@ -1624,13 +1605,13 @@ void CTagmaImpTest::DEF101994_DefectL()
 			{
 			if (interpreter.Op() == TTmInterpreter::EOpLine)
 				{
-				TESTPOINT(interpreter.LineContextCharChar() == expectedResults[lines++]);
+				test(interpreter.LineContextCharChar() == expectedResults[lines++]);
 				}
 			interpreter.Skip();
 			}
 		
 		// Test the correct amount of lines have been tested.
-		TESTPOINT(4 == lines);
+		test(4 == lines);
 		
 		// Close the interpreter and clean up the heap.
 		interpreter.Close();
@@ -1696,7 +1677,7 @@ void CTagmaImpTest::DEF101994_DefectL()
 			TUint32 op = interpreter.Op();
 			if (interpreter.Op() == TTmInterpreter::EOpText || interpreter.Op() == TTmInterpreter::EOpSpecialChar)
 				{
-				TESTPOINT(expectedResults[chunks++] == interpreter.ContextCharChar());
+				test(expectedResults[chunks++] == interpreter.ContextCharChar());
 				}
 			else
 				{
@@ -1705,7 +1686,7 @@ void CTagmaImpTest::DEF101994_DefectL()
 			}
 		
 		// Test that the expected number of chunks were found in the bytecode.
-		TESTPOINT(3 == chunks);
+		test(3 == chunks);
 		
 		// Close the interpreter and clean up the heap.
 		interpreter.Close();
@@ -1717,82 +1698,82 @@ void CTagmaImpTest::DEF101994_DefectL()
 void CTagmaImpTest::TestL()
 	{
 //	__UHEAP_MARK;
-    
-	TESTPRINT(_L("Regression test: DEF073838")); // Line break problem with WORD
+
+	test.Start(_L("Regression test: DEF073838")); // Line break problem with WORD
 	DEF_073838_DefectL();
 
-	TESTPRINT(_L("Regression test: INC044969"));
+	test.Next(_L("Regression test: INC044969"));
 	INC_044969_DefectL();
 
-	TESTPRINT(_L("CTmTextImp::RRunArray tests"));
+	test.Next(_L("CTmTextImp::RRunArray tests"));
 	CTmTextImp_RRunArrayL();
 
-	TESTPRINT(_L("Regression test: BUR-58FGE8"));
+	test.Next(_L("Regression test: BUR-58FGE8"));
 	BUR_58FGE8_DefectL();
 
-	TESTPRINT(_L("Regression test: WEP-55BHBF"));
+	test.Next(_L("Regression test: WEP-55BHBF"));
 	WEP_55BHBF_DefectL();
 
-	TESTPRINT(_L("Regression test: EXT-5ATF8D"));
+	test.Next(_L("Regression test: EXT-5ATF8D"));
 	EXT_5ATF8D_DefectL();
 
-	TESTPRINT(_L(" @SYMTestCaseID:SYSLIB-FORM-UT-1886 Test for CTmTextImp API's "));
+	test.Next(_L(" @SYMTestCaseID:SYSLIB-FORM-UT-1886 Test for CTmTextImp API's "));
 	TestAPIL();
 
-	TESTPRINT(_L("CTmCode tests"));
+	test.Next(_L("CTmCode tests"));
 	CTmCodeOOML();
 
-	TESTPRINT(_L("CTmFormatContext::FormatL tests"));
+	test.Next(_L("CTmFormatContext::FormatL tests"));
 	FormatOOML();
 
-	TESTPRINT(_L("RTmTextCache::Width tests"));
+	test.Next(_L("RTmTextCache::Width tests"));
 	RTmTextCacheWidthOOM();
 
-	TESTPRINT(_L("RTmGeneralInterpreter::GetDisplayedText tests"));
+	test.Next(_L("RTmGeneralInterpreter::GetDisplayedText tests"));
 	RTmGeneralInterpreterGetDisplayedTextOOM();
 
-	TESTPRINT(_L("Bidirectional alignment tests"));
+	test.Next(_L("Bidirectional alignment tests"));
 	CTmTextImp_BidirectionalAlignmentL();
 
-	TESTPRINT(_L("Custom formatting tests"));
+	test.Next(_L("Custom formatting tests"));
 	CustomFormattingL();
 
-	TESTPRINT(_L(" @SYMTestCaseID:SYSLIB-FORM-CT-3353 Regression test: PDEF101464 "));
+	test.Next(_L(" @SYMTestCaseID:SYSLIB-FORM-CT-3353 Regression test: PDEF101464 "));
 	PDEF_101464_DefectL();
 
-	TESTPRINT(_L(" @SYMTestCaseID:SYSLIB-FORM-CT-3398 Regression test: DEF101994 "));
+	test.Next(_L(" @SYMTestCaseID:SYSLIB-FORM-CT-3398 Regression test: DEF101994 "));
 	DEF101994_DefectL();
 	
-	TESTPRINT(_L(" @SYMTestCaseID:SYSLIB-FORM-UT-4010 Drawing Text within context: Testing chunk context."));
+	test.Next(_L(" @SYMTestCaseID:SYSLIB-FORM-UT-4010 Drawing Text within context: Testing chunk context."));
 	TestChunkContext();
 	
-	TESTPRINT(_L(" @SYMTestCaseID:SYSLIB-FORM-UT-4011 Drawing Text within context: Testing line context within bytecode."));
+	test.Next(_L(" @SYMTestCaseID:SYSLIB-FORM-UT-4011 Drawing Text within context: Testing line context within bytecode."));
 	TestBytecodeLineContext();
 	
-	TESTPRINT(_L(" @SYMTestCaseID:SYSLIB-FORM-UT-4012 Drawing Text within context: Testing chunk context within bytecode."));
-	TestBytecodeChunkContext();	
+	test.Next(_L(" @SYMTestCaseID:SYSLIB-FORM-UT-4012 Drawing Text within context: Testing chunk context within bytecode."));
+	TestBytecodeChunkContext();
+	
+	test.End(); 
 	
 //	__UHEAP_MARKEND;
 	}
 
-CTTagmaImpStep::CTTagmaImpStep()
-    {
-    
-    }
 
-TVerdict CTTagmaImpStep::doTestStepL()
-    {    
-    SetTestStepResult(EPass);
-    TestStep = this;
-    
-    TESTPRINT(_L("Tagma internals tests"));
-    CTagmaImpTest* t = new(ELeave) CTagmaImpTest(this);
-    CleanupStack::PushL(t);
-    t->ConstructL();
-    t->TestL();
-    CleanupStack::PopAndDestroy(t);
-    
-    return TestStepResult();
-    }
+void RunTestsL()
+	{
+	CTagmaImpTest* t = new(ELeave) CTagmaImpTest();
+	CleanupStack::PushL(t);
+	t->ConstructL();
+	t->TestL();
+	CleanupStack::PopAndDestroy(t);
+	}
 
-
+TInt E32Main()
+	{
+	CTrapCleanup* theCleanup =CTrapCleanup::New();
+	test.Title();
+	TRAPD(err, RunTestsL());
+	test.Close();
+	delete theCleanup;
+	return err;
+	}

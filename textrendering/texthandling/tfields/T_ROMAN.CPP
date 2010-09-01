@@ -17,28 +17,19 @@
 
 
 #include "../sfields/FLDNUMS.H"
-#include "T_ROMAN.h"
-
-#define test(cond)											\
-	{														\
-	TBool __bb = (cond);									\
-	TEST(__bb);												\
-	if (!__bb)												\
-		{													\
-		ERR_PRINTF1(_L("ERROR: Test Failed"));				\
-		User::Leave(1);										\
-		}													\
-	}
+#include <e32test.h>
+#include <e32std.h>
 
 #define UNUSED_VAR(a) a = a
 
 const TInt KTestCleanupStack=0x40;
 
+LOCAL_D RTest test(_L("Testing denery to Roman numeral converter"));
 LOCAL_D CTrapCleanup* TheTrapCleanup;
 
 //
 
-void CT_ROMAN::GetValue(HBufC* aBuf,TInt aDenery,TDeneryToCharBase& aNumeral)
+LOCAL_C void GetValue(HBufC* aBuf,TInt aDenery,TDeneryToCharBase& aNumeral)
 	{
 	TPtr ptr=aBuf->Des();
 	TInt size=aNumeral.DeneryToChar(ptr,aDenery);
@@ -52,19 +43,19 @@ void CT_ROMAN::GetValue(HBufC* aBuf,TInt aDenery,TDeneryToCharBase& aNumeral)
 	}
 
 
-void CT_ROMAN::DisplayValue(HBufC* aBuf,TInt aDenery,TDeneryToCharBase& aNumeral)
+LOCAL_D void DisplayValue(HBufC* aBuf,TInt aDenery,TDeneryToCharBase& aNumeral)
 	{
 	GetValue(aBuf,aDenery,aNumeral);
-	INFO_PRINTF2(_L("%D: "),aDenery);
-	INFO_PRINTF1(*aBuf);
-	INFO_PRINTF1(_L("\n"));
+	test.Printf(_L("%D: "),aDenery);
+		test.Printf(*aBuf);
+		test.Printf(_L("\n"));
 	}
 
 
-void CT_ROMAN::test1()
+LOCAL_C void test1()
 	{
-	INFO_PRINTF1(_L("Testing with buffer of adequate size"));
-	INFO_PRINTF1(_L(" @SYMTestCaseID:SYSLIB-ETEXT-LEGACY-T_ROMAN-0001 "));
+	test.Start(_L("Testing with buffer of adequate size"));
+	test.Next(_L(" @SYMTestCaseID:SYSLIB-ETEXT-LEGACY-T_ROMAN-0001 "));
 	HBufC* hbuf = HBufC::NewL(10); 
 	CleanupStack::PushL(hbuf);
 	TRomanNumeral roman;
@@ -73,7 +64,7 @@ void CT_ROMAN::test1()
 		test(buf==_L("IV"));
 	CleanupStack::PopAndDestroy();
 	//
-	INFO_PRINTF1(_L("Testing with inadequate buffer"));
+	test.Next(_L("Testing with inadequate buffer"));
 	HBufC* minibuf = HBufC::NewL(1); 
 	CleanupStack::PushL(minibuf);
 	GetValue(minibuf,4,roman);
@@ -83,9 +74,9 @@ void CT_ROMAN::test1()
 	}
 
 
-void CT_ROMAN::test2()
+LOCAL_C void test2()
 	{
-	INFO_PRINTF1(_L("Testing Roman numerals for a range of denery values"));
+	test.Next(_L("Testing Roman numerals for a range of denery values"));
 	HBufC* hbuf = HBufC::NewL(10); 
 	CleanupStack::PushL(hbuf);
 	TRomanNumeral roman;
@@ -111,9 +102,9 @@ void CT_ROMAN::test2()
 	}
 
 
-void CT_ROMAN::test3()
+LOCAL_C void test3()
 	{
-	INFO_PRINTF1(_L("Testing alphabetic numerals for a range of denery values"));
+	test.Next(_L("Testing alphabetic numerals for a range of denery values"));
 	HBufC* hbuf = HBufC::NewL(10); 
 	CleanupStack::PushL(hbuf);
 	TAlphabeticNumeral alpha;
@@ -139,7 +130,7 @@ void CT_ROMAN::test3()
 	}
 
 
-void CT_ROMAN::runTests()
+LOCAL_C void runTests()
 // Test the fields dll.
 //
     {
@@ -154,7 +145,7 @@ void CT_ROMAN::runTests()
     }
 
 
-void CT_ROMAN::setupCleanup()
+LOCAL_C void setupCleanup()
 //
 // Initialise the cleanup stack.
 //
@@ -170,30 +161,24 @@ void CT_ROMAN::setupCleanup()
 		});
 	}
 
-CT_ROMAN::CT_ROMAN()
+
+GLDEF_C TInt E32Main()
+//
+// Test the streaming framework.
+//
     {
-    SetTestStepName(KTestStep_T_ROMAN);
-    }
 
-TVerdict CT_ROMAN::doTestStepL()
-    {
-	INFO_PRINTF1(_L("Testing denery to Roman numeral converter"));
-    SetTestStepResult(EFail);
-
-    __UHEAP_MARK;
-
+	test.Title();
+	
+	__UHEAP_MARK;
 	setupCleanup();
-    
-    TRAPD(error1, runTests());
-
+       
+	TRAPD(r,runTests());
+    test(r == KErrNone);
+	
 	delete TheTrapCleanup;
-
-    __UHEAP_MARKEND;
-
-    if(error1 == KErrNone)
-        {
-        SetTestStepResult(EPass);
-        }
-
-    return TestStepResult();
+	__UHEAP_MARKEND;
+	test.End();
+	test.Close();
+	return 0;
     }

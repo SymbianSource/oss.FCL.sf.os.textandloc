@@ -17,23 +17,37 @@
 
 
 #include <e32std.h>
+#include <e32test.h>
 #include <f32file.h>
 #include <utf.h>
-#include "t_realuni.h"
 
 ///////////////////////////////////////////////////////////////////////////////////////
 
+RTest TheTest(_L("TRealUni"));
 
-#define test(cond)                                          \
-    {                                                       \
-    TBool __bb = (cond);                                    \
-    TEST(__bb);                                             \
-    if (!__bb)                                              \
-        {                                                   \
-        ERR_PRINTF1(_L("ERROR: Test Failed"));              \
-        User::Leave(1);                                     \
-        }                                                   \
-    }
+///////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////
+//Tests macroses and functions.
+//If (!aValue) then the test will be panicked, the test data files will be deleted.
+static void Check(TInt aValue, TInt aLine)
+	{
+	if(!aValue)
+		{
+		TheTest(EFalse, aLine);
+		}
+	}
+//If (aValue != aExpected) then the test will be panicked, the test data files will be deleted.
+static void Check(TInt aValue, TInt aExpected, TInt aLine)
+	{
+	if(aValue != aExpected)
+		{
+		TheTest.Printf(_L("*** Expected error: %d, got: %d\r\n"), aExpected, aValue);
+		TheTest(EFalse, aLine);
+		}
+	}
+//Use these to test conditions.
+#define TEST(arg) ::Check((arg), __LINE__)
+#define TEST2(aValue, aExpected) ::Check(aValue, aExpected, __LINE__)
 
 ///////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -45,62 +59,43 @@
 @SYMTestExpectedResults Test must not fail
 @SYMREQ                 REQ0000
 */
-void CT_REALUNI::TestREALUNI()
+GLDEF_C TInt E32Main()
 	{
-    INFO_PRINTF1(_L(" @SYMTestCaseID:SYSLIB-CHARCONV-CT-0568 Testing a \"real\" Unicode file's round trip "));
+	TheTest.Title();
+	TheTest.Start(_L(" @SYMTestCaseID:SYSLIB-CHARCONV-CT-0568 Testing a \"real\" Unicode file's round trip "));
 	RFs fs;
 	RFile file;
-	test(fs.Connect() == KErrNone);
+	TEST2(fs.Connect(), KErrNone);
 	TFindFile findFile=fs;
-	test(findFile.FindByDir(_L("DAXUE.UNI"), _L("\\system\\data\\"))==KErrNone);
-	test(file.Open(fs, findFile.File(), EFileShareExclusive|EFileStream|EFileRead)==KErrNone);
+	TEST(findFile.FindByDir(_L("DAXUE.UNI"), _L("\\system\\data\\"))==KErrNone);
+	TEST(file.Open(fs, findFile.File(), EFileShareExclusive|EFileStream|EFileRead)==KErrNone);
 	TInt size=0;
-	test(file.Size(size) == KErrNone);
-	test((size>0) && (size%2==0));
+	TEST2(file.Size(size), KErrNone);
+	TEST((size>0) && (size%2==0));
 	HBufC16* originalUnicode=HBufC16::New(size/2);
 	HBufC8* generatedUtf8=HBufC8::New(size*2);
 	HBufC16* generatedUnicode=HBufC16::New(size/2);
-	test(originalUnicode!=NULL);
-	test(generatedUtf8!=NULL);
-	test(generatedUnicode!=NULL);
+	TEST(originalUnicode!=NULL);
+ 	TEST(generatedUtf8!=NULL);
+ 	TEST(generatedUnicode!=NULL);
 	TPtr8 ptr1(REINTERPRET_CAST(TUint8*, CONST_CAST(TUint16*, originalUnicode->Ptr())), 0, size);
-	test(file.Read(ptr1) == KErrNone);
-	test(ptr1.Length()==size);
+	TEST2(file.Read(ptr1), KErrNone);
+	TEST(ptr1.Length()==size);
 	TPtr16 ptr2=originalUnicode->Des();
 	ptr2.SetLength(size/2);
-	test(originalUnicode->Size()==size);
+	TEST(originalUnicode->Size()==size);
 	TPtr8 ptr3=generatedUtf8->Des();
-	test(CnvUtfConverter::ConvertFromUnicodeToUtf8(ptr3, *originalUnicode)==0);
+	TEST(CnvUtfConverter::ConvertFromUnicodeToUtf8(ptr3, *originalUnicode)==0);
 	TPtr16 ptr4=generatedUnicode->Des();
-	test(CnvUtfConverter::ConvertToUnicodeFromUtf8(ptr4, *generatedUtf8)==0);
-	test(*generatedUnicode==*originalUnicode);
+	TEST(CnvUtfConverter::ConvertToUnicodeFromUtf8(ptr4, *generatedUtf8)==0);
+	TEST(*generatedUnicode==*originalUnicode);
 	delete originalUnicode;
 	delete generatedUtf8;
 	delete generatedUnicode;
 	file.Close();
 	fs.Close();
-
+	TheTest.End();
+	TheTest.Close();
+	return KErrNone;
 	}
 
-CT_REALUNI::CT_REALUNI()
-    {
-    SetTestStepName(KTestStep_T_REALUNI);
-    }
-
-TVerdict CT_REALUNI::doTestStepL()
-    {
-    SetTestStepResult(EFail);
-
-    __UHEAP_MARK;
-
-    TRAPD(error1, TestREALUNI());
-
-    __UHEAP_MARKEND;
-
-    if(error1 == KErrNone )
-        {
-        SetTestStepResult(EPass);
-        }
-
-    return TestStepResult();
-    }

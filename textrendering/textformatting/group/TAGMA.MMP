@@ -30,7 +30,7 @@ VENDORID 0x70000001
 
 SOURCEPATH ../tagma
 userinclude ../tagma
-userinclude ../inc ../traces
+userinclude ../inc
 OS_LAYER_SYSTEMINCLUDE_SYMBIAN
 
 source TMCODE.CPP TMFORWRD.CPP TMGLYPH.CPP TMINTERP.CPP TMLAYOUT.CPP

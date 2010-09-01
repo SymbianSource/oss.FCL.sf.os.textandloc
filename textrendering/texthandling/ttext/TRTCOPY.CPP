@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 1997-2010 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 1997-2009 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -16,6 +16,7 @@
 */
 
 
+#include <e32test.h>
 #include <txtrich.h>
 #include <txtstyle.h>
 #include <flddef.h>
@@ -25,19 +26,8 @@
 #include <s32mem.h>
 #include <s32file.h>
 #include "../incp/T_PMLPAR.H"
-#include "TRTCOPY.h"
 
-#define test(cond)											\
-	{														\
-	TBool __bb = (cond);									\
-	TEST(__bb);												\
-	if (!__bb)												\
-		{													\
-		ERR_PRINTF1(_L("ERROR: Test Failed"));				\
-		User::Leave(1);										\
-		}													\
-	}
-
+GLDEF_C RTest test(_L("TRTCOPY"));
 LOCAL_D RFs theFs;
 LOCAL_D CRichText* ComponentText;
 LOCAL_D CParaFormatLayer* GlobalParaFormatLayer;
@@ -48,7 +38,7 @@ LOCAL_D CParser* TheParser;
 const TInt KTestCleanupStack=0x500;
 
 
-CRichText* CT_TRTCOPY::LoadIntoTextL(TFileName& aFileName)
+LOCAL_C CRichText* LoadIntoTextL(TFileName& aFileName)
 //
 	{
 	TRAPD(ret,
@@ -64,7 +54,7 @@ CRichText* CT_TRTCOPY::LoadIntoTextL(TFileName& aFileName)
 	}
 
 /*
-CStyleList* CT_TRTCOPY::CreatePopulatedStyleList()
+LOCAL_C CStyleList* CreatePopulatedStyleList()
 //
 	{
 	//
@@ -80,7 +70,7 @@ CStyleList* CT_TRTCOPY::CreatePopulatedStyleList()
 	}
 */
 
-void CT_TRTCOPY::CreateAggregateTextL()
+LOCAL_C void CreateAggregateTextL()
 //
 	{
 	TFileName theFileName=_L("z:\\test\\app-framework\\etext\\aggregat.pml");
@@ -113,13 +103,15 @@ void CT_TRTCOPY::CreateAggregateTextL()
 	}
 
 
-void CT_TRTCOPY::doMainL()
+LOCAL_C void doMainL()
 	{
 	CreateAggregateTextL();
+
+	
 	}
 
 
-void CT_TRTCOPY::setupCleanup()
+LOCAL_C void setupCleanup()
 //
 // Initialise the cleanup stack.
 //
@@ -135,29 +127,24 @@ void CT_TRTCOPY::setupCleanup()
 	test(r==KErrNone);
 	}
 
-CT_TRTCOPY::CT_TRTCOPY()
+
+GLDEF_C TInt E32Main()
+//
+// Test permanent file store.
+//
     {
-    SetTestStepName(KTestStep_T_TRTCOPY);
+	test.Title();	
+	setupCleanup();
+	__UHEAP_MARK;
+//
+	test.Start(_L(" @SYMTestCaseID:SYSLIB-TTEXT-LEGACY-T_TRTCOPY-0001 RichText Copy Testing "));
+	TRAPD(ret,doMainL());	
+	test(ret==KErrNone);
+	test.End();
+//
+	__UHEAP_MARKEND;
+	delete TheTrapCleanup;
+	test.Close();
+	return KErrNone;
     }
 
-TVerdict CT_TRTCOPY::doTestStepL()
-    {
-    SetTestStepResult(EFail);
-
-    INFO_PRINTF1(_L("TRTCOPY"));
-    setupCleanup();
-    __UHEAP_MARK;
-
-    INFO_PRINTF1(_L(" @SYMTestCaseID:SYSLIB-TTEXT-LEGACY-T_TRTCOPY-0001 RichText Copy Testing "));
-    TRAPD(error1, doMainL());
-
-    __UHEAP_MARKEND;
-    delete TheTrapCleanup;
-
-    if(error1 == KErrNone)
-        {
-        SetTestStepResult(EPass);
-        }
-
-    return TestStepResult();
-    }

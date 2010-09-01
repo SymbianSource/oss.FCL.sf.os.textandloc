@@ -23,11 +23,6 @@
 #include "TXTFRMAT.H"
 
 #include "TXTSTD.H"
-#include "OstTraceDefinitions.h"
-#ifdef OST_TRACE_COMPILER_IN_USE
-#include "TXTFRMATTraces.h"
-#endif
-
 
 
 const TInt KParaDefaultLanguage=0;
@@ -652,10 +647,6 @@ than the total number of tab stops, or a panic occurs. To find the total number
 of tab stops, use TabCount(). 
 @return The tab stop located at the specified index. */
 	{
-	if (aTabIndex>=TabCount())
-	    {
-	    OstTrace0( TRACE_FATAL, CPARAFORMAT_TABSTOP, "ETabNotFound" );
-	    }
 	__ASSERT_ALWAYS(aTabIndex<TabCount(),Panic(ETabNotFound));
 	
 	return (iTabList)

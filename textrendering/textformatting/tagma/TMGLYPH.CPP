@@ -19,11 +19,6 @@
 
 #include "TMSTD.H"
 #include <bidi.h>
-#include "OstTraceDefinitions.h"
-#ifdef OST_TRACE_COMPILER_IN_USE
-#include "TMGLYPHTraces.h"
-#endif
-
 
 
 inline TBool IsSurrogate(TText a) { return 0xD800 == (a & 0xF800); }
@@ -317,10 +312,6 @@ void AppendTextToBuffer(TDes& aBuffer,
 		TPtrC text;
 		aSource.GetText(aStart, text, dummy);
 		TInt textEnd = aStart + text.Length();
-		if (aStart >= textEnd)
-		    {
-		    OstTrace0( TRACE_FATAL, DUP1__APPENDTEXTTOBUFFER, "EZeroLengthTextSupplied" );
-		    }
 		__ASSERT_ALWAYS(aStart < textEnd, TmPanic(EZeroLengthTextSupplied));
 		if (aEnd < textEnd)
 			{
@@ -422,10 +413,6 @@ TInt RTmTextCache::GetDisplayedText(TInt aStart, TInt aEnd,
 									TDisplayedTextDirectionality aDirectionality, TText* aBuffer,TUint aContextChar,
 									TTmCharFormat* aFormat, CTmTextFontCache** aFont)
 	{
-	if (aStart > aEnd)
-	    {
-	    OstTrace0( TRACE_DUMP, RTMTEXTCACHE_GETDISPLAYEDTEXT, "EBadArg" );
-	    }
 	__ASSERT_DEBUG(aStart <= aEnd, TmPanic(EBadArg));
 	if (aContextChar == 0)
 		aBuffer[0] = 0xFFFF;

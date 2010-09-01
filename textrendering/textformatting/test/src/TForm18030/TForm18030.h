@@ -41,10 +41,10 @@
 #include <eikappui.h>
 #include <eikapp.h>
 #include <eikdoc.h>
-#include <eikmenup.h>
-#include <eikon.hrh>
+#include <techview/eikmenup.h>
+#include <techview/eikon.hrh>
 #include <txtrich.h> 
-#include <eikrted.h>
+#include <techview/eikrted.h>
 
 #include <tform18030.rsg>
 #include "TForm18030.hrh"

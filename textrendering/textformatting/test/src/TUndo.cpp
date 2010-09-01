@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2000-2010 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 2000-2009 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -35,17 +35,14 @@
 #include "txtfmlyr_internal.h"
 #endif
 
-#include "tundo.h"
-
 #define UNUSED_VAR(a) a = a
 
 using namespace UndoSystem;
 
 namespace
 {
-CTUndoStep* TestStep = NULL;
-#define TESTPOINT(p) TestStep->testpoint(p,(TText8*)__FILE__,__LINE__)
-#define TESTPRINT(p) TestStep->print(p,(TText8*)__FILE__,__LINE__)
+CTrapCleanup* TrapCleanup;
+RTest test(_L("TUndo - Undo system"));
 }
 
 //
@@ -1223,7 +1220,7 @@ TInt ExecuteStackL(CCommandStack& a)
 		CSingleCommand* single = a.Top()->Single();
 		if (!single)
 			{
-            TESTPRINT(_L("CCommandStack : stack unexpectedly contained batches"));
+			test.Printf(_L("CCommandStack : stack unexpectedly contained batches"));
 			a.Reset();
 			return 1;
 			}
@@ -1237,14 +1234,14 @@ TInt CheckLog(CCheckingLogger& a)
 	{
 	if (a.Passed())
 		return 0;
-	TESTPRINT(_L("CCommandStack... : log failed"));
+	test.Printf(_L("CCommandStack... : log failed"));
 	return 1;
 	}
 TInt CheckTop(CCommandStack& aStack, CCommand* aTop)
 	{
 	if (aStack.Top() != aTop)
 		{
-        TESTPRINT(_L("CCommandStack : unexpected item at top of stack"));
+		test.Printf(_L("CCommandStack : unexpected item at top of stack"));
 		return 1;
 		}
 	return 0;
@@ -1253,7 +1250,7 @@ TInt CheckCount(CCommandStack& aStack, TInt aExpectedCount)
 	{
 	if (aStack.Count() != aExpectedCount)
 		{
-	    TESTPRINT(_L("CCommandStack : stack an unexpected size"));
+		test.Printf(_L("CCommandStack : stack an unexpected size"));
 		return 1;
 		}
 	return 0;
@@ -1263,7 +1260,7 @@ TInt CheckPop(CCommandStack& aStack)
 	CCommand* check = aStack.Top();
 	if (aStack.Pop() != check)
 		{
-        TESTPRINT(_L("CCommandStack : Pop() does not match Top()"));
+		test.Printf(_L("CCommandStack : Pop() does not match Top()"));
 		return 1;
 		}
 	return 0;
@@ -1395,21 +1392,21 @@ void ExecuteBatchL(CBatchCommand& a)
 		single->ExecuteL();
 		if (a.Pop() != single)
 			{
-            TESTPRINT(_L("CBatchCommand : Pop() didn't match Top()"));
-            TESTPOINT(0);
+			test.Printf(_L("CBatchCommand : Pop() didn't match Top()"));
+			test(0);
 			}
 		delete single;
 		}
-	TESTPOINT(1);
+	test(1);
 	}
 void CheckTop(CBatchCommand& aBatch, CCommand* aTop)
 	{
 	if (aBatch.Top() != aTop)
 		{
-        TESTPRINT(_L("CCommandBatch : unexpected item at top of stack"));
-        TESTPOINT(0);
+		test.Printf(_L("CCommandBatch : unexpected item at top of stack"));
+		test(0);
 		}
-	TESTPOINT(1);
+	test(1);
 	}
 void TestCBatchCommandL()
 	{
@@ -1534,7 +1531,7 @@ void ExecuteHistoryL(CCommandHistory& aHistory, CLogger& aLog)
 		else
 			{
 			CBatchCommand* batch = aHistory.Top()->Batch();
-			TESTPOINT(batch != 0);
+			test(batch != 0);
 			aLog << _L("batch{");
 			ExecuteBatchL(*batch);
 			aLog << _L("}");
@@ -1609,41 +1606,41 @@ void TestCanUndo(const CCommandManager& aMan)
 	{
 	if (aMan.CanUndo())
 		{
-        TESTPOINT(1);
+		test(1);
 		return;
 		}
-	TESTPRINT(_L("CCommandManager : unexpectedly could not undo"));
-	TESTPOINT(0);
+	test.Printf(_L("CCommandManager : unexpectedly could not undo"));
+	test(0);
 	}
 void TestCanRedo(const CCommandManager& aMan)
 	{
 	if (aMan.CanRedo())
 		{
-        TESTPOINT(1);
+		test(1);
 		return;
 		}
-	TESTPRINT(_L("CCommandManager : unexpectedly could not redo"));
-	TESTPOINT(0);
+	test.Printf(_L("CCommandManager : unexpectedly could not redo"));
+	test(0);
 	}
 void TestCannotUndo(const CCommandManager& aMan)
 	{
 	if (!aMan.CanUndo())
 		{
-        TESTPOINT(1);
+		test(1);
 		return;
 		}
-	TESTPRINT(_L("CCommandManager : unexpectedly could undo"));
-	TESTPOINT(0);
+	test.Printf(_L("CCommandManager : unexpectedly could undo"));
+	test(0);
 	}
 void TestCannotRedo(const CCommandManager& aMan)
 	{
 	if (!aMan.CanRedo())
 		{
-        TESTPOINT(1);
+		test(1);
 		return;
 		}
-	TESTPRINT(_L("CCommandManager : unexpectedly could undo"));
-	TESTPOINT(0);
+	test.Printf(_L("CCommandManager : unexpectedly could undo"));
+	test(0);
 	}
 void SetUpTestL(CCommandManager& aMan, CSingleCommand& aCommand, TInt* aTarget, CLogger* aLogger)
 	{
@@ -1672,9 +1669,9 @@ TInt CheckErrorCode(TInt aErr, TInt aExpected)
 	if (aErr == aExpected)
 		return 0;
 	if (aErr == KErrNone)
-	    TESTPRINT(_L("CCommandManager : no leave where one was expected"));
+		test.Printf(_L("CCommandManager : no leave where one was expected"));
 	else
-	    TESTPRINT(_L("CCommandManager : unexpected leave code"));
+		test.Printf(_L("CCommandManager : unexpected leave code"));
 	return 1;
 	}
 void TestCCommandManagerL()
@@ -1999,11 +1996,11 @@ void CheckEditorLog(CCheckingLogger& a)
 	{
 	if (a.Passed())
 		{
-	    TESTPOINT(1);
+		test(1);
 		return;
 		}
-	TESTPRINT(_L("EditorUndo : log failed"));
-	TESTPOINT(0);
+	test.Printf(_L("EditorUndo : log failed"));
+	test(0);
 	}
 
 void TestPlainText(CTestEditor& aTestEditor, MUnifiedEditor& aUndoEditor,
@@ -2795,16 +2792,16 @@ void TestEditorUndo::Test6L()
 	styleLog2 = log->GetStore();
 	if (retval != KErrNone)
 		{
-        TESTPRINT(_L("EditorUndo : apply style failed"));
-        TESTPOINT(0);
+		test.Printf(_L("EditorUndo : apply style failed"));
+		test(0);
 		}
 	TPtrC testStyleName;
 	TInt testStyleRunLength;
 	ed->StyleSupport()->GetStyle(1, testStyleName, testStyleRunLength);
 	if (testStyleRunLength != 3 || testStyleName != style1.iName)
 		{
-        TESTPRINT(_L("EditorUndo : apply style failed"));
-		TESTPOINT(0);
+		test.Printf(_L("EditorUndo : apply style failed"));
+		test(0);
 		}
 	ed->InsertTextL(5, _L(","), &style1.iName, 0, 0);
 	testEd->Print(*log);
@@ -2835,14 +2832,14 @@ void TestEditorUndo::Test6L()
 	styleLog10 = log->GetStore();
 	if (retval != KErrNone)
 		{
-        TESTPRINT(_L("EditorUndo : rename style failed"));
-		TESTPOINT(0);
+		test.Printf(_L("EditorUndo : rename style failed"));
+		test(0);
 		}
 	ed->StyleSupport()->GetStyle(1, testStyleName, testStyleRunLength);
 	if (testStyleRunLength != 1 || testStyleName != style1.iName)
 		{
-        TESTPRINT(_L("EditorUndo : rename or apply style failed"));
-		TESTPOINT(0);
+		test.Printf(_L("EditorUndo : rename or apply style failed"));
+		test(0);
 		}
 	ed->StyleSupport()->RenameStyleL(_L("title"), _L("zip"));
 	style2.iName = _L("zip");
@@ -3172,82 +3169,82 @@ void TestEditorUndo::Test8L()
 		// in the way.
 		if (i == 5)
 			{
-            TESTPOINT(manager->IsAtBookmark());
+			test(manager->IsAtBookmark());
 			check->SetCheckString(*bookMarkLog4);
 			testEd->Print(*check);
 			CheckEditorLog(*check);
 			ed->UndoL();
 			}
 		if (i == 4)
-		    TESTPOINT(manager->IsAtBookmark());
+			test(manager->IsAtBookmark());
 		else
-		    TESTPOINT(!manager->IsAtBookmark());
+			test(!manager->IsAtBookmark());
 		check->SetCheckString(*bookMarkLog3);
 		testEd->Print(*check);
 		CheckEditorLog(*check);
 		ed->UndoL();
 		if (i == 2)
-		    TESTPOINT(manager->IsAtBookmark());
+			test(manager->IsAtBookmark());
 		else
-		    TESTPOINT(!manager->IsAtBookmark());
+			test(!manager->IsAtBookmark());
 		check->SetCheckString(*bookMarkLog2);
 		testEd->Print(*check);
 		CheckEditorLog(*check);
 		ed->UndoL();
 		if (i == 1)
-		    TESTPOINT(manager->IsAtBookmark());
+			test(manager->IsAtBookmark());
 		else
-		    TESTPOINT(!manager->IsAtBookmark());
+			test(!manager->IsAtBookmark());
 		check->SetCheckString(*bookMarkLog1);
 		testEd->Print(*check);
 		CheckEditorLog(*check);
 		ed->UndoL();
 		if (i == 0)
-		    TESTPOINT(manager->IsAtBookmark());
+			test(manager->IsAtBookmark());
 		else
-		    TESTPOINT(!manager->IsAtBookmark());
+			test(!manager->IsAtBookmark());
 		check->SetCheckString(*bookMarkLog0);
 		testEd->Print(*check);
 		CheckEditorLog(*check);
-		TESTPOINT(!ed->CanUndo());
+		test(!ed->CanUndo());
 		ed->RedoL();
 		if (i == 1)
-		    TESTPOINT(manager->IsAtBookmark());
+			test(manager->IsAtBookmark());
 		else
-		    TESTPOINT(!manager->IsAtBookmark());
+			test(!manager->IsAtBookmark());
 		check->SetCheckString(*bookMarkLog1);
 		testEd->Print(*check);
 		CheckEditorLog(*check);
 		ed->RedoL();
 		if (i == 2)
-		    TESTPOINT(manager->IsAtBookmark());
+			test(manager->IsAtBookmark());
 		else
-		    TESTPOINT(!manager->IsAtBookmark());
+			test(!manager->IsAtBookmark());
 		check->SetCheckString(*bookMarkLog2);
 		testEd->Print(*check);
 		CheckEditorLog(*check);
 		ed->RedoL();
 		if (i == 4)
-		    TESTPOINT(manager->IsAtBookmark());
+			test(manager->IsAtBookmark());
 		else
-		    TESTPOINT(!manager->IsAtBookmark());
+			test(!manager->IsAtBookmark());
 		check->SetCheckString(*bookMarkLog3);
 		testEd->Print(*check);
 		CheckEditorLog(*check);
 		ed->RedoL();
 		if (i == 5)
 			{
-            TESTPOINT(manager->IsAtBookmark());
+			test(manager->IsAtBookmark());
 			check->SetCheckString(*bookMarkLog4);
 			testEd->Print(*check);
 			CheckEditorLog(*check);
 			ed->RedoL();
 			}
-		TESTPOINT(!ed->CanRedo());
+		test(!ed->CanRedo());
 		if (i == 6)
-		    TESTPOINT(manager->IsAtBookmark());
+			test(manager->IsAtBookmark());
 		else
-		    TESTPOINT(!manager->IsAtBookmark());
+			test(!manager->IsAtBookmark());
 
 		delete bookMarkLog0;
 		delete bookMarkLog1;
@@ -3440,8 +3437,8 @@ void TestMultipleEditorsL()
 	TTmCharFormat charB1;
 	RTmParFormat parT1;
 	ed0->GetBaseFormatL(charB1,parT1);
-	TESTPOINT(charB1==charB);
-	TESTPOINT(parT1==parT);
+	test(charB1==charB);
+	test(parT1==parT);
 
 	//Getting the character format
 	TTmCharFormatLayer charLayer1;
@@ -3456,7 +3453,7 @@ void TestMultipleEditorsL()
 	//Getting the text
 	TPtrC text;
 	ed0->GetText(0,text);
-	TESTPOINT(text==_L("a"));
+	test(text==_L("a"));
 
 	//Deleting the formating
 	ed0->DeleteCharFormatL(0,1);
@@ -3544,15 +3541,13 @@ void TestMultipleEditorsL()
 //
 //
 
-TVerdict CTUndoStep::doTestStepL()
+void RunTests()
 	{
-    SetTestStepResult(EPass);
-    TestStep = this;
-    TESTPRINT(_L("TUndo - Undo system"));
-    
-    __UHEAP_MARK;
-    TESTPRINT(_L("@SYMTestCaseID:SYSLIB-FORM-LEGACY-UNDO-0001 Undo System Tests: "));
-	
+	__UHEAP_MARK;
+
+	test.Title();
+	test.Start(_L("@SYMTestCaseID:SYSLIB-FORM-LEGACY-UNDO-0001 Undo System Tests: "));
+
 	// test of general undo system components
 	TestCCommandStackL();
 	TestCBatchCommandL();
@@ -3565,8 +3560,17 @@ TVerdict CTUndoStep::doTestStepL()
 	// test that command manager and multiple editors integrate correctly
 	TestMultipleEditorsL();
 
+	test.End();
+	test.Close();
+
 	__UHEAP_MARKENDC(0);
-	
-	return TestStepResult();
 	}
 
+TInt E32Main()
+	{
+	TrapCleanup = CTrapCleanup::New();
+	TRAPD(err, RunTests());
+    test(err == KErrNone);
+	delete TrapCleanup;
+	return 0;
+	}

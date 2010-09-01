@@ -1,0 +1,41 @@
+/*
+* Copyright (c) 2006 Nokia Corporation and/or its subsidiary(-ies). 
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:   File that exports the files belonging to 
+:                Character Conversion API
+*
+*/
+
+
+
+#include <platform_paths.hrh>
+
+PRJ_PLATFORMS
+DEFAULT
+
+PRJ_EXPORTS
+
+../inc/GBK.H     OS_LAYER_PUBLIC_EXPORT_PATH(gbk.h)
+../inc/JISX0208.H     OS_LAYER_PUBLIC_EXPORT_PATH(jisx0208.h)
+../inc/GB2312.H     OS_LAYER_PUBLIC_EXPORT_PATH(gb2312.h)
+../inc/CharacterSetConverter.h     OS_LAYER_PUBLIC_EXPORT_PATH(charactersetconverter.h)
+../inc/CONVDATA.H     OS_LAYER_PUBLIC_EXPORT_PATH(convdata.h)
+../inc/JISX0201.H     OS_LAYER_PUBLIC_EXPORT_PATH(jisx0201.h)
+../inc/UTF.H     OS_LAYER_PUBLIC_EXPORT_PATH(utf.h)
+../inc/JISX0212.H     OS_LAYER_PUBLIC_EXPORT_PATH(jisx0212.h)
+../inc/CharacterSetConverter.inl     OS_LAYER_PUBLIC_EXPORT_PATH(CharacterSetConverter.inl)
+../inc/BIG5.H     OS_LAYER_PUBLIC_EXPORT_PATH(big5.h)
+../inc/CONVNAMES.H     OS_LAYER_PUBLIC_EXPORT_PATH(convnames.h)
+../inc/CHARCONV.H     OS_LAYER_PUBLIC_EXPORT_PATH(charconv.h)
+
+../inc/SHIFTJIS.H     OS_LAYER_PUBLIC_EXPORT_PATH(shiftjis.h)

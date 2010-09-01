@@ -283,7 +283,6 @@ TInt CEucjpPackedConverterImpl::ConvertFromUnicode(
         const TDesC16& aUnicode,
         CCnvCharacterSetConverter::TArrayOfAscendingIndices& aIndicesOfUnconvertibleCharacters)
     {
-    TInt ret = KErrNone;
     RArray<CnvUtilities::SCharacterSet> characterSets;
     if ( FeatureManager::FeatureSupported(KFeatureIdJapanesePicto) )
         {      
@@ -292,19 +291,19 @@ TInt CEucjpPackedConverterImpl::ConvertFromUnicode(
         characterSet.iConversionData=&CnvJisRoman::ConversionData();
         characterSet.iConvertFromIntermediateBufferInPlace=DummyConvertFromIntermediateBufferInPlace;
         characterSet.iEscapeSequence=&KNullDesC8;
-        ret |= characterSets.Append(characterSet);
+        characterSets.Append(characterSet);
         characterSet.iConversionData=&CnvJisX0208::ConversionData();
         characterSet.iConvertFromIntermediateBufferInPlace=ConvertFromJisX0208ToEucJpPackedInPlace;
         characterSet.iEscapeSequence=&KNullDesC8;
-        ret |= characterSets.Append(characterSet);
+        characterSets.Append(characterSet);
         characterSet.iConversionData=&CnvHalfWidthKatakana8::ConversionData();
         characterSet.iConvertFromIntermediateBufferInPlace=ConvertFromHalfWidthKatakana8ToEucJpPackedInPlace;
         characterSet.iEscapeSequence=&KNullDesC8;
-        ret |= characterSets.Append(characterSet);
+        characterSets.Append(characterSet);
         characterSet.iConversionData=&CnvJisX0212::ConversionData();
         characterSet.iConvertFromIntermediateBufferInPlace=ConvertFromJisX0212ToEucJpPackedInPlace;
         characterSet.iEscapeSequence=&KNullDesC8;
-        ret |= characterSets.Append(characterSet);
+        characterSets.Append(characterSet);
 
         SetCharacterSetsForPictograph(characterSets, ECharsetEucJp);
         }
@@ -314,21 +313,20 @@ TInt CEucjpPackedConverterImpl::ConvertFromUnicode(
         characterSet.iConversionData=&CnvJisRoman::ConversionData();
         characterSet.iConvertFromIntermediateBufferInPlace=DummyConvertFromIntermediateBufferInPlace;
         characterSet.iEscapeSequence=&KNullDesC8;
-        ret |= characterSets.Append(characterSet);
+        characterSets.Append(characterSet);
         characterSet.iConversionData=&CnvJisX0208::ConversionData();
         characterSet.iConvertFromIntermediateBufferInPlace=ConvertFromJisX0208ToEucJpPackedInPlace;
         characterSet.iEscapeSequence=&KNullDesC8;
-        ret |= characterSets.Append(characterSet);
+        characterSets.Append(characterSet);
         characterSet.iConversionData=&CnvHalfWidthKatakana8::ConversionData();
         characterSet.iConvertFromIntermediateBufferInPlace=ConvertFromHalfWidthKatakana8ToEucJpPackedInPlace;
         characterSet.iEscapeSequence=&KNullDesC8;
-        ret |= characterSets.Append(characterSet);
+        characterSets.Append(characterSet);
         characterSet.iConversionData=&CnvJisX0212::ConversionData();
         characterSet.iConvertFromIntermediateBufferInPlace=ConvertFromJisX0212ToEucJpPackedInPlace;
         characterSet.iEscapeSequence=&KNullDesC8;
-        ret |= characterSets.Append(characterSet);
+        characterSets.Append(characterSet);
         }
-    __ASSERT_DEBUG(!ret, User::Panic(_L("RArray append failure"), ret));
     TInt unconvert = CnvUtilities::ConvertFromUnicode(aDefaultEndiannessOfForeignCharacters, aReplacementForUnconvertibleUnicodeCharacters, aForeign, aUnicode, aIndicesOfUnconvertibleCharacters, characterSets.Array());
 
     characterSets.Close();
@@ -577,7 +575,6 @@ TInt CEucjpPackedConverterImpl::ConvertToUnicode(
         TInt& aNumberOfUnconvertibleCharacters,
         TInt& aIndexOfFirstByteOfFirstUnconvertibleCharacter)
     {
-    TInt ret =KErrNone;
     RArray<CnvUtilities::SMethod> methods;
     if ( FeatureManager::FeatureSupported(KFeatureIdJapanesePicto) )
         {      
@@ -588,25 +585,25 @@ TInt CEucjpPackedConverterImpl::ConvertToUnicode(
         method.iConversionData=&CnvJisRoman::ConversionData();
         method.iNumberOfBytesPerCharacter=1;
         method.iNumberOfCoreBytesPerCharacter=1;
-        ret |= methods.Append(method);
+        methods.Append(method);
         method.iNumberOfBytesAbleToConvert=NumberOfBytesAbleToConvertToJisX0208;
         method.iConvertToIntermediateBufferInPlace=ConvertToJisX0208FromEucJpPackedInPlace;
         method.iConversionData=&CnvJisX0208::ConversionData();
         method.iNumberOfBytesPerCharacter=2;
         method.iNumberOfCoreBytesPerCharacter=2;
-        ret |= methods.Append(method);
+        methods.Append(method);
         method.iNumberOfBytesAbleToConvert=NumberOfBytesAbleToConvertToHalfWidthKatakana8;
         method.iConvertToIntermediateBufferInPlace=ConvertToHalfWidthKatakana8FromEucJpPackedInPlace;
         method.iConversionData=&CnvHalfWidthKatakana8::ConversionData();
         method.iNumberOfBytesPerCharacter=2;
         method.iNumberOfCoreBytesPerCharacter=1;
-        ret |= methods.Append(method);
+        methods.Append(method);
         method.iNumberOfBytesAbleToConvert=NumberOfBytesAbleToConvertToJisX0212;
         method.iConvertToIntermediateBufferInPlace=ConvertToJisX0212FromEucJpPackedInPlace;
         method.iConversionData=&CnvJisX0212::ConversionData();
         method.iNumberOfBytesPerCharacter=3;
         method.iNumberOfCoreBytesPerCharacter=2;
-        ret |= methods.Append(method);
+        methods.Append(method);
         }
     else
         {
@@ -616,27 +613,26 @@ TInt CEucjpPackedConverterImpl::ConvertToUnicode(
         method.iConversionData=&CnvJisRoman::ConversionData();
         method.iNumberOfBytesPerCharacter=1;
         method.iNumberOfCoreBytesPerCharacter=1;
-        ret |= methods.Append(method);
+        methods.Append(method);
         method.iNumberOfBytesAbleToConvert=NumberOfBytesAbleToConvertToJisX0208;
         method.iConvertToIntermediateBufferInPlace=ConvertToJisX0208FromEucJpPackedInPlace;
         method.iConversionData=&CnvJisX0208::ConversionData();
         method.iNumberOfBytesPerCharacter=2;
         method.iNumberOfCoreBytesPerCharacter=2;
-        ret |= methods.Append(method);
+        methods.Append(method);
         method.iNumberOfBytesAbleToConvert=NumberOfBytesAbleToConvertToHalfWidthKatakana8;
         method.iConvertToIntermediateBufferInPlace=ConvertToHalfWidthKatakana8FromEucJpPackedInPlace;
         method.iConversionData=&CnvHalfWidthKatakana8::ConversionData();
         method.iNumberOfBytesPerCharacter=2;
         method.iNumberOfCoreBytesPerCharacter=1;
-        ret |= methods.Append(method);
+        methods.Append(method);
         method.iNumberOfBytesAbleToConvert=NumberOfBytesAbleToConvertToJisX0212;
         method.iConvertToIntermediateBufferInPlace=ConvertToJisX0212FromEucJpPackedInPlace;
         method.iConversionData=&CnvJisX0212::ConversionData();
         method.iNumberOfBytesPerCharacter=3;
         method.iNumberOfCoreBytesPerCharacter=2;
-        ret |= methods.Append(method);
+        methods.Append(method);
         }
-    __ASSERT_DEBUG(!ret, User::Panic(_L("RArray append failure"), ret));
     TInt unconvert = CnvUtilities::ConvertToUnicodeFromHeterogeneousForeign(aDefaultEndiannessOfForeignCharacters, aUnicode, aForeign, aNumberOfUnconvertibleCharacters, aIndexOfFirstByteOfFirstUnconvertibleCharacter, methods.Array());
 
     // The following is specific impelementation for brower.

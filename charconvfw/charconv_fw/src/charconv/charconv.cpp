@@ -26,11 +26,6 @@
 #include <charactersetconverter.h>
 #include "chcnvpanic.h"
 #include "charconv_tls.h"
-#include "OstTraceDefinitions.h"
-#ifdef OST_TRACE_COMPILER_IN_USE
-#include "charconvTraces.h"
-#endif
-
 
 #if defined(_DEBUG)
 #define NON_DEBUG_INLINE
@@ -134,7 +129,6 @@ static void IsBuiltInCharacterSet(const TUint& aCharacterSetIdentifier,
 			break;
 #if defined(_DEBUG)
 		default:
-		    OstTraceExt3( TRACE_DUMP, _ISBUILTINCHARACTERSET, "::IsBuiltInCharacterSet;aCharacterSetIdentifier=%u;aConfidenceLevel=%d;aSample=%x", aCharacterSetIdentifier, aConfidenceLevel, ( TUint )&( aSample ) );	    
 			Panic(EPanicCharacterSetNotPresent);
 			break;
 #endif
@@ -163,16 +157,8 @@ void TTlsData::CharacterSetConverterIsBeingDestroyed()
 	TTlsData* tlsData=STATIC_CAST(TTlsData*, Dll::Tls());
 	if (tlsData!=NULL)
 		{
-		if ( tlsData->iCurrentCharacterSetConverter!=NULL )
-		    {
-		    OstTrace0( TRACE_DUMP, TTLSDATA_CHARACTERSETCONVERTERISBEINGDESTROYED, "EPanicDestructionDuringConversion" );	    
-		    }
 		__ASSERT_DEBUG(tlsData->iCurrentCharacterSetConverter==NULL, Panic(EPanicDestructionDuringConversion));
 		--tlsData->iReferenceCount;
-		if ( tlsData->iReferenceCount < 0 )
-		    {
-		    OstTrace0( TRACE_DUMP, DUP1_TTLSDATA_CHARACTERSETCONVERTERISBEINGDESTROYED, "EPanicBadTlsDataReferenceCount" );
-		    }
 		__ASSERT_DEBUG(tlsData->iReferenceCount>=0, Panic(EPanicBadTlsDataReferenceCount));
 		if (tlsData->iReferenceCount<=0)
 			{
@@ -185,15 +171,7 @@ void TTlsData::CharacterSetConverterIsBeingDestroyed()
 void TTlsData::SetCurrentCharacterSetConverter(const CCnvCharacterSetConverter* aCharacterSetConverter)
 	{
 	TTlsData* tlsData=STATIC_CAST(TTlsData*, Dll::Tls());
-	if ( tlsData==NULL )
-	    {
-	    OstTrace0( TRACE_FATAL, DUP1_TTLSDATA_SETCURRENTCHARACTERSETCONVERTER, "No Tls Data in TTlsData::SetCurrentCharacterSetConverter" );
-	    }
 	__ASSERT_ALWAYS(tlsData!=NULL, Panic(EPanicNoTlsData));
-    if ( (tlsData->iCurrentCharacterSetConverter==NULL)==(aCharacterSetConverter==NULL) )
-        {
-        OstTrace0( TRACE_FATAL, TTLSDATA_SETCURRENTCHARACTERSETCONVERTER, "Bad Toggle of current characater set converter in TTlsData::SetCurrentCharacterSetConverter" );  
-        }
 	__ASSERT_ALWAYS((tlsData->iCurrentCharacterSetConverter==NULL)!=(aCharacterSetConverter==NULL), Panic(EPanicBadToggleOfCurrentCharacterSetConverter));
 	tlsData->iCurrentCharacterSetConverter=aCharacterSetConverter;
 	}
@@ -253,7 +231,7 @@ public:
 	void ReadBufferL(TDes8& aBuffer, TInt aBufferLength);
 	HBufC8* ReadBufferL(TInt aBufferLength);
 	HBufC8* ReadBufferLC(TInt aBufferLength);
-	inline TBool IsEndOfFile() const {if ( iNextByteToConsume>iOnePastEndOfBuffer ) {OstTrace0( TRACE_DUMP, _NONSHARABLE_CLASS, "EPanicPastEndOfFile" );}__ASSERT_DEBUG(iNextByteToConsume<=iOnePastEndOfBuffer, Panic(EPanicPastEndOfFile)); return iNextByteToConsume>=iOnePastEndOfBuffer;}
+	inline TBool IsEndOfFile() const {__ASSERT_DEBUG(iNextByteToConsume<=iOnePastEndOfBuffer, Panic(EPanicPastEndOfFile)); return iNextByteToConsume>=iOnePastEndOfBuffer;}
 private:
 	enum {ENumberOfBytesToConsumeBetweenEachReAllocation=1000};
 private:
@@ -275,20 +253,13 @@ private:
 
 void CFileReader::ReAllocateTheBuffer() // put this function first so that the compiler does actually inline it for non-DEBUG builds
 	{
-	if ( (iBuffer==NULL) || (iNextByteToConsume<iFlagPoleForReAllocation ) )
-	    {
-	    OstTrace0( TRACE_DUMP, CFILEREADER_REALLOCATETHEBUFFER, "EPanicNotPastFlagPoleForReAllocation" );
-	    }
-	
 	__ASSERT_DEBUG((iBuffer!=NULL) && (iNextByteToConsume>=iFlagPoleForReAllocation), Panic(EPanicNotPastFlagPoleForReAllocation));
 	const TInt lengthOfBuffer=iOnePastEndOfBuffer-iNextByteToConsume;
 	Mem::Copy(STATIC_CAST(TAny*, iBuffer), iNextByteToConsume, lengthOfBuffer);
+#if defined(_DEBUG)
 	const TAny* reAllocatedCell=
-	        User::ReAlloc(STATIC_CAST(TAny*, iBuffer), lengthOfBuffer);
-	if ( reAllocatedCell!=iBuffer )
-	    {
-	    OstTrace0( TRACE_DUMP, DUP1_CFILEREADER_REALLOCATETHEBUFFER, "EPanicReAllocatedCellMoved" );
-	    }
+#endif
+	User::ReAlloc(STATIC_CAST(TAny*, iBuffer), lengthOfBuffer);
 	__ASSERT_DEBUG(reAllocatedCell==iBuffer, Panic(EPanicReAllocatedCellMoved));
 	iNextByteToConsume=iBuffer;
 	iOnePastEndOfBuffer=iBuffer+lengthOfBuffer;
@@ -317,16 +288,11 @@ CFileReader::~CFileReader()
 
 void CFileReader::SkipL(TInt aNumberOfBytes)
 	{
-	if ( aNumberOfBytes<0 )
-	    {
-	    OstTrace0( TRACE_DUMP, CFILEREADER_SKIPL, "EPanicNegativeNumberOfBytes" );
-	    }
 	__ASSERT_DEBUG(aNumberOfBytes>=0, Panic(EPanicNegativeNumberOfBytes));
 	CheckPointers(EPanicInconsistentFileReader1);
 	const TUint8* newNextByteToConsume=iNextByteToConsume+aNumberOfBytes;
 	if (newNextByteToConsume>iOnePastEndOfBuffer)
 		{
-		OstTrace0( TRACE_FATAL, DUP2_CFILEREADER_SKIPL, "KErrCorrupt" );
 		User::Leave(KErrCorrupt);
 		}
 	iNextByteToConsume=newNextByteToConsume;
@@ -361,7 +327,6 @@ TInt CFileReader::ReadUint16L() // little-endian
 	const TUint8* newNextByteToConsume=iNextByteToConsume+sizeof(TUint16);
 	if (newNextByteToConsume>iOnePastEndOfBuffer)
 		{
-		OstTrace0( TRACE_FATAL, CFILEREADER_READUINT16L, "KErrCorrupt" );
 		User::Leave(KErrCorrupt);
 		}
 	const TInt integer=(*iNextByteToConsume|(*(iNextByteToConsume+1)<<8));
@@ -428,7 +393,6 @@ TInt CFileReader::ReadPositiveIntegerCompacted30L() // big-endian
 	const TUint8* bytePointer=iNextByteToConsume;
 	if (bytePointer>=iOnePastEndOfBuffer)
 		{
-		OstTrace0( TRACE_FATAL, CFILEREADER_READPOSITIVEINTEGERCOMPACTED30L, "KErrCorrupt" );
 		User::Leave(KErrCorrupt);
 		}
 	TInt integer=*bytePointer;
@@ -438,7 +402,6 @@ TInt CFileReader::ReadPositiveIntegerCompacted30L() // big-endian
 		++bytePointer;
 		if (bytePointer>=iOnePastEndOfBuffer)
 			{
-			OstTrace0( TRACE_FATAL, DUP1_CFILEREADER_READPOSITIVEINTEGERCOMPACTED30L, "KErrCorrupt" );
 			User::Leave(KErrCorrupt);
 			}
 		integer<<=8;
@@ -448,7 +411,6 @@ TInt CFileReader::ReadPositiveIntegerCompacted30L() // big-endian
 			integer&=~0x00004000;
 			if (bytePointer+2>=iOnePastEndOfBuffer)
 				{
-				OstTrace0( TRACE_FATAL, DUP2_CFILEREADER_READPOSITIVEINTEGERCOMPACTED30L, "KErrCorrupt" );
 				User::Leave(KErrCorrupt);
 				}
 			++bytePointer;
@@ -475,7 +437,6 @@ TInt CFileReader::ReadSignedIntegerCompacted29L() // big-endian
 	const TUint8* bytePointer=iNextByteToConsume;
 	if (bytePointer>=iOnePastEndOfBuffer)
 		{
-		OstTrace0( TRACE_FATAL, CFILEREADER_READSIGNEDINTEGERCOMPACTED29L, "KErrCorrupt" );
 		User::Leave(KErrCorrupt);
 		}
 	TInt integer=*bytePointer;
@@ -487,7 +448,6 @@ TInt CFileReader::ReadSignedIntegerCompacted29L() // big-endian
 		++bytePointer;
 		if (bytePointer>=iOnePastEndOfBuffer)
 			{
-			OstTrace0( TRACE_FATAL, DUP1_CFILEREADER_READSIGNEDINTEGERCOMPACTED29L, "KErrCorrupt" );
 			User::Leave(KErrCorrupt);
 			}
 		integer<<=8;
@@ -497,7 +457,6 @@ TInt CFileReader::ReadSignedIntegerCompacted29L() // big-endian
 			integer&=~0x00002000;
 			if (bytePointer+2>=iOnePastEndOfBuffer)
 				{
-				OstTrace0( TRACE_FATAL, DUP2_CFILEREADER_READSIGNEDINTEGERCOMPACTED29L, "KErrCorrupt" );
 				User::Leave(KErrCorrupt);
 				}
 			++bytePointer;
@@ -524,16 +483,11 @@ TInt CFileReader::ReadSignedIntegerCompacted29L() // big-endian
 
 void CFileReader::ReadBufferL(TDes8& aBuffer, TInt aBufferLength)
 	{
-	if ( aBufferLength<0 )
-	    {
-	    OstTrace0( TRACE_DUMP, CFILEREADER_READBUFFERL, "EPanicNegativeBufferLength1" );
-	    }
 	__ASSERT_DEBUG(aBufferLength>=0, Panic(EPanicNegativeBufferLength1));
 	CheckPointers(EPanicInconsistentFileReader15);
 	const TUint8* newNextByteToConsume=iNextByteToConsume+aBufferLength;
 	if (newNextByteToConsume>iOnePastEndOfBuffer)
 		{
-		OstTrace0( TRACE_FATAL, DUP1_CFILEREADER_READBUFFERL, "KErrCorrupt" );
 		User::Leave(KErrCorrupt);
 		}
 	aBuffer=TPtrC8(iNextByteToConsume, aBufferLength);
@@ -547,16 +501,11 @@ void CFileReader::ReadBufferL(TDes8& aBuffer, TInt aBufferLength)
 
 HBufC8* CFileReader::ReadBufferL(TInt aBufferLength)
 	{
-	if ( aBufferLength<0 )
-	    {
-	    OstTrace0( TRACE_DUMP, DUP2_CFILEREADER_READBUFFERL, "EPanicNegativeBufferLength2" );
-	    }
 	__ASSERT_DEBUG(aBufferLength>=0, Panic(EPanicNegativeBufferLength2));
 	CheckPointers(EPanicInconsistentFileReader17);
 	const TUint8* newNextByteToConsume=iNextByteToConsume+aBufferLength;
 	if (newNextByteToConsume>iOnePastEndOfBuffer)
 		{
-		OstTrace0( TRACE_FATAL, DUP3_CFILEREADER_READBUFFERL, "KErrCorrupt" );
 		User::Leave(KErrCorrupt);
 		}
 	HBufC8* buffer=TPtrC8(iNextByteToConsume, aBufferLength).AllocL();
@@ -595,17 +544,12 @@ CFileReader::CFileReader(const TUint8* aRomFile, TInt aLengthOfRomFile)
 void CFileReader::ConstructForNonRomFileL(RFile& aFile)
 	{
 	TInt lengthOfBuffer;
-	if ( aFile.Size(lengthOfBuffer) < 0 )
-	    {
-	    OstTrace0( TRACE_FATAL, DUP1_CFILEREADER_CONSTRUCTFORNONROMFILEL, "aFile.Size(lengthOfBuffer) < 0" );
-	    }
 	User::LeaveIfError(aFile.Size(lengthOfBuffer));
 	iBuffer=STATIC_CAST(TUint8*, User::AllocL(lengthOfBuffer+1));
 	TPtr8 buffer(iBuffer, 0, lengthOfBuffer);
 	User::LeaveIfError(aFile.Read(buffer));
 	if ((buffer.Length()!=lengthOfBuffer) || (lengthOfBuffer<=0))
 		{
-		OstTrace0( TRACE_FATAL, CFILEREADER_CONSTRUCTFORNONROMFILEL, "KErrCorrupt" );
 		User::Leave(KErrCorrupt);
 		}
 	iNextByteToConsume=iBuffer;
@@ -902,10 +846,6 @@ CCharsetCnvCache::~CCharsetCnvCache()
 		--iCacheSize;
 		}
 	//If iCacheSize is not 0, then there is something wrong with adding/removing cache entry functionality
-	if ( iCacheSize != 0)
-	    {
-	    OstTrace0( TRACE_DUMP, CCHARSETCNVCACHE_CCHARSETCNVCACHE, "iCacheSize not zero in CCharsetCnvCache::~CCharsetCnvCache" );
-	    }
 	__ASSERT_DEBUG(iCacheSize == 0, User::Invariant());
 	}
 
@@ -944,10 +884,6 @@ CCharacterSetConverterPluginInterface* CCharsetCnvCache::GetConverterL(TUid aImp
 			--iCacheSize;
 			}
 		}
-	if ( !entry )
-	    {
-	    OstTrace0( TRACE_FATAL, CCHARSETCNVCACHE_GETCONVERTERL, "entry NULL in CCharsetCnvCache::GetConverterL" );   
-	    }
 	__ASSERT_ALWAYS(entry, User::Invariant());
 	return entry->iCharsetCnv;
 	}
@@ -964,10 +900,6 @@ The implementation UID of the converter is used as a key, uniquely identifying t
 CCharacterSetConverterPluginInterface* CCharsetCnvCache::Converter(TUid aImplUid)
 	{
 	TCharsetCnvEntry* entry = Find(aImplUid);
-	if ( entry == NULL || entry->iCharsetCnv == NULL )
-	    {
-	    OstTrace0( TRACE_FATAL, CCHARSETCNVCACHE_CONVERTER, "entry or entry->iCharsetCnv NULL in CCharsetCnvCache::Converter" );
-	    }
 	__ASSERT_ALWAYS(entry != NULL && entry->iCharsetCnv != NULL, Panic(EPanicCharacterSetConverterNotLoaded));
 	iCache.Remove(*entry);
 	iCache.AddFirst(*entry);
@@ -986,10 +918,6 @@ Note: Setting very small cache size will impact the overall performance of CHARC
 */
 void CCharsetCnvCache::SetMaxSize(TInt aSize)
 	{
-	if ( aSize < KMinCacheSize )
-	    {
-	    OstTrace0( TRACE_FATAL, CCHARSETCNVCACHE_SETMAXSIZE, "aSize < KMinCacheSize in CCharsetCnvCache::SetMaxSize" );
-	    }
 	__ASSERT_ALWAYS(aSize >= KMinCacheSize, User::Invariant());
 	//Remove and destroy the last cache entries, if iCacheSize > aSize.
 	for(;iCacheSize>aSize;--iCacheSize)
@@ -1054,10 +982,6 @@ The related converter implementation will be destroyed, the entry - deleted.
 void CCharsetCnvCache::RemoveLast()
 	{
 	TCharsetCnvEntry* lastEntry = iCache.Last();
-	if ( !lastEntry )
-	    {
-	    OstTrace0( TRACE_FATAL, CCHARSETCNVCACHE_REMOVELAST, "lastEntry NULL in CCharsetCnvCache::RemoveLast" );
-	    }
 	__ASSERT_ALWAYS(lastEntry, User::Invariant());
 	iCache.Remove(*lastEntry);
 	delete lastEntry->iCharsetCnv;
@@ -1387,7 +1311,6 @@ CCnvCharacterSetConverter::PrepareToConvertToOrFromL(
 																 aFileServerSession);
 	if (availability!=EAvailable)
 		{
-		OstTrace0( TRACE_FATAL, CCNVCHARACTERSETCONVERTER_PREPARETOCONVERTTOORFROML, "Conversion Not found in CCnvCharacterSetConverter::PrepareToConvertToOrFromL" );
 		User::Leave(KErrNotFound);
 		}
 	}
@@ -1404,7 +1327,7 @@ functions ConvertFromUnicode() or ConvertToUnicode().
 
 This overload of the function is simpler to use than the other and does not 
 panic if the character set with the specified UID is not available at run 
-timeÂ, it simply returns ENotAvailable. It should be used when the conversion 
+time�, it simply returns ENotAvailable. It should be used when the conversion 
 character set is specified within the text object being converted, e.g. an 
 email message, or an HTML document. If the character set is not specified, 
 the user must be presented with a list of all available sets, so it makes 
@@ -1460,10 +1383,6 @@ EXPORT_C void
 CCnvCharacterSetConverter::SetDefaultEndiannessOfForeignCharacters(
 											TEndianness aDefaultEndiannessOfForeignCharacters)
     {
-    if ( (aDefaultEndiannessOfForeignCharacters!=ELittleEndian) && (aDefaultEndiannessOfForeignCharacters!=EBigEndian) )
-        {
-        OstTrace0( TRACE_FATAL, CCNVCHARACTERSETCONVERTER_SETDEFAULTENDIANNESSOFFOREIGNCHARACTERS, "Bad Default Endianness Of Foreign Characters in CCnvCharacterSetConverter::SetDefaultEndiannessOfForeignCharacters" );        
-        }
 	__ASSERT_ALWAYS((aDefaultEndiannessOfForeignCharacters==ELittleEndian) || (aDefaultEndiannessOfForeignCharacters==EBigEndian), Panic(EPanicBadDefaultEndiannessOfForeignCharacters));
 	iDefaultEndiannessOfForeignCharacters=aDefaultEndiannessOfForeignCharacters;
 	}
@@ -1491,10 +1410,6 @@ EXPORT_C void
 CCnvCharacterSetConverter::SetDowngradeForExoticLineTerminatingCharacters(
 	TDowngradeForExoticLineTerminatingCharacters aDowngradeForExoticLineTerminatingCharacters)
 	{
-    if ( (aDowngradeForExoticLineTerminatingCharacters!=EDowngradeExoticLineTerminatingCharactersToCarriageReturnLineFeed) && (aDowngradeForExoticLineTerminatingCharacters!=EDowngradeExoticLineTerminatingCharactersToJustLineFeed) )
-    {
-    OstTrace0( TRACE_FATAL, CCNVCHARACTERSETCONVERTER_SETDOWNGRADEFOREXOTICLINETERMINATINGCHARACTERS, "Bad Downgrade For Exotic Line Terminating Characters1 in CCnvCharacterSetConverter::SetDowngradeForExoticLineTerminatingCharacters" );
-    }
 	__ASSERT_ALWAYS((aDowngradeForExoticLineTerminatingCharacters==EDowngradeExoticLineTerminatingCharactersToCarriageReturnLineFeed) || (aDowngradeForExoticLineTerminatingCharacters==EDowngradeExoticLineTerminatingCharactersToJustLineFeed), Panic(EPanicBadDowngradeForExoticLineTerminatingCharacters1));
 	iDowngradeForExoticLineTerminatingCharacters=aDowngradeForExoticLineTerminatingCharacters;
 	}
@@ -1659,10 +1574,6 @@ EXPORT_C TInt CCnvCharacterSetConverter::ConvertFromUnicode(
 						const TDesC16& aUnicode, 
 						TArrayOfAscendingIndices& aIndicesOfUnconvertibleCharacters) const
 	{
-	if ( iCharacterSetIdentifierOfLoadedConversionData==0 )
-	    {
-	    OstTrace0( TRACE_FATAL, CCNVCHARACTERSETCONVERTER_CONVERTFROMUNICODE, "NullCharacterSetIdentifier1 in CCnvCharacterSetConverter::ConvertFromUnicode" );
-	    }
 	__ASSERT_ALWAYS(iCharacterSetIdentifierOfLoadedConversionData!=0, Panic(EPanicNullCharacterSetIdentifier1));
 	if (aUnicode.Length()==0)
 		{
@@ -1824,10 +1735,6 @@ EXPORT_C TInt CCnvCharacterSetConverter::ConvertToUnicode(
 								TInt& aNumberOfUnconvertibleCharacters, 
 								TInt& aIndexOfFirstByteOfFirstUnconvertibleCharacter) const
 	{
-	if ( iCharacterSetIdentifierOfLoadedConversionData==0 )
-	    {
-	    OstTrace0( TRACE_FATAL, CCNVCHARACTERSETCONVERTER_CONVERTTOUNICODE, "Null CharacterSetIdentifier2 in CCnvCharacterSetConverter::ConvertToUnicode" );    
-	    }
 	__ASSERT_ALWAYS(iCharacterSetIdentifierOfLoadedConversionData!=0, Panic(EPanicNullCharacterSetIdentifier2));
 	aNumberOfUnconvertibleCharacters=0;
 	aIndexOfFirstByteOfFirstUnconvertibleCharacter=-1;
@@ -1871,10 +1778,6 @@ EXPORT_C TInt CCnvCharacterSetConverter::ConvertToUnicode(
 			returnValue=CnvUtfConverter::ConvertToUnicodeFromUtf7(aUnicode, aForeign, ETrue, aState);
 			break;
 		default:
-		    if ( iConversionData==NULL )
-		        {
-		        OstTrace0( TRACE_FATAL, DUP1_CCNVCHARACTERSETCONVERTER_CONVERTTOUNICODE, "No ConversionData2 in CCnvCharacterSetConverter::ConvertToUnicode" );
-		        }
 			__ASSERT_ALWAYS(iConversionData!=NULL, Panic(EPanicNoConversionData2));
 			returnValue=DoConvertToUnicode(*iConversionData, iDefaultEndiannessOfForeignCharacters, aUnicode, aForeign, aNumberOfUnconvertibleCharacters, aIndexOfFirstByteOfFirstUnconvertibleCharacter);
 			break;
@@ -1985,7 +1888,6 @@ EXPORT_C void CCnvCharacterSetConverter::AutoDetectCharSetL(
 																plugInImplementsAutoDetect, 
 																aConfidenceLevel, 
 																aSample);
-			OstTraceExt3( TRACE_DUMP, CCNVCHARACTERSETCONVERTER_AUTODETECTCHARSETL, "detect identifier 0x%x, return isInThisCharSet=%d, aConfidenceLevel=%d",  implUid.iUid, isInThisCharSet, aConfidenceLevel);
 			if ((!plugInImplementsAutoDetect) || !isInThisCharSet)
 				{
 				continue;
@@ -2016,7 +1918,6 @@ EXPORT_C void CCnvCharacterSetConverter::AutoDetectCharSetL(
 	const TInt numberOfCandidateCharacterSets=chid.Count();
 	if (numberOfCandidateCharacterSets ==0)
  		{
-        OstTrace0( TRACE_DUMP, DUP2_CCNVCHARACTERSETCONVERTER_AUTODETECTCHARSETL, "We donot find any candidate in first run, so add all plugin as candidate." );
  		// all the charcterset returned 0, so take all and find then one with least unconvertible
  		// characters
  		for (TInt i=aArrayOfCharacterSetsAvailable.Count()-1; i>=0; --i)
@@ -2038,8 +1939,6 @@ EXPORT_C void CCnvCharacterSetConverter::AutoDetectCharSetL(
 			TInt state=KStateDefault;
 			TInt unconvertibleChars;
 			charconverter->ConvertToUnicode(*convertedToUnicode,aSample,state,unconvertibleChars);
-			OstTraceExt2( TRACE_DUMP, DUP1_CCNVCHARACTERSETCONVERTER_AUTODETECTCHARSETL, "Plugin 0x%x has %d unconvertibleChars", chid[i], unconvertibleChars);
-			
 			if (unconvertibleChars < min)
 				{
 				min = unconvertibleChars;
@@ -2053,7 +1952,6 @@ EXPORT_C void CCnvCharacterSetConverter::AutoDetectCharSetL(
 
 	//aConfidenceLevel=another;
 	aCharacterSetIdentifier = chid[result];
-	OstTrace1( TRACE_DUMP, DUP3_CCNVCHARACTERSETCONVERTER_AUTODETECTCHARSETL, "Use 0x%x as the auto detected plugin", aCharacterSetIdentifier);
 	
 	if (aConfidenceLevel <= ELowestThreshold) 
 		{
@@ -2155,10 +2053,6 @@ EXPORT_C void CCnvCharacterSetConverter::ConvertibleToCharSetL(
 LOCAL_C TUint OutputCharacterCode(TUint aInputCharacterCode, 
 								  const SCnvConversionData::SOneDirectionData::SRange& aRange)
 	{
-	if ( (aInputCharacterCode<aRange.iFirstInputCharacterCodeInRange) || (aInputCharacterCode>aRange.iLastInputCharacterCodeInRange) )
-	    {
-	    OstTrace0( TRACE_FATAL, _OUTPUTCHARACTERCODE, "Input Character Code Not In Range in ::OutputCharacterCode" );
-	    }
 	__ASSERT_DEBUG((aInputCharacterCode>=aRange.iFirstInputCharacterCodeInRange) && (aInputCharacterCode<=aRange.iLastInputCharacterCodeInRange), Panic(EPanicInputCharacterCodeNotInRange));
 	switch (aRange.iAlgorithm)
 		{
@@ -2166,17 +2060,9 @@ LOCAL_C TUint OutputCharacterCode(TUint aInputCharacterCode,
 		return aInputCharacterCode;
 	case SCnvConversionData::SOneDirectionData::SRange::EOffset:
 #if defined(CONST_STATIC_UNIONS_ARE_POSSIBLE)
-	    if (aRange.iData.iOffset==0)
-	        {
-	        OstTrace0( TRACE_DUMP, DUP1__OUTPUTCHARACTERCODE, "EPanicZeroOffset1" );
-	        }
 		__ASSERT_DEBUG(aRange.iData.iOffset!=0, Panic(EPanicZeroOffset1));
 		return aInputCharacterCode+aRange.iData.iOffset;
 #else
-		if (STATIC_CAST(TInt, aRange.iData.iWord1)==0)
-		    {
-		    OstTrace0( TRACE_DUMP, DUP2__OUTPUTCHARACTERCODE, "EPanicZeroOffset2" );
-		    }
 		__ASSERT_DEBUG(STATIC_CAST(TInt, aRange.iData.iWord1)!=0, Panic(EPanicZeroOffset2));
 		return aInputCharacterCode+STATIC_CAST(TInt, aRange.iData.iWord1);
 #endif
@@ -2197,17 +2083,9 @@ LOCAL_C TUint OutputCharacterCode(TUint aInputCharacterCode,
 		TInt rightIndex=STATIC_CAST(TInt, aRange.iData.iWord1);
 		const SCnvConversionData::SOneDirectionData::SRange::UData::SKeyedTable1616::SEntry* const entryArray=REINTERPRET_CAST(SCnvConversionData::SOneDirectionData::SRange::UData::SKeyedTable1616::SEntry*, aRange.iData.iWord2);
 #endif
-		if(rightIndex<=0)
-		    {
-		    OstTrace0( TRACE_DUMP, DUP3__OUTPUTCHARACTERCODE, "EPanicEmptyKeyedTable1616" );
-		    }
 		__ASSERT_DEBUG(rightIndex>0, Panic(EPanicEmptyKeyedTable1616));
 		FOREVER
 			{
-			if (leftIndex>rightIndex)
-			    {
-			    OstTrace0( TRACE_DUMP, DUP4__OUTPUTCHARACTERCODE, "EPanicBadIndices1" );
-			    }
 			__ASSERT_DEBUG(leftIndex<=rightIndex, Panic(EPanicBadIndices1));
 			if (leftIndex==rightIndex)
 				{
@@ -2239,17 +2117,9 @@ LOCAL_C TUint OutputCharacterCode(TUint aInputCharacterCode,
 		TInt rightIndex=STATIC_CAST(TInt, aRange.iData.iWord1);
 		const SCnvConversionData::SOneDirectionData::SRange::UData::SKeyedTable16OfIndexedTables16::SKeyedEntry* const keyedEntryArray=REINTERPRET_CAST(SCnvConversionData::SOneDirectionData::SRange::UData::SKeyedTable16OfIndexedTables16::SKeyedEntry*, aRange.iData.iWord2);
 #endif
-		if (rightIndex<=0)
-		    {
-		    OstTrace0( TRACE_DUMP, DUP5__OUTPUTCHARACTERCODE, "EPanicEmptyKeyedTable16OfIndexedTables16" );
-		    }
 		__ASSERT_DEBUG(rightIndex>0, Panic(EPanicEmptyKeyedTable16OfIndexedTables16));
 		FOREVER
 			{
-			if (leftIndex>rightIndex)
-			    {
-			    OstTrace0( TRACE_DUMP, DUP6__OUTPUTCHARACTERCODE, "EPanicBadIndices2" );
-			    }
 			__ASSERT_DEBUG(leftIndex<=rightIndex, Panic(EPanicBadIndices2));
 			if (leftIndex==rightIndex)
 				{
@@ -2290,17 +2160,9 @@ LOCAL_C TUint OutputCharacterCode(TUint aInputCharacterCode,
 		TInt rightIndex=STATIC_CAST(TInt, aRange.iData.iWord1);
 		const SCnvConversionData::SOneDirectionData::SRange::UData::SKeyedTable3232::SEntry* const entryArray=REINTERPRET_CAST(SCnvConversionData::SOneDirectionData::SRange::UData::SKeyedTable3232::SEntry*, aRange.iData.iWord2);
 #endif
-		if (rightIndex<=0)
-		    {
-		    OstTrace0( TRACE_DUMP, DUP7__OUTPUTCHARACTERCODE, "EPanicEmptyKeyedTable3232" );
-		    }
 		__ASSERT_DEBUG(rightIndex>0, Panic(EPanicEmptyKeyedTable3232));
 		FOREVER
 			{
-			if (leftIndex>rightIndex)
-			    {
-			    OstTrace0( TRACE_DUMP, DUP8__OUTPUTCHARACTERCODE, "EPanicBadIndices1" );
-			    }
 			__ASSERT_DEBUG(leftIndex<=rightIndex, Panic(EPanicBadIndices1));
 			if (leftIndex==rightIndex)
 				{
@@ -2332,17 +2194,9 @@ LOCAL_C TUint OutputCharacterCode(TUint aInputCharacterCode,
 		TInt rightIndex=STATIC_CAST(TInt, aRange.iData.iWord1);
 		const SCnvConversionData::SOneDirectionData::SRange::UData::SKeyedTable32OfIndexedTables32::SKeyedEntry* const keyedEntryArray=REINTERPRET_CAST(SCnvConversionData::SOneDirectionData::SRange::UData::SKeyedTable32OfIndexedTables32::SKeyedEntry*, aRange.iData.iWord2);
 #endif
-		if (rightIndex<=0)
-		    {
-		    OstTrace0( TRACE_DUMP, DUP9__OUTPUTCHARACTERCODE, "EPanicEmptyKeyedTable32OfIndexedTables32" );
-		    }
 		__ASSERT_DEBUG(rightIndex>0, Panic(EPanicEmptyKeyedTable32OfIndexedTables32));
 		FOREVER
 			{
-			if (leftIndex>rightIndex)
-			    {
-			    OstTrace0( TRACE_DUMP, DUP10__OUTPUTCHARACTERCODE, "EPanicBadIndices2" );
-			    }
 			__ASSERT_DEBUG(leftIndex<=rightIndex, Panic(EPanicBadIndices2));
 			if (leftIndex==rightIndex)
 				{
@@ -2368,7 +2222,6 @@ LOCAL_C TUint OutputCharacterCode(TUint aInputCharacterCode,
 		
 #if defined(_DEBUG)
 	default:
-	    OstTrace0( TRACE_DUMP, DUP11__OUTPUTCHARACTERCODE, "EPanicBadAlgorithm1" );
 		Panic(EPanicBadAlgorithm1);
 #endif
 		}
@@ -2382,20 +2235,8 @@ ConvertsToForeignCharacterSet(
 			const SCnvConversionData::SOneDirectionData::SRange* aFirstUnicodeToForeignRange, 
 			const SCnvConversionData::SOneDirectionData::SRange* aLastUnicodeToForeignRange)
 	{
-	if (aFirstUnicodeToForeignRange==NULL)
-	    {
-	    OstTrace0( TRACE_DUMP, _CONVERTSTOFOREIGNCHARACTERSET, "EPanicNullPointer1" );
-	    }
 	__ASSERT_DEBUG(aFirstUnicodeToForeignRange!=NULL, Panic(EPanicNullPointer1));
-	if (aLastUnicodeToForeignRange==NULL)
-	    {
-	    OstTrace0( TRACE_DUMP, DUP1__CONVERTSTOFOREIGNCHARACTERSET, "EPanicNullPointer2" );
-	    }
 	__ASSERT_DEBUG(aLastUnicodeToForeignRange!=NULL, Panic(EPanicNullPointer2));
-	if (aFirstUnicodeToForeignRange>aLastUnicodeToForeignRange)
-	    {
-	    OstTrace0( TRACE_DUMP, DUP2__CONVERTSTOFOREIGNCHARACTERSET, "EPanicCrossedPointers" );
-	    }
 	__ASSERT_DEBUG(aFirstUnicodeToForeignRange<=aLastUnicodeToForeignRange, Panic(EPanicCrossedPointers));
 	for (const SCnvConversionData::SOneDirectionData::SRange* currentUnicodeToForeignRange=aFirstUnicodeToForeignRange; ; ++currentUnicodeToForeignRange)
 		{
@@ -2408,10 +2249,6 @@ ConvertsToForeignCharacterSet(
 				return ETrue;
 				}
 			}
-		if (currentUnicodeToForeignRange>aLastUnicodeToForeignRange)
-		    {
-		    OstTrace0( TRACE_DUMP, DUP3__CONVERTSTOFOREIGNCHARACTERSET, "EPanicPointerPastUpperLimit21" );
-		    }
 		__ASSERT_DEBUG(currentUnicodeToForeignRange<=aLastUnicodeToForeignRange, Panic(EPanicPointerPastUpperLimit21));
 		if (currentUnicodeToForeignRange>=aLastUnicodeToForeignRange)
 			{
@@ -2444,7 +2281,7 @@ SCnvConversionData::EUnspecified), then that value is used and the value of
 aDefaultEndiannessOfForeignCharacters is ignored.
 @param aReplacementForUnconvertibleUnicodeCharacters The single character which 
 is to be used to replace unconvertible characters.
-@param aForeign On return, contains the converted textÂ in a non-Unicode 
+@param aForeign On return, contains the converted text in a non-Unicode 
 character set.
 @param aUnicode The source Unicode text to be converted.
 @param aIndicesOfUnconvertibleCharacters On return holds the indices of each 
@@ -2494,7 +2331,7 @@ is to be used to replace unconvertible characters. If aInputConversionFlags
 is set to EInputConversionFlagStopAtFirstUnconvertibleCharacter, this 
 replacement character is used to replace the first unconvertible character, 
 then the conversion will stop.
-@param aForeign On return, contains the converted textÂ in a non-Unicode 
+@param aForeign On return, contains the converted text in a non-Unicode 
 character set. This may already contain some text. If it does, and if 
 aInputConversionFlags specifies EInputConversionFlagAppend, then the converted 
 text is appended to this descriptor.
@@ -2549,10 +2386,6 @@ EXPORT_C TInt CCnvCharacterSetConverter::DoConvertFromUnicode(
 		}
 	const TUint16* pointerToCurrentUnicodeCharacter=aUnicode.Ptr();
 	const TUint16* const pointerToLastUnicodeCharacter=pointerToCurrentUnicodeCharacter+(aUnicode.Length()-1);
-	if (aConversionData.iUnicodeToForeignData.iNumberOfRanges<=0)
-	    {
-	    OstTrace0( TRACE_DUMP, CCNVCHARACTERSETCONVERTER_DOCONVERTFROMUNICODE, "EPanicBadNumberOfRanges1" );
-	    }
 	__ASSERT_DEBUG(aConversionData.iUnicodeToForeignData.iNumberOfRanges>0, Panic(EPanicBadNumberOfRanges1));
 	const SCnvConversionData::SOneDirectionData::SRange* const firstRange=aConversionData.iUnicodeToForeignData.iRangeArray;
 	const SCnvConversionData::SOneDirectionData::SRange* const lastRange=firstRange+(aConversionData.iUnicodeToForeignData.iNumberOfRanges-1);
@@ -2564,15 +2397,7 @@ EXPORT_C TInt CCnvCharacterSetConverter::DoConvertFromUnicode(
 	TUint nextInputCharacterCode=KNoConversionAvailable;
 	FOREVER
 		{
-		if (pointerToPreviousForeignByte>pointerToLastForeignByte)
-		    {
-		    OstTrace0( TRACE_DUMP, DUP1_CCNVCHARACTERSETCONVERTER_DOCONVERTFROMUNICODE, "EPanicPointerPastUpperLimit6" );
-		    }
 		__ASSERT_DEBUG(pointerToPreviousForeignByte<=pointerToLastForeignByte, Panic(EPanicPointerPastUpperLimit6));
-		if (pointerToCurrentUnicodeCharacter>pointerToLastUnicodeCharacter)
-		    {
-		    OstTrace0( TRACE_DUMP, DUP2_CCNVCHARACTERSETCONVERTER_DOCONVERTFROMUNICODE, "EPanicPointerPastUpperLimit7" );
-		    }
 		__ASSERT_DEBUG(pointerToCurrentUnicodeCharacter<=pointerToLastUnicodeCharacter, Panic(EPanicPointerPastUpperLimit7));
 		TBool stop=EFalse;
 		TUint inputCharacterCode;
@@ -2587,10 +2412,6 @@ EXPORT_C TInt CCnvCharacterSetConverter::DoConvertFromUnicode(
 			}
 		if ((inputCharacterCode>=0xd800) && (inputCharacterCode<0xdc00))
 			{
-			if (pointerToCurrentUnicodeCharacter>pointerToLastUnicodeCharacter)
-			    {
-			    OstTrace0( TRACE_DUMP, DUP3_CCNVCHARACTERSETCONVERTER_DOCONVERTFROMUNICODE, "EPanicPointerPastUpperLimit8" );
-			    }
 			__ASSERT_DEBUG(pointerToCurrentUnicodeCharacter<=pointerToLastUnicodeCharacter, Panic(EPanicPointerPastUpperLimit8));
 			if (pointerToCurrentUnicodeCharacter>=pointerToLastUnicodeCharacter)
 				{
@@ -2607,10 +2428,6 @@ EXPORT_C TInt CCnvCharacterSetConverter::DoConvertFromUnicode(
 			secondHalfOfSurrogatePair&=~0xdc00;
 			inputCharacterCode|=secondHalfOfSurrogatePair;
 			inputCharacterCode+=0x00010000; // this must be added - it cannot be bitwise-"or"-ed
-			if (!(inputCharacterCode&0xffff0000) || !(inputCharacterCode<0x00110000))
-			    {
-			    OstTrace0( TRACE_DUMP, DUP4_CCNVCHARACTERSETCONVERTER_DOCONVERTFROMUNICODE, "EPanicBadNon16BitCharacterCode1" );
-			    }
 			__ASSERT_DEBUG((inputCharacterCode&0xffff0000) && (inputCharacterCode<0x00110000), Panic(EPanicBadNon16BitCharacterCode1));
 			}
 convertInputCharacterCode:
@@ -2624,10 +2441,6 @@ convertInputCharacterCode:
 				if (outputCharacterCode!=KNoConversionAvailable)
 					{
 					TInt temp=currentRange->iSizeOfOutputCharacterCodeInBytesIfForeign; // the meaning of temp changes during it's lifetime (hence the bland variable name)
-					if ( (temp<=0) || ((temp>STATIC_CAST(TInt, sizeof(TUint)))) || !((temp==sizeof(TUint)) || (outputCharacterCode<STATIC_CAST(TUint, 1<<(temp*8)))) )
-					    {
-					    OstTrace0( TRACE_DUMP, DUP5_CCNVCHARACTERSETCONVERTER_DOCONVERTFROMUNICODE, "EPanicBadSizeOfForeignOutputCharacterCode" );
-					    }
 					__ASSERT_DEBUG((temp>0) && (temp<=STATIC_CAST(TInt, sizeof(TUint))) && ((temp==sizeof(TUint)) || (outputCharacterCode<STATIC_CAST(TUint, 1<<(temp*8)))), Panic(EPanicBadSizeOfForeignOutputCharacterCode)); // ?? this second half of this assert needs a corresponding "KErrCorrupt"-check when loading the file
 					if (pointerToLastForeignByte-pointerToPreviousForeignByte<temp)
 						{
@@ -2640,17 +2453,9 @@ convertInputCharacterCode:
 					case ELittleEndian:
 						FOREVER
 							{
-							if (pointerToPreviousForeignByte>=pointerToLastForeignByte)
-							    {
-							    OstTrace0( TRACE_DUMP, DUP6_CCNVCHARACTERSETCONVERTER_DOCONVERTFROMUNICODE, "EPanicPointerPastUpperLimit9" );
-							    }
 							__ASSERT_DEBUG(pointerToPreviousForeignByte<pointerToLastForeignByte, Panic(EPanicPointerPastUpperLimit9));
 							++pointerToPreviousForeignByte;
 							*pointerToPreviousForeignByte=STATIC_CAST(TUint8, outputCharacterCode);
-							if (temp<0)
-							    {
-							    OstTrace0( TRACE_DUMP, DUP7_CCNVCHARACTERSETCONVERTER_DOCONVERTFROMUNICODE, "EPanicBadNumberOfRemainingForeignBytes1" );
-							    }
 							__ASSERT_DEBUG(temp>=0, Panic(EPanicBadNumberOfRemainingForeignBytes1));
 							if (temp<=0)
 								{
@@ -2663,17 +2468,9 @@ convertInputCharacterCode:
 					case EBigEndian:
 						FOREVER
 							{
-							if (pointerToPreviousForeignByte>=pointerToLastForeignByte)
-							    {
-							    OstTrace0( TRACE_DUMP, DUP8_CCNVCHARACTERSETCONVERTER_DOCONVERTFROMUNICODE, "EPanicPointerPastUpperLimit10" );
-							    }
 							__ASSERT_DEBUG(pointerToPreviousForeignByte<pointerToLastForeignByte, Panic(EPanicPointerPastUpperLimit10));
 							++pointerToPreviousForeignByte;
 							*pointerToPreviousForeignByte=STATIC_CAST(TUint8, outputCharacterCode>>temp);
-							if (temp<0)
-							    {
-							    OstTrace0( TRACE_DUMP, DUP9_CCNVCHARACTERSETCONVERTER_DOCONVERTFROMUNICODE, "EPanicBadNumberOfRemainingForeignBytes2" );
-							    }
 							__ASSERT_DEBUG(temp>=0, Panic(EPanicBadNumberOfRemainingForeignBytes2));
 							if (temp<=0)
 								{
@@ -2684,7 +2481,6 @@ convertInputCharacterCode:
 						break;
 #if defined(_DEBUG)
 					default:
-					    OstTrace0( TRACE_DUMP, DUP10_CCNVCHARACTERSETCONVERTER_DOCONVERTFROMUNICODE, "EPanicBadEndianness1" );
 						Panic(EPanicBadEndianness1);
 						break;
 #endif
@@ -2692,10 +2488,6 @@ convertInputCharacterCode:
 					break;
 					}
 				}
-			if (currentRange>lastRange)
-			    {
-			    OstTrace0( TRACE_DUMP, DUP11_CCNVCHARACTERSETCONVERTER_DOCONVERTFROMUNICODE, "EPanicPointerPastUpperLimit11" );
-			    }
 			__ASSERT_DEBUG(currentRange<=lastRange, Panic(EPanicPointerPastUpperLimit11));
 			if (currentRange>=lastRange)
 				{
@@ -2725,7 +2517,6 @@ convertInputCharacterCode:
 							goto convertInputCharacterCode;
 #if defined(_DEBUG)
 						default:
-						    OstTrace0( TRACE_DUMP, DUP12_CCNVCHARACTERSETCONVERTER_DOCONVERTFROMUNICODE, "EPanicBadDowngradeForExoticLineTerminatingCharacters2" );
 							Panic(EPanicBadDowngradeForExoticLineTerminatingCharacters2);
 							break;
 #endif
@@ -2751,10 +2542,6 @@ convertInputCharacterCode:
 						}
 					FOREVER
 						{
-						if (pointerToPreviousForeignByte>=pointerToLastForeignByte)
-						    {
-						    OstTrace0( TRACE_DUMP, DUP13_CCNVCHARACTERSETCONVERTER_DOCONVERTFROMUNICODE, "EPanicPointerPastUpperLimit12" );
-						    }
 						__ASSERT_DEBUG(pointerToPreviousForeignByte<pointerToLastForeignByte, Panic(EPanicPointerPastUpperLimit12));
 						++pointerToPreviousForeignByte;
 						*pointerToPreviousForeignByte=*pointerToReadFrom;
@@ -2776,20 +2563,12 @@ convertInputCharacterCode:
 			}
 		if (inputCharacterCode>=0x00010000)
 			{
-			if (pointerToCurrentUnicodeCharacter>=pointerToLastUnicodeCharacter)
-			    {
-			    OstTrace0( TRACE_DUMP, DUP14_CCNVCHARACTERSETCONVERTER_DOCONVERTFROMUNICODE, "EPanicPointerPastUpperLimit13" );
-			    }
 			__ASSERT_DEBUG(pointerToCurrentUnicodeCharacter<pointerToLastUnicodeCharacter, Panic(EPanicPointerPastUpperLimit13));
 			if (nextInputCharacterCode==KNoConversionAvailable)
 				{
 				++pointerToCurrentUnicodeCharacter;
 				}
 			}
-		if (pointerToCurrentUnicodeCharacter>pointerToLastUnicodeCharacter)
-		    {
-		    OstTrace0( TRACE_DUMP, DUP15_CCNVCHARACTERSETCONVERTER_DOCONVERTFROMUNICODE, "EPanicPointerPastUpperLimit14" );
-		    }
 		__ASSERT_DEBUG(pointerToCurrentUnicodeCharacter<=pointerToLastUnicodeCharacter, Panic(EPanicPointerPastUpperLimit14));
 		if (nextInputCharacterCode==KNoConversionAvailable)
 			{
@@ -2806,10 +2585,6 @@ convertInputCharacterCode:
 			}
 		}
 end:
-    if (pointerToCurrentUnicodeCharacter<aUnicode.Ptr())
-        {
-        OstTrace0( TRACE_DUMP, DUP16_CCNVCHARACTERSETCONVERTER_DOCONVERTFROMUNICODE, "EPanicPointerPastLowerLimit1" );
-        }
 	__ASSERT_DEBUG(pointerToCurrentUnicodeCharacter>=aUnicode.Ptr(), Panic(EPanicPointerPastLowerLimit1));
 	if ((pointerToCurrentUnicodeCharacter<=aUnicode.Ptr()) && (aOutputConversionFlags&EOutputConversionFlagInputIsTruncated) && (~aInputConversionFlags&EInputConversionFlagAllowTruncatedInputNotEvenPartlyConsumable))
 		{
@@ -2845,7 +2620,7 @@ SCnvConversionData objects into this parameter).
 foreign characters. If an endian-ness for foreign characters is specified 
 in aConversionData, then that is used instead and the value of 
 aDefaultEndiannessOfForeignCharacters is ignored.
-@param aUnicode On return, contains the textÂ converted into Unicode.
+@param aUnicode On return, contains the text converted into Unicode.
 @param aForeign The non-Unicode source text to be converted.
 @param aNumberOfUnconvertibleCharacters On return, contains the number of 
 characters in aForeign which were not converted. Characters which cannot be 
@@ -2900,7 +2675,7 @@ SCnvConversionData objects into this parameter).
 foreign characters. If an endian-ness for foreign characters is specified 
 in aConversionData, then that is used instead and the value of 
 aDefaultEndiannessOfForeignCharacters is ignored.
-@param aUnicode On return, contains the textÂ converted into Unicode.
+@param aUnicode On return, contains the text converted into Unicode.
 @param aForeign The non-Unicode source text to be converted.
 @param aNumberOfUnconvertibleCharacters On return, contains the number of 
 characters in aForeign which were not converted. Characters which cannot be 
@@ -2955,49 +2730,25 @@ EXPORT_C TInt CCnvCharacterSetConverter::DoConvertToUnicode(
 		}
 	const TUint8* pointerToCurrentForeignByte=aForeign.Ptr();
 	const TUint8* const pointerToLastForeignByte=pointerToCurrentForeignByte+(aForeign.Length()-1);
-	if (aConversionData.iForeignVariableByteData.iNumberOfRanges<=0)
-	    {
-	    OstTrace0( TRACE_DUMP, CCNVCHARACTERSETCONVERTER_DOCONVERTTOUNICODE, "EPanicBadNumberOfRanges2" );
-	    }
 	__ASSERT_DEBUG(aConversionData.iForeignVariableByteData.iNumberOfRanges>0, Panic(EPanicBadNumberOfRanges2));
 	const SCnvConversionData::SVariableByteData::SRange* const foreignVariableByteData_firstRange=aConversionData.iForeignVariableByteData.iRangeArray;
 	const SCnvConversionData::SVariableByteData::SRange* const foreignVariableByteData_lastRange=foreignVariableByteData_firstRange+(aConversionData.iForeignVariableByteData.iNumberOfRanges-1);
-	if (aConversionData.iForeignToUnicodeData.iNumberOfRanges<=0)
-	    {
-	    OstTrace0( TRACE_DUMP, DUP1_CCNVCHARACTERSETCONVERTER_DOCONVERTTOUNICODE, "EPanicBadNumberOfRanges3" );
-	    }
 	__ASSERT_DEBUG(aConversionData.iForeignToUnicodeData.iNumberOfRanges>0, Panic(EPanicBadNumberOfRanges3));
 	const SCnvConversionData::SOneDirectionData::SRange* const oneDirectionData_firstRange=aConversionData.iForeignToUnicodeData.iRangeArray;
 	const SCnvConversionData::SOneDirectionData::SRange* const oneDirectionData_lastRange=oneDirectionData_firstRange+(aConversionData.iForeignToUnicodeData.iNumberOfRanges-1);
 	FOREVER
 		{
-		if (pointerToPreviousUnicodeCharacter>pointerToLastUnicodeCharacter)
-		    {
-		    OstTrace0( TRACE_DUMP, DUP2_CCNVCHARACTERSETCONVERTER_DOCONVERTTOUNICODE, "EPanicPointerPastUpperLimit15" );
-		    }
 		__ASSERT_DEBUG(pointerToPreviousUnicodeCharacter<=pointerToLastUnicodeCharacter, Panic(EPanicPointerPastUpperLimit15));
-		if (pointerToCurrentForeignByte>pointerToLastForeignByte)
-		    {
-		    OstTrace0( TRACE_DUMP, DUP3_CCNVCHARACTERSETCONVERTER_DOCONVERTTOUNICODE, "EPanicPointerPastUpperLimit16" );
-		    }
 		__ASSERT_DEBUG(pointerToCurrentForeignByte<=pointerToLastForeignByte, Panic(EPanicPointerPastUpperLimit16));
 		TBool stop=EFalse;
 		TUint inputCharacterCode=*pointerToCurrentForeignByte;
 		const SCnvConversionData::SVariableByteData::SRange* foreignVariableByteData_currentRange=foreignVariableByteData_firstRange;
 		FOREVER
 			{
-			if (foreignVariableByteData_currentRange->iNumberOfSubsequentBytes>=sizeof(TUint))
-			    {
-			    OstTrace0( TRACE_DUMP, DUP4_CCNVCHARACTERSETCONVERTER_DOCONVERTTOUNICODE, "EPanicBadNumberOfSubsequentBytes" );
-			    }
 			__ASSERT_DEBUG(foreignVariableByteData_currentRange->iNumberOfSubsequentBytes<sizeof(TUint), Panic(EPanicBadNumberOfSubsequentBytes));
 			if ((inputCharacterCode>=foreignVariableByteData_currentRange->iFirstInitialByteValueInRange) && (inputCharacterCode<=foreignVariableByteData_currentRange->iLastInitialByteValueInRange))
 				{
 				const TInt numberOfSubsequentBytes=foreignVariableByteData_currentRange->iNumberOfSubsequentBytes;
-				if (pointerToCurrentForeignByte>pointerToLastForeignByte)
-				    {
-				    OstTrace0( TRACE_DUMP, DUP5_CCNVCHARACTERSETCONVERTER_DOCONVERTTOUNICODE, "EPanicPointerPastUpperLimit17" );
-				    }
 				__ASSERT_DEBUG(pointerToCurrentForeignByte<=pointerToLastForeignByte, Panic(EPanicPointerPastUpperLimit17));
 				if (pointerToLastForeignByte-pointerToCurrentForeignByte<numberOfSubsequentBytes)
 					{
@@ -3010,10 +2761,6 @@ EXPORT_C TInt CCnvCharacterSetConverter::DoConvertToUnicode(
 					{
 					for (TInt i=1; i<=numberOfSubsequentBytes; ++i)
 						{
-						if (pointerToCurrentForeignByte>=pointerToLastForeignByte)
-						    {
-						    OstTrace0( TRACE_DUMP, DUP6_CCNVCHARACTERSETCONVERTER_DOCONVERTTOUNICODE, "EPanicPointerPastUpperLimit18" );
-						    }
 						__ASSERT_DEBUG(pointerToCurrentForeignByte<pointerToLastForeignByte, Panic(EPanicPointerPastUpperLimit18));
 						++pointerToCurrentForeignByte;
 						TUint currentForeignByte=*pointerToCurrentForeignByte;
@@ -3026,10 +2773,6 @@ EXPORT_C TInt CCnvCharacterSetConverter::DoConvertToUnicode(
 					{
 					for (TInt i=numberOfSubsequentBytes; i>0; --i)
 						{
-						if (pointerToCurrentForeignByte>=pointerToLastForeignByte)
-						    {
-						    OstTrace0( TRACE_DUMP, DUP7_CCNVCHARACTERSETCONVERTER_DOCONVERTTOUNICODE, "EPanicPointerPastUpperLimit19" );
-						    }
 						__ASSERT_DEBUG(pointerToCurrentForeignByte<pointerToLastForeignByte, Panic(EPanicPointerPastUpperLimit19));
 						++pointerToCurrentForeignByte;
 						inputCharacterCode<<=8;
@@ -3039,7 +2782,6 @@ EXPORT_C TInt CCnvCharacterSetConverter::DoConvertToUnicode(
 					break;
 #if defined(_DEBUG)
 				default:
-				    OstTrace0( TRACE_DUMP, DUP8_CCNVCHARACTERSETCONVERTER_DOCONVERTTOUNICODE, "EPanicBadEndianness2" );
 					Panic(EPanicBadEndianness2);
 					break;
 #endif
@@ -3047,10 +2789,6 @@ EXPORT_C TInt CCnvCharacterSetConverter::DoConvertToUnicode(
 				pointerToCurrentForeignByte-=numberOfSubsequentBytes; // resets pointerToCurrentForeignByte to its value before the loop above
 				break;
 				}
-			if (foreignVariableByteData_currentRange>foreignVariableByteData_lastRange)
-			    {
-			    OstTrace0( TRACE_DUMP, DUP9_CCNVCHARACTERSETCONVERTER_DOCONVERTTOUNICODE, "EPanicPointerPastUpperLimit20" );
-			    }
 			__ASSERT_DEBUG(foreignVariableByteData_currentRange<=foreignVariableByteData_lastRange, Panic(EPanicPointerPastUpperLimit20));
 			if (foreignVariableByteData_currentRange>=foreignVariableByteData_lastRange)
 				{
@@ -3071,10 +2809,6 @@ EXPORT_C TInt CCnvCharacterSetConverter::DoConvertToUnicode(
 					break;
 					}
 				}
-			if (oneDirectionData_currentRange>oneDirectionData_lastRange)
-			    {
-			    OstTrace0( TRACE_DUMP, DUP10_CCNVCHARACTERSETCONVERTER_DOCONVERTTOUNICODE, "EPanicPointerPastUpperLimit21" );
-			    }
 			__ASSERT_DEBUG(oneDirectionData_currentRange<=oneDirectionData_lastRange, Panic(EPanicPointerPastUpperLimit21));
 			if (oneDirectionData_currentRange>=oneDirectionData_lastRange)
 				{
@@ -3082,10 +2816,6 @@ EXPORT_C TInt CCnvCharacterSetConverter::DoConvertToUnicode(
 				}
 			++oneDirectionData_currentRange;
 			}
-		if (pointerToPreviousUnicodeCharacter>pointerToLastUnicodeCharacter)
-		    {
-		    OstTrace0( TRACE_DUMP, DUP11_CCNVCHARACTERSETCONVERTER_DOCONVERTTOUNICODE, "EPanicPointerPastUpperLimit22" );
-		    }
 		__ASSERT_DEBUG(pointerToPreviousUnicodeCharacter<=pointerToLastUnicodeCharacter, Panic(EPanicPointerPastUpperLimit22));
 		if (pointerToPreviousUnicodeCharacter==pointerToLastUnicodeCharacter)
 			{
@@ -3094,10 +2824,6 @@ EXPORT_C TInt CCnvCharacterSetConverter::DoConvertToUnicode(
 		if (outputCharacterCode==KNoConversionAvailable)
 			{
 			outputCharacterCode=0xfffd; // Unicode's "REPLACEMENT CHARACTER"
-			if (aNumberOfUnconvertibleCharacters<0)
-			    {
-			    OstTrace0( TRACE_FATAL, DUP13_CCNVCHARACTERSETCONVERTER_DOCONVERTTOUNICODE, "EPanicBadNumberOfUnconvertibleCharacters" );
-			    }
 			__ASSERT_ALWAYS(aNumberOfUnconvertibleCharacters>=0, Panic(EPanicBadNumberOfUnconvertibleCharacters));
 			if (aNumberOfUnconvertibleCharacters<=0)
 				{
@@ -3116,15 +2842,7 @@ EXPORT_C TInt CCnvCharacterSetConverter::DoConvertToUnicode(
 			}
 		else
 			{
-			if (outputCharacterCode>=0x00110000)
-			    {
-			    OstTrace0( TRACE_DUMP, DUP12_CCNVCHARACTERSETCONVERTER_DOCONVERTTOUNICODE, "EPanicBadNon16BitCharacterCode2" );
-				}
 			__ASSERT_DEBUG(outputCharacterCode<0x00110000, Panic(EPanicBadNon16BitCharacterCode2));
-			if (pointerToPreviousUnicodeCharacter>pointerToLastUnicodeCharacter)
-			    {
-			    OstTrace0( TRACE_DUMP, DUP14_CCNVCHARACTERSETCONVERTER_DOCONVERTTOUNICODE, "EPanicPointerPastUpperLimit23" );
-			    }
 			__ASSERT_DEBUG(pointerToPreviousUnicodeCharacter<=pointerToLastUnicodeCharacter, Panic(EPanicPointerPastUpperLimit23));
 			if (pointerToLastUnicodeCharacter-pointerToPreviousUnicodeCharacter<2)
 				{
@@ -3136,10 +2854,6 @@ EXPORT_C TInt CCnvCharacterSetConverter::DoConvertToUnicode(
 			++pointerToPreviousUnicodeCharacter;
 			*pointerToPreviousUnicodeCharacter=STATIC_CAST(TUint16, (outputCharacterCode&0x000003ff)|0xdc00);
 			}
-		if (pointerToLastForeignByte-pointerToCurrentForeignByte<foreignVariableByteData_currentRange->iNumberOfSubsequentBytes)
-		    {
-		    OstTrace0( TRACE_DUMP, DUP15_CCNVCHARACTERSETCONVERTER_DOCONVERTTOUNICODE, "EPanicPointerPastUpperLimit24" );
-		    }
 		__ASSERT_DEBUG(pointerToLastForeignByte-pointerToCurrentForeignByte>=foreignVariableByteData_currentRange->iNumberOfSubsequentBytes, Panic(EPanicPointerPastUpperLimit24));
 		pointerToCurrentForeignByte+=foreignVariableByteData_currentRange->iNumberOfSubsequentBytes;
 		if (pointerToCurrentForeignByte==pointerToLastForeignByte)
@@ -3154,10 +2868,6 @@ EXPORT_C TInt CCnvCharacterSetConverter::DoConvertToUnicode(
 			}
 		}
 end:
-    if (pointerToCurrentForeignByte<aForeign.Ptr())
-        {
-        OstTrace0( TRACE_DUMP, DUP16_CCNVCHARACTERSETCONVERTER_DOCONVERTTOUNICODE, "EPanicPointerPastLowerLimit2" );
-        }
 	__ASSERT_DEBUG(pointerToCurrentForeignByte>=aForeign.Ptr(), Panic(EPanicPointerPastLowerLimit2));
 	if ((pointerToCurrentForeignByte<=aForeign.Ptr()) && (aOutputConversionFlags&EOutputConversionFlagInputIsTruncated) && (~aInputConversionFlags&EInputConversionFlagAllowTruncatedInputNotEvenPartlyConsumable))
 		{
@@ -3250,10 +2960,6 @@ CCnvCharacterSetConverter::DoCreateArrayOfCharacterSetsAvailableLC(
 			{
 			for(TInt j = arrayOfCharacterSetsAvailable->Count() - 1; j >= 0; --j)
 				{
-				if ((*arrayOfCharacterSetsAvailable)[j].Identifier() == characterSetIdentifier)
-				    {
-				    OstTrace0( TRACE_DUMP, DUP1_CCNVCHARACTERSETCONVERTER_DOCREATEARRAYOFCHARACTERSETSAVAILABLELC, "EPanicCharacterSetAlreadyAdded" );
-				    }
 				__ASSERT_DEBUG((*arrayOfCharacterSetsAvailable)[j].Identifier() != characterSetIdentifier, Panic(EPanicCharacterSetAlreadyAdded));
 				}
 			}
@@ -3273,10 +2979,6 @@ CCnvCharacterSetConverter::DoCreateArrayOfCharacterSetsAvailableLC(
 			characterSet.iName = implInfo->DisplayName().AllocLC();
 
 			arrayOfCharacterSetsAvailable->AppendL(characterSet);
-			
-			OstTraceDefExt1( OST_TRACE_CATEGORY_PRODUCTION | OST_TRACE_CATEGORY_RND, TRACE_INTERNALS, 
-			            CCNVCHARACTERSETCONVERTER_DOCREATEARRAYOFCHARACTERSETSAVAILABLELC, 
-			             "%S Appended to Character Set Array",  *(characterSet.iName) );
 
 			CleanupStack::Pop(characterSet.iName); //characterSet.iName
 			}
@@ -3391,16 +3093,11 @@ CCnvCharacterSetConverter::DoPrepareToConvertToOrFromL(
 								const CArrayFix<SCharacterSet>* aArrayOfCharacterSetsAvailable, 
 								RFs& aFileServerSession)
 	{
-    OstTraceExt2( TRACE_DUMP, DUP3_CCNVCHARACTERSETCONVERTER_DOPREPARETOCONVERTTOORFROML, "Prepare to convert aCharacterSetIdentifier(0x%x) in aArrayOfCharacterSetsAvailable(0x%x)", aCharacterSetIdentifier, (unsigned int)aArrayOfCharacterSetsAvailable);
-    
 	//AutoDetectCharacterSetL relies on the fact that this function does not use 
 	//aFileServerSession if aArrayOfCharacterSetsAvailable is *not* NULL and 
 	//if aCharacterSetIdentifier is *not* a data file
 	// aFileServerSession is no longer used load Plugin libraries. ECom framework used instead
-	if (aCharacterSetIdentifier==0)
-	    {
-	    OstTrace0( TRACE_FATAL, CCNVCHARACTERSETCONVERTER_DOPREPARETOCONVERTTOORFROML, "EPanicNullCharacterSetIdentifier3" );
-	    }
+	
 	__ASSERT_ALWAYS(aCharacterSetIdentifier!=0, Panic(EPanicNullCharacterSetIdentifier3));
 	if (iCharacterSetIdentifierOfLoadedConversionData!=aCharacterSetIdentifier)
 		{
@@ -3470,10 +3167,6 @@ CCnvCharacterSetConverter::DoPrepareToConvertToOrFromL(
 				const SCharacterSet& characterSet=(*aArrayOfCharacterSetsAvailable)[i];
 				if (characterSet.Identifier()==aCharacterSetIdentifier)
 					{
-					if (!characterSet.NameIsFileName())
-					    {
-					    OstTrace0( TRACE_DUMP, DUP1_CCNVCHARACTERSETCONVERTER_DOPREPARETOCONVERTTOORFROML, "EPanicNameIsNotFileName" );
-					    }
 					__ASSERT_DEBUG(characterSet.NameIsFileName(), Panic(EPanicNameIsNotFileName));
 					if (characterSet.FileIsConversionPlugInLibrary())
 						{
@@ -3487,7 +3180,6 @@ CCnvCharacterSetConverter::DoPrepareToConvertToOrFromL(
 						{
 						//You are here?! This should never happen! Source code here was related to
 						//old type character set converter data!
-						OstTrace0( TRACE_FATAL, DUP2_CCNVCHARACTERSETCONVERTER_DOPREPARETOCONVERTTOORFROML, "EPanicCharacterSetNotPresent" );
  						__ASSERT_ALWAYS(EFalse, Panic(EPanicCharacterSetNotPresent));
 						}
 					break;
@@ -3511,17 +3203,9 @@ LOCAL_C void DeleteOneDirectionData(
 								TInt aNumberOfRanges, 
 								const SCnvConversionData::SOneDirectionData::SRange* aRange)
 	{
-	if ( !((aRange!=NULL) || (aNumberOfRanges==0)) )
-	    {
-	    OstTrace0( TRACE_DUMP, _DELETEONEDIRECTIONDATA, "EPanicBadNumberOfRanges4" );
-	    }
 	__ASSERT_DEBUG((aRange!=NULL) || (aNumberOfRanges==0), Panic(EPanicBadNumberOfRanges4));
 	if (aRange!=NULL)
 		{
-		if (aNumberOfRanges<=0)
-		    {
-		    OstTrace0( TRACE_DUMP, DUP1__DELETEONEDIRECTIONDATA, "EPanicBadNumberOfRanges5" );
-		    }
 		__ASSERT_DEBUG(aNumberOfRanges>0, Panic(EPanicBadNumberOfRanges5));
 		SCnvConversionData::SOneDirectionData::SRange* currentRange=CONST_CAST(SCnvConversionData::SOneDirectionData::SRange*, aRange);
 		const SCnvConversionData::SOneDirectionData::SRange* const lastRange=currentRange+(aNumberOfRanges-1);
@@ -3550,15 +3234,10 @@ LOCAL_C void DeleteOneDirectionData(
 				// fall through
 #if defined(_DEBUG)
 			default:
-			    OstTrace0( TRACE_FATAL, DUP2__DELETEONEDIRECTIONDATA, "EPanicBadAlgorithm2" );
 				Panic(EPanicBadAlgorithm2);
 #endif
 				break;
 				}
-			if (currentRange>lastRange)
-			    {
-			    OstTrace0( TRACE_DUMP, DUP3__DELETEONEDIRECTIONDATA, "EPanicPointerPastUpperLimit25" );
-			    }
 			__ASSERT_DEBUG(currentRange<=lastRange, Panic(EPanicPointerPastUpperLimit25));
 			if (currentRange==lastRange)
 				{
@@ -3601,7 +3280,6 @@ CCnvCharacterSetConverter::EndiannessOfForeignCharacters(
 		return EBigEndian;
 		}
 #if defined(_DEBUG)
-	OstTrace0( TRACE_DUMP, CCNVCHARACTERSETCONVERTER_ENDIANNESSOFFOREIGNCHARACTERS, "EPanicBadEndianness3" );
 	Panic(EPanicBadEndianness3);
 #endif
 	return ELittleEndian; // dummy return to prevent compiler error
@@ -3621,20 +3299,12 @@ EAppendSuccessful if it succeeded. */
 EXPORT_C CCnvCharacterSetConverter::TArrayOfAscendingIndices::TAppendResult 
 CCnvCharacterSetConverter::TArrayOfAscendingIndices::AppendIndex(TInt aIndex)
  	{
- 	if ( aIndex<0 )
- 	    {
- 	    OstTrace1( TRACE_DUMP, DUP2_TARRAYOFASCENDINGINDICES_APPENDINDEX, "Bad index in TArrayOfAscendingIndices::AppendIndex;aIndex=%d", aIndex );    
- 	    }
 	__ASSERT_DEBUG(aIndex>=0, Panic(EPanicBadIndex));
 	const TInt lengthOfArrayOfIndices=iArrayOfIndices.Length();
 	if ((aIndex>STATIC_CAST(TInt, KMaxTUint16)) || (lengthOfArrayOfIndices==iArrayOfIndices.MaxLength()))
 		{
 		return EAppendFailed;
 		}
-	if ( (lengthOfArrayOfIndices!=0) && (iArrayOfIndices[lengthOfArrayOfIndices-1]>=aIndex))
-	    {
-	    OstTrace1( TRACE_DUMP, DUP1_TARRAYOFASCENDINGINDICES_APPENDINDEX, "Duplicate Index Or Not Ascending in TArrayOfAscendingIndices::AppendIndex;aIndex=%d", aIndex );
-	    }
 	__ASSERT_DEBUG((lengthOfArrayOfIndices==0) || (iArrayOfIndices[lengthOfArrayOfIndices-1]<aIndex), Panic(EPanicDuplicateIndexOrNotAscending));
 	iArrayOfIndices.Append(aIndex);
 	return EAppendSuccessful;
@@ -3660,10 +3330,6 @@ Note: Setting very small cache size will impact the overall performance of CHARC
 */
 EXPORT_C void CCnvCharacterSetConverter::SetMaxCacheSize(TInt aSize)
     {
-    if ( aSize < CCharsetCnvCache::KMinCacheSize )
-        {
-        OstTrace1( TRACE_FATAL, CCNVCHARACTERSETCONVERTER_SETMAXCACHESIZE, "Parameter aSize < KMinCacheSize in CCnvCharacterSetConverter::SetMaxCacheSize;aSize=%d", aSize );
-        }
     __ASSERT_ALWAYS(aSize >= CCharsetCnvCache::KMinCacheSize, User::Invariant());
     iCharsetCnvCache->SetMaxSize(aSize);
     }

@@ -24,11 +24,6 @@
 #include <txtfmstm.h>
 
 #include "TXTSTD.H"
-#include "OstTraceDefinitions.h"
-#ifdef OST_TRACE_COMPILER_IN_USE
-#include "TXTFMSTMTraces.h"
-#endif
-
 
 const TInt KMaxFormatStreamLength=0x400;  // 1024 bytes
 
@@ -295,10 +290,6 @@ void RFormatStream::Reset()
 void RFormatStream::CopyL(const RFormatStream& aSource)
 	{
 	TInt size = aSource.iEnd - aSource.iBase;
-	if (size < 0)
-	    {
-	    OstTrace0( TRACE_DUMP, RFORMATSTREAM_COPYL, "EDebug" );
-	    }
 	__ASSERT_DEBUG(size >= 0,Panic(EDebug));
 	if (size == 0)
 		Reset();
@@ -366,10 +357,6 @@ const TUint8* RFormatStream::Ptr(TInt& aLength) const
 	{
 	__TEST_INVARIANT;
 	aLength=iEnd-iBase;
-	if (!((iBase==NULL && aLength==0) || (iBase!=NULL && aLength>0)))
-	    {
-	    OstTrace0( TRACE_DUMP, RFORMATSTREAM_PTR, "ECorruptFormatLayer" );
-	    }
 	__ASSERT_DEBUG((iBase==NULL && aLength==0) || (iBase!=NULL && aLength>0),Panic(ECorruptFormatLayer));
 	return iBase;
 	}
@@ -1607,15 +1594,7 @@ TInt RFormatStream::MergeTabLists(TUint8*& aPtr,const CParaFormat& aDesiredForma
 			}
 		}
 // ASSERT: The tabList offsets are as we would expect in a normal (correct) completion.	
-	if (offsetInDesired!=aDesiredTabCount)
-	    {
-	    OstTrace0( TRACE_FATAL, RFORMATSTREAM_MERGETABLISTS, "EStoreTabError" );
-	    }
 	__ASSERT_ALWAYS(offsetInDesired==aDesiredTabCount,Panic(EStoreTabError));
-	if (offsetInCurrent!=aCurrentTabCount)
-	    {
-	    OstTrace0( TRACE_FATAL, DUP1_RFORMATSTREAM_MERGETABLISTS, "EStoreTabError" );
-	    }
 	__ASSERT_ALWAYS(offsetInCurrent==aCurrentTabCount,Panic(EStoreTabError));
 	return requiredTabCount;
 	}
@@ -1795,11 +1774,6 @@ TUint8* RFormatStream::ReadValue(TUint8* aPtr,TTypeface& aTypeface)const
 	//
 	// Read typeface name
 	TInt typefaceLength=length-KTypefaceFlags;
-	
-	if ((typefaceLength%2)!=0)
-	    {
-	    OstTrace0( TRACE_DUMP, RFORMATSTREAM_READVALUE, "ECorruptFormatLayer" );
-	    }
 	__ASSERT_DEBUG((typefaceLength%2)==0,Panic(ECorruptFormatLayer)); // must be an even number
 
 	TPtr name=aTypeface.iName.Des();
@@ -1856,10 +1830,6 @@ TInt RFormatStream::Length(TUint8*& aPtr,TTextFormatAttribute aType) const
 	{
 	TInt length=TheAttributeLength[aType];
 
-	if (length<0)
-	    {
-	    OstTrace0( TRACE_DUMP, RFORMATSTREAM_LENGTH, "EAttributeLengthLookupNegative" );
-	    }
 	__ASSERT_DEBUG(length>=0,Panic(EAttributeLengthLookupNegative));
 	if (length>0)
 		return length;

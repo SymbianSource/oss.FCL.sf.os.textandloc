@@ -1,0 +1,4 @@
+EXPORTS
+	ConvertUCS2toUTF7__FPPUsPUsPPcPcii @ 1 NONAME ; ConvertUCS2toUTF7(unsigned short **, unsigned short *, char **, char *, int, int)
+	ConvertUTF7toUCS2__FPPcPcPPUsPUs @ 2 NONAME ; ConvertUTF7toUCS2(char **, char *, unsigned short **, unsigned short *)
+

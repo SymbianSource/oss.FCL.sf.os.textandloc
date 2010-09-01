@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2003-2010 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 2003-2009 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -21,24 +21,13 @@
 #include "TestLayout.h"
 #include "TGraphicsContext.h"
 #include "TMINTERP.H"
-#include "tinterpreter.h"
+
 #include <txtrich.h>
 #include <e32test.h>
 
-
-namespace LocalToTInterpreter
-{
 _LIT(KLeftToRight1, "abc \x5D0 def abc \x5D0\x5D1\x5D2 \x5D0\x5D1\x5D2 xyz abc a\tb\tc\td\te.");
 _LIT(KLeftToRight2, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
 _LIT(KContingentBreak, "\xFFFC");
-
-CTInterpreterStep* TestStep = NULL;
-#define TESTPOINT(p) TestStep->testpoint(p,(TText8*)__FILE__,__LINE__)
-#define TESTPRINT(p) TestStep->print(p,(TText8*)__FILE__,__LINE__)
-
-}
-using namespace LocalToTInterpreter;
-
 
 /**
 Checks if one region is a subset of another.
@@ -116,7 +105,7 @@ void GetSelectionL(TRegion& aRegion, CTestTmTextLayout& aLayout,
 Tests RTmBoundingRectInterpreter for a particular piece of text.
 @internalComponent
 */
-void TestTextL(CTestTmTextLayout& aLayout)
+void TestTextL(RTest& aTest, CTestTmTextLayout& aLayout)
 	{
 	RRegion region1;
 	RRegion region2;
@@ -129,8 +118,8 @@ void TestTextL(CTestTmTextLayout& aLayout)
 	GetSelectionL(region2, aLayout, 0, 1, 1);
 	GetSelectionL(region3, aLayout, 0, aLayout.Source().DocumentLength(), 1);
 
-	TESTPOINT(RegionsEqualL(region1, region2));
-	TESTPOINT(RegionsEqualL(region1, region3));
+	aTest(RegionsEqualL(region1, region2));
+	aTest(RegionsEqualL(region1, region3));
 
 	CleanupStack::PopAndDestroy(&region3);
 	CleanupStack::PopAndDestroy(&region2);
@@ -138,7 +127,7 @@ void TestTextL(CTestTmTextLayout& aLayout)
 	}
 
 
-void TestsL()
+void TestsL(RTest& aTest)
 	{
 	CParaFormatLayer* paraLayer = CParaFormatLayer::NewL();
 	CleanupStack::PushL(paraLayer);
@@ -147,7 +136,7 @@ void TestsL()
 	CRichText* richText = CRichText::NewL(paraLayer, charLayer);
 	CleanupStack::PushL(richText);
 
-	TESTPRINT(_L("RTmBoundingRectInterpreter consistency of coverage"));
+	aTest.Next(_L("RTmBoundingRectInterpreter consistency of coverage"));
 	richText->Reset();
 	richText->InsertL(0, KLeftToRight1);
 	CTestTmTextLayout* text1 = CTestTmTextLayout::NewLC(*richText, 100);
@@ -167,7 +156,7 @@ void TestsL()
 	param.iParInvalid = EFalse;
 	TTmReformatResult out;
 	text1->FormatL(param, out);
-	TestTextL(*text1);
+	TestTextL(aTest, *text1);
 
 	//Test for finding text chunks adjoining a given document position
 	text1->TestAdjacentChunks();
@@ -194,7 +183,7 @@ void TestsL()
 @SYMDEF                 DEF077884
 */
 
-void Def077884L()
+void Def077884L(RTest& aTest)
 	{
 	TInt testStartLength = 52;
 	TInt testEndLength = 56;
@@ -206,14 +195,14 @@ void Def077884L()
 	CRichText* richText = CRichText::NewL(paraLayer, charLayer);
 	CleanupStack::PushL(richText);
 
-	TESTPRINT(_L(" @SYMTestCaseID:SYSLIB-FORM-UT-1591 DEF077884: TSourcePictureBreaker crashes when picture not found. "));
+	aTest.Next(_L(" @SYMTestCaseID:SYSLIB-FORM-UT-1591 DEF077884: TSourcePictureBreaker crashes when picture not found. "));
 
 
 	richText->Reset();
 
 	richText->InsertL(0, KLeftToRight2);
 
-	TESTPOINT(testStartLength == richText->DocumentLength());
+	aTest(testStartLength == richText->DocumentLength());
 
 	CTestTmTextLayout* text1 = CTestTmTextLayout::NewLC(*richText, 100);
 
@@ -288,9 +277,9 @@ void Def077884L()
 	text2->FormatL(formatParam, param, out); // Scans the text from left to right.
 
 
-	TestTextL(*text1);
+	TestTextL(aTest, *text1);
 
-	TESTPOINT(testEndLength == richText->DocumentLength());
+	aTest(testEndLength == richText->DocumentLength());
 
 	CleanupStack::PopAndDestroy(text1);
 	CleanupStack::PopAndDestroy(richText);
@@ -302,15 +291,24 @@ void Def077884L()
 Tests RTmBoundingRectInterpreter.
 @internalComponent
 */
-TVerdict CTInterpreterStep::doTestStepL()
+void RunTestsL(RTest& aTest)
 	{
-    SetTestStepResult(EPass);
-    TestStep = this;
-    TESTPRINT(_L("TInterpreter unit"));
-    TESTPRINT(_L("Start TInterpreter.exe Tests"));
-	TestsL();
-	Def077884L();
-	return TestStepResult();
+	TestsL(aTest);
+	Def077884L(aTest);
 	}
 
+/**
+Tests RTmBoundingRectInterpreter.
+@internalComponent
+*/
+TInt E32Main()
+	{
+	RTest rtest(_L("TInterpreter unit"));
+	CTrapCleanup* TrapCleanup = CTrapCleanup::New();
+	rtest.Start(_L("Start TInterpreter.exe Tests"));
+	TRAPD(err, RunTestsL(rtest));
+	rtest.End();
+	delete TrapCleanup;
+	return err;
+	}
 

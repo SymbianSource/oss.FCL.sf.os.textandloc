@@ -1,0 +1,5 @@
+EXPORTS
+	ConversionData__11CnvJisX0201 @ 1 NONAME R3UNUSED ; CnvJisX0201::ConversionData(void)
+	ConversionData__11CnvJisRoman @ 2 NONAME R3UNUSED ; CnvJisRoman::ConversionData(void)
+	ConversionData__21CnvHalfWidthKatakana8 @ 3 NONAME R3UNUSED ; CnvHalfWidthKatakana8::ConversionData(void)
+

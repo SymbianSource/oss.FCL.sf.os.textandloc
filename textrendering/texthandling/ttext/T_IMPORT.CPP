@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 1997-2010 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 1997-2009 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -18,6 +18,7 @@
 
 #include <e32std.h>
 #include <e32base.h>
+#include <e32test.h>
 #include <e32svr.h>
 
 #include <txtetext.h>
@@ -28,24 +29,6 @@
 #include <gdi.h>
 #include <s32mem.h>
 #include <charconv.h>
-#include "T_IMPORT.h"
-
-LOCAL_D CTestStep *pTestStep = NULL;
-#define test(cond)											\
-	{														\
-	TBool __bb = (cond);									\
-	pTestStep->TEST(__bb);									\
-	if (!__bb)												\
-		{													\
-		pTestStep->ERR_PRINTF1(_L("ERROR: Test Failed"));	\
-		User::Leave(1);										\
-		}													\
-	}
-#undef INFO_PRINTF1
-#undef INFO_PRINTF2
-// copy from tefexportconst.h
-#define INFO_PRINTF1(p1)        pTestStep->Logger().LogExtra(((TText8*)__FILE__), __LINE__, ESevrInfo, (p1))
-#define INFO_PRINTF2(p1, p2)    pTestStep->Logger().LogExtra(((TText8*)__FILE__), __LINE__, ESevrInfo, (p1), (p2))
 
 /* this fixes a MSVC link warning */
 #ifdef __VC32__
@@ -59,7 +42,7 @@ const TInt KTestCleanupStack=0x40;
 _LIT(KTestFileName1, "c:\\etext\\climb.txg");
 _LIT(KTestFileName2, "c:\\etext\\import1.txg");
 
-LOCAL_D void EnsureFileExists(const TDesC& aName)
+void EnsureFileExists(const TDesC& aName)
 	{
 	RFs fs;
 	fs.Connect();
@@ -70,6 +53,7 @@ LOCAL_D void EnsureFileExists(const TDesC& aName)
 	fs.Close();
 	}
 
+LOCAL_D RTest test(_L("Plain Text File Imports"));
 LOCAL_D CTrapCleanup* TheTrapCleanup=NULL;
 LOCAL_D CPlainText* TheText=NULL;
 LOCAL_D CRichText* richText=NULL;
@@ -325,7 +309,7 @@ static void TestEncodingConversionL()
 		pos += p1.Length();
 		} while (pos < length1);
 
-    INFO_PRINTF1(_L("DEF058651 - Propagated:NTT - Received MMS with line break CR set does not cause line feed."));
+    test.Next(_L("DEF058651 - Propagated:NTT - Received MMS with line break CR set does not cause line feed."));
     buffer->Reset();
     plain1->Reset();
     
@@ -350,7 +334,7 @@ LOCAL_C void DoTestL()
 // Main routine
 //
     {
-	INFO_PRINTF1(_L(" @SYMTestCaseID:SYSLIB-ETEXT-LEGACY-T_IMPORT-0001 CPlainText "));
+	test.Start(_L(" @SYMTestCaseID:SYSLIB-ETEXT-LEGACY-T_IMPORT-0001 CPlainText "));
 	CreateTextL();
 
 	ImportText1();
@@ -359,14 +343,14 @@ LOCAL_C void DoTestL()
 	TestUnicodeCompressionL();
 	TestEncodingConversionL();
 
-	INFO_PRINTF1(_L("CRichText"));
+	test.Next(_L("CRichText"));
 	delete TheText;
 	TheText=richText;
 
 	ImportText1();
 	ImportText2();
 
-	INFO_PRINTF1(_L("CRichText - more than 256 styles, defect INC044582"));
+	test.Next(_L("CRichText - more than 256 styles, defect INC044582"));
 	TestInc044582();
 	
 	DestroyText();
@@ -418,32 +402,29 @@ LOCAL_C void DeleteDataFile(const TDesC& aFullName)
 		}
 	}
 
-CT_IMPORT::CT_IMPORT()
+GLDEF_C TInt E32Main()
+//
+// Test the streaming framework.
+//
     {
-    SetTestStepName(KTestStep_T_IMPORT);
-    pTestStep = this;
-    }
 
-TVerdict CT_IMPORT::doTestStepL()
-    {
-    SetTestStepResult(EFail);
+	test.Title();
+	__UHEAP_MARK;
+	setupCleanup();
+	TRAPD(r, DoTestL());
 
-    INFO_PRINTF1(_L("Plain Text File Imports"));
-    __UHEAP_MARK;
-    setupCleanup();
-    TRAPD(r, DoTestL());
+	test(r == KErrNone);
 
-    ::DeleteDataFile(KTestFileName1);       //deletion of data files must be before call to End() - DEF047652
-    ::DeleteDataFile(KTestFileName2);   
+	::DeleteDataFile(KTestFileName1);		//deletion of data files must be before call to End() - DEF047652
+	::DeleteDataFile(KTestFileName2);	
 
-    delete TheTrapCleanup;
+	test.End();
+	
+	delete TheTrapCleanup;
 
-    __UHEAP_MARKEND;
-    
-    if (r == KErrNone)
-        {
-        SetTestStepResult(EPass);
-        }
+	__UHEAP_MARKEND;
 
-    return TestStepResult();
+	test.Close();
+
+	return 0;
     }

@@ -205,7 +205,6 @@ void CnvPictographShared::SetCharacterSetsForPictograph(
 void CnvPictographShared::SetMethodsForPictograph(
         RArray<CnvUtilities::SMethod>& aArrayOfMethods, TOriginalCharset aOriginalCharset)
     {
-    TInt ret = KErrNone;
     CnvUtilities::SMethod method;
     switch (aOriginalCharset)
         {
@@ -218,7 +217,7 @@ void CnvPictographShared::SetMethodsForPictograph(
                 &CnvShiftJisDirectmap::ConversionData();
             method.iNumberOfBytesPerCharacter = 2;
             method.iNumberOfCoreBytesPerCharacter = 2;
-            ret |= aArrayOfMethods.Append(method);
+            aArrayOfMethods.Append(method);
             break;
         case ECharsetEucJp:
             method.iNumberOfBytesAbleToConvert =
@@ -229,7 +228,7 @@ void CnvPictographShared::SetMethodsForPictograph(
                 &CnvShiftJisDirectmap::ConversionData();
             method.iNumberOfBytesPerCharacter = 2;
             method.iNumberOfCoreBytesPerCharacter = 2;
-            ret |= aArrayOfMethods.Append(method);
+            aArrayOfMethods.Append(method);
             method.iNumberOfBytesAbleToConvert =
                 CnvPictographShared::NumberOfBytesAbleToConvertToEucJpDirectMap2;
             method.iConvertToIntermediateBufferInPlace =
@@ -238,12 +237,12 @@ void CnvPictographShared::SetMethodsForPictograph(
                 &CnvShiftJisDirectmap::ConversionData();
             method.iNumberOfBytesPerCharacter = 3;
             method.iNumberOfCoreBytesPerCharacter = 2;
-            ret |= aArrayOfMethods.Append(method);
+            aArrayOfMethods.Append(method);
             break;
         default:
             break;
         }
-    __ASSERT_DEBUG(!ret, User::Panic(_L("RArray append failure"), ret));
+
     // SAMPLE CODE
     // If this module needs to support escape sequence pictograph,
     // Remove the comment from the following code.
@@ -270,7 +269,6 @@ void CnvPictographShared::SetCharacterSetsForPictograph(
         RArray<CnvUtilities::SCharacterSet>& aArrayOfStates,
         TOriginalCharset aOriginalCharset)
     {
-    TInt ret = KErrNone;
     CnvUtilities::SCharacterSet characterSet;
     switch (aOriginalCharset)
         {
@@ -281,7 +279,7 @@ void CnvPictographShared::SetCharacterSetsForPictograph(
             characterSet.iConvertFromIntermediateBufferInPlace =
                 DummyConvertFromIntermediateBufferInPlace;
             characterSet.iEscapeSequence = &KNullDesC8;
-            ret |= aArrayOfStates.Append(characterSet);
+            aArrayOfStates.Append(characterSet);
             break;
         case ECharsetEucJp:
             // Append the character set for pictograph1
@@ -289,19 +287,18 @@ void CnvPictographShared::SetCharacterSetsForPictograph(
             characterSet.iConvertFromIntermediateBufferInPlace =
                 ConvertFromPictogaphToEucJpDirectmapInPlace;
             characterSet.iEscapeSequence = &KNullDesC8;
-            ret |= aArrayOfStates.Append(characterSet);
+            aArrayOfStates.Append(characterSet);
 
             // Append the character set for pictograph2
             characterSet.iConversionData = &CnvShiftJisDirectmap::ConversionData();
             characterSet.iConvertFromIntermediateBufferInPlace =
                 ConvertFromPictogaphToEucJpDirectmapInPlace;
             characterSet.iEscapeSequence = &KNullDesC8;
-            ret |= aArrayOfStates.Append(characterSet);
+            aArrayOfStates.Append(characterSet);
             break;
         default:
             break;
         }
-    __ASSERT_DEBUG(!ret, User::Panic(_L("RArray append failure"), ret));
     }
 
 // -----------------------------------------------------------------------------

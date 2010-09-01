@@ -18,11 +18,6 @@
 
 #include "TmHighlightSource.h"
 #include <txtfrmat.h>
-#include "OstTraceDefinitions.h"
-#ifdef OST_TRACE_COMPILER_IN_USE
-#include "TmHighlightSourceTraces.h"
-#endif
-
 
 // MTmSource derivatives that can draw text in the appropriate highlight colours
 
@@ -50,7 +45,6 @@ TTmHighlightSource::TTmHighlightSource(MTmSource& aDelegate)
 	if(!iTmTextDrawExt)
 		{
 		iTmTextDrawExt = &iTmTextDrawExtDefault;
-		OstTrace0( TRACE_FATAL, TTMHIGHLIGHTSOURCE_TTMHIGHLIGHTSOURCE, "Invariant" );
 		}
 	__ASSERT_ALWAYS(iTmTextDrawExt, User::Invariant());
 

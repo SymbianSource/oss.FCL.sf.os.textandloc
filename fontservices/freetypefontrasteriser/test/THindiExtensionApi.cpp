@@ -516,9 +516,7 @@ TAny* CTestTrueTypeTable::TestGetTable(TExpectedResult aExpected,
 	__UHEAP_FAILNEXT(1);
 	TAny* table = aTableStore->GetTrueTypeTable(error, aTag, &length);
 	__UHEAP_RESET;
-
-#if 0	
-// __UHEAP_FAILNEXT(1) doesn't work on Platsim, so just remove this TEST
+	
 #ifdef _DEBUG
 	// If it was EAvailableNew, it should have failed allocating memory
 	TEST ( aExpected != EAvailableNew
@@ -528,7 +526,6 @@ TAny* CTestTrueTypeTable::TestGetTable(TExpectedResult aExpected,
 	//__UHEAP_FAILNEXT is only for debug mode
 	TEST ( aExpected != EAvailableNew
 		|| (error == KErrNone && table != 0) );
-#endif
 #endif
 
 	// If it returned OK, it should be returning a table with positive length

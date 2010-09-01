@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 1997-2010 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 1997-2009 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -22,25 +22,15 @@
 #include <s32file.h>
 #include <flddef.h>
 #include <fldbltin.h>
+#include <e32test.h>
 #include "../incp/T_PMLPAR.H"
-#include "T_CONVRT.h"
-
-#define test(cond)											\
-	{														\
-	TBool __bb = (cond);									\
-	TEST(__bb);												\
-	if (!__bb)												\
-		{													\
-		ERR_PRINTF1(_L("ERROR: Test Failed"));				\
-		User::Leave(1);										\
-		}													\
-	}
 
 #define UNUSED_VAR(a) a = a
 
 const TInt KTestCleanupStack=0x20;
 
 LOCAL_D CTrapCleanup* TheTrapCleanup;
+LOCAL_D RTest test(_L("T_CONVRT - Rich Text Persistence"));
 //
 LOCAL_D CRichText* TheText=NULL;
 LOCAL_D CParaFormatLayer* TheGlobalParaLayer=NULL;
@@ -48,7 +38,7 @@ LOCAL_D CCharFormatLayer* TheGlobalCharLayer=NULL;
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////
-class TTestFieldFactoryCONVRT : public MTextFieldFactory
+class TTestFieldFactory : public MTextFieldFactory
 	{
 public:
 	// from MTextFieldFactory
@@ -57,7 +47,7 @@ public:
 	// Returns NULL if it does not recognise/support the field type
 	};
 
-CTextField* TTestFieldFactoryCONVRT::NewFieldL(TUid aFieldType)
+CTextField* TTestFieldFactory::NewFieldL(TUid aFieldType)
 // Creates a field (in aHeader) of the type specified in aHeader
 // 
 	{
@@ -70,7 +60,7 @@ CTextField* TTestFieldFactoryCONVRT::NewFieldL(TUid aFieldType)
 
 _LIT(KOutputFile, "c:\\etext\\t_convrt.tst");
 template <class T>
-void CT_CONVRT::testStoreRestoreL(T& aCopy,const T& aOriginal)
+void testStoreRestoreL(T& aCopy,const T& aOriginal)
 // Test document persistance.
 //
     {
@@ -99,7 +89,7 @@ void CT_CONVRT::testStoreRestoreL(T& aCopy,const T& aOriginal)
     }
 
 
-TInt CT_CONVRT::IsEqual(const CEditableText* aCopy,const CEditableText* aOriginal)
+LOCAL_C TInt IsEqual(const CEditableText* aCopy,const CEditableText* aOriginal)
 //
 // Returns true if aCopy contents matches aOriginal contents.
 // Takes account of multiple segments of a segmented text component.
@@ -125,7 +115,7 @@ TInt CT_CONVRT::IsEqual(const CEditableText* aCopy,const CEditableText* aOrigina
 	}
 
 
-void CT_CONVRT::DoTestRichTextL()
+LOCAL_C void DoTestRichTextL()
 //
 // Test streaming CRichText.
 //
@@ -153,14 +143,14 @@ void CT_CONVRT::DoTestRichTextL()
 	TInt globalPrint=size-newsize;
 	TBuf<50> buf;
 	buf.Format(_L("Empty rich text takes: %d bytes\n"),footprint);
-	INFO_PRINTF1(buf);
+	test.Printf(buf);
 	buf.Format(_L("Empty global text takes: %d bytes\n"),globalPrint);
-	INFO_PRINTF1(buf);
+	test.Printf(buf);
 //	test.Getch();
 	delete gText;
 	//
 	// Now add a text field to this.
-	TTestFieldFactoryCONVRT factory;
+	TTestFieldFactory factory;
 	TheText->SetFieldFactory(&factory);
 	theCopy->SetFieldFactory(&factory);
 	CTextField* field=NULL;
@@ -185,7 +175,7 @@ void CT_CONVRT::DoTestRichTextL()
 	}
 
 
-void CT_CONVRT::LoadIntoText(TFileName& aFileName)
+LOCAL_C void LoadIntoText(TFileName& aFileName)
 //
 	{
 	CParser* myParser=NULL;
@@ -201,21 +191,21 @@ void CT_CONVRT::LoadIntoText(TFileName& aFileName)
 	}
 
 
-void CT_CONVRT::KillText()
+LOCAL_C void KillText()
 //
 	{
 	delete TheText;
 	}
 
 
-void CT_CONVRT::KillLayers()
+LOCAL_C void KillLayers()
 	{
 	delete TheGlobalParaLayer;
 	delete TheGlobalCharLayer;
 	}
 
 
-void CT_CONVRT::Reset()
+LOCAL_C void Reset()
 //
 	{
 	KillText();
@@ -223,10 +213,10 @@ void CT_CONVRT::Reset()
 	}
 
 
-void CT_CONVRT::GoL()
+LOCAL_C void GoL()
 //
 	{
-	INFO_PRINTF1(_L("Rich Text of Shared Para Formats Only"));
+	test.Start(_L("Rich Text of Shared Para Formats Only"));
 	TFileName fileName=_L("z:\\test\\app-framework\\etext\\shared.pml");
 	LoadIntoText(fileName);
 	TBool hasMarkupData=TheText->HasMarkupData();
@@ -234,17 +224,19 @@ void CT_CONVRT::GoL()
 	DoTestRichTextL();
 	Reset();
 	//
-	INFO_PRINTF1(_L("Rich Text with specific character formatting"));
+	test.Next(_L("Rich Text with specific character formatting"));
 	fileName=_L("z:\\test\\app-framework\\etext\\test1.pml");
 	LoadIntoText(fileName);
 	hasMarkupData=TheText->HasMarkupData();
 	test(hasMarkupData);
 	DoTestRichTextL();
 	Reset();
+	//
+	test.End();
 	}
 
 
-void CT_CONVRT::setupCleanup()
+LOCAL_C void setupCleanup()
 //
 // Initialise the cleanup stack.
 //
@@ -261,7 +253,7 @@ void CT_CONVRT::setupCleanup()
 	}
 
 
-void CT_CONVRT::DeleteDataFile(const TDesC& aFullName)
+LOCAL_C void DeleteDataFile(const TDesC& aFullName)
 	{
 	RFs fsSession;
 	TInt err = fsSession.Connect();
@@ -290,30 +282,26 @@ void CT_CONVRT::DeleteDataFile(const TDesC& aFullName)
 		}
 	}
 
-CT_CONVRT::CT_CONVRT()
+GLDEF_C TInt E32Main()
+//
+// Test streaming conversions.
+//
     {
-    SetTestStepName(KTestStep_T_CONVRT);
+	setupCleanup();
+	test.Title();
+	test.Start(_L("Persisting Rich Text")); 
+	test.Next(_L(" @SYMTestCaseID:SYSLIB-ETEXT-LEGACY-T_CONVRT-0001 "));
+ 	__UHEAP_MARK;
+	TRAPD(ret, GoL());
+	__UHEAP_MARKEND;
+    test(ret == KErrNone);
+
+	//deletion of data files must be before call to End() - DEF047652	
+	::DeleteDataFile(KOutputFile);
+	test.End();
+	test.Close();
+
+	delete TheTrapCleanup;
+	return 0;
     }
 
-TVerdict CT_CONVRT::doTestStepL()
-    {
-    SetTestStepResult(EFail);
-
-    setupCleanup();
-    __UHEAP_MARK;
-
-    INFO_PRINTF1(_L("T_CONVRT - Rich Text Persistence"));
-    INFO_PRINTF1(_L("Persisting Rich Text"));
-    INFO_PRINTF1(_L(" @SYMTestCaseID:SYSLIB-ETEXT-LEGACY-T_CONVRT-0001 "));
-    TRAPD(error1, GoL());
-
-    __UHEAP_MARKEND;
-    delete TheTrapCleanup;
-
-    if(error1 == KErrNone)
-        {
-        SetTestStepResult(EPass);
-        }
-
-    return TestStepResult();
-    }

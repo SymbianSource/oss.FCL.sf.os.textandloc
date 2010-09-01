@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2009-2010 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -23,34 +23,28 @@ REM FORM tests
 #include <etext.iby>
 #include <form.iby>
 #include <ezlib.iby>
-#include <testexecute.iby>
 
-// batch file that runs all automatic form tests
-data=DATAZ_\test\app-framework\form\FormTests.bat			TEST\FormTests.bat
+// batch file that runs all automatic charconv tests
+data=ZSYSTEM\test\FormTests.bat			TEST\FormTests.bat
 
 //file=ABI_DIR\BUILD_DIR\TBitMapDoc.dll 		System\Libs\TBitMapDoc.dll
 file=ABI_DIR\BUILD_DIR\TTagma.exe               Test\TTagma.exe
 // Tedwin is broken so has been temporarily been removed from the ROM
-//file=ABI_DIR\BUILD_DIR\TTextview2.exe         Test\TTextview2.exe
-
-file=ABI_DIR\DEBUG_DIR\tformserver.exe    		\sys\bin\tformserver.exe
-data=DATAZ_\test\app-framework\form\form_t_all.script					\test\app-framework\form\form_t_all.script
-data=DATAZ_\test\app-framework\form\form_t_customcharmapping.script		\test\app-framework\form\form_t_customcharmapping.script
-data=DATAZ_\test\app-framework\form\form_t_tagmaimp.script				\test\app-framework\form\form_t_tagmaimp.script
-data=DATAZ_\test\app-framework\form\form_t_tmsource.script				\test\app-framework\form\form_t_tmsource.script
-data=DATAZ_\test\app-framework\form\form_t_bidicursorpos.script			\test\app-framework\form\form_t_bidicursorpos.script
-data=DATAZ_\test\app-framework\form\form_t_tmcode.script				\test\app-framework\form\form_t_tmcode.script
-data=DATAZ_\test\app-framework\form\form_t_unique.script				\test\app-framework\form\form_t_unique.script
-data=DATAZ_\test\app-framework\form\form_t_undo.script					\test\app-framework\form\form_t_undo.script
-data=DATAZ_\test\app-framework\form\form_t_interpreter.script			\test\app-framework\form\form_t_interpreter.script
-data=DATAZ_\test\app-framework\form\form_t_format.script				\test\app-framework\form\form_t_format.script
-data=DATAZ_\test\app-framework\form\form_t_inlinetext.script			\test\app-framework\form\form_t_inlinetext.script
-data=DATAZ_\test\app-framework\form\form_t_graphemeiterator.script		\test\app-framework\form\form_t_graphemeiterator.script
-data=DATAZ_\test\app-framework\form\form_t_formbenchmark.script			\test\app-framework\form\form_t_formbenchmark.script
-data=DATAZ_\test\app-framework\form\form_t_linepag.script				\test\app-framework\form\form_t_linepag.script
-data=DATAZ_\test\app-framework\form\form_t_formhindi.script				\test\app-framework\form\form_t_formhindi.script
-
-
+file=ABI_DIR\BUILD_DIR\TLinePag.exe             Test\TLinePag.exe
+file=ABI_DIR\BUILD_DIR\TUnique.exe              Test\TUnique.exe
+file=ABI_DIR\BUILD_DIR\TUndo.exe                Test\TUndo.exe
+//file=ABI_DIR\BUILD_DIR\TTextview2.exe           Test\TTextview2.exe
+file=ABI_DIR\BUILD_DIR\TTagmaImp.exe            Test\TTagmaImp.exe
+file=ABI_DIR\BUILD_DIR\TTmSource.exe            Test\TTmSource.exe
+file=ABI_DIR\BUILD_DIR\TBidiCursorPos.exe       Test\TBidiCursorPos.exe
+file=ABI_DIR\BUILD_DIR\TTmCode.exe              Test\TTmCode.exe
+file=ABI_DIR\BUILD_DIR\TGraphemeIterator.exe    Test\TGraphemeIterator.exe
+file=ABI_DIR\BUILD_DIR\TInterpreter.exe    	Test\TInterpreter.exe
+file=ABI_DIR\BUILD_DIR\TFormat.exe		Test\TFormat.exe
+file=ABI_DIR\BUILD_DIR\TInlineText.exe		Test\TInlineText.exe
+file=ABI_DIR\BUILD_DIR\TCustomCharMapping.exe		Test\TCustomCharMapping.exe
+file=ABI_DIR\BUILD_DIR\TFormBenchmark.exe		Test\TFormBenchmark.exe
+file=ABI_DIR\BUILD_DIR\tformhindi.exe		Test\tformhindi.exe
 
 data=ZRESOURCE\fonts\clearlyu.gdr				Resource\Fonts\clearlyu.gdr
 data=ZSYSTEM\fonts\Testfont.gdr				System\Fonts\Testfont.gdr

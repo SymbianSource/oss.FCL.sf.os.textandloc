@@ -43,9 +43,9 @@ public:
 	IMPORT_C void SaveFileL(const TDesC& aFileName);
     
 	// Gets
-	inline CRichText* DocModel() {return iDocModel;}
-	inline CTextView* View() {return iView;}
-	inline CTextLayout* Layout() {return iLayout;}
+	IMPORT_C CRichText* DocModel() {return iDocModel;}
+	IMPORT_C CTextView* View() {return iView;}
+	IMPORT_C CTextLayout* Layout() {return iLayout;}
 	
 	IMPORT_C void AppendL(const TDesC&);
 	IMPORT_C void AppendL(CPicture* aPic);

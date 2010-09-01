@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 1997-2010 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 1997-2009 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -21,35 +21,18 @@
 
 #include <gdi.h>
 #include <s32file.h>
+#include <e32test.h>
 
 #include <txtrich.h>
 #include <txtfmlyr.h>
 #include <txtfrmat.h>
 #include <txtstyle.h>
-#include "T_STYLE.h"
-
-LOCAL_D CTestStep *pTestStep = NULL;
-#define test(cond)											\
-	{														\
-	TBool __bb = (cond);									\
-	pTestStep->TEST(__bb);									\
-	if (!__bb)												\
-		{													\
-		pTestStep->ERR_PRINTF1(_L("ERROR: Test Failed"));	\
-		User::Leave(1);										\
-		}													\
-	}
-#undef INFO_PRINTF1
-#undef INFO_PRINTF2
-// copy from tefexportconst.h
-#define INFO_PRINTF1(p1)        pTestStep->Logger().LogExtra(((TText8*)__FILE__), __LINE__, ESevrInfo, (p1))
-#define INFO_PRINTF2(p1, p2)    pTestStep->Logger().LogExtra(((TText8*)__FILE__), __LINE__, ESevrInfo, (p1), (p2))
-
 
 #define UNUSED_VAR(a) a = a
 
 const TInt KTestCleanupStack=0x40;
 
+LOCAL_D RTest test(_L("Testing Paragraph Styles"));
 LOCAL_D CTrapCleanup* TheTrapCleanup;
 
 LOCAL_D CRichText* TheText;
@@ -272,7 +255,7 @@ LOCAL_C void TestParaWithNullParaFormat()
 	{
 	CParagraphStyle::TApplyParaStyleMode applyMode=CParagraphStyle::ERetainNoSpecificFormats;
 
-	INFO_PRINTF1(_L("Apply style to paragraph with NULL para format"));
+	test.Next(_L("Apply style to paragraph with NULL para format"));
 	ConstructEnvWithNullParaFormat();
 	TheText->InsertL(0,_L("HEADINGBODYTEXT"));
 	//
@@ -297,7 +280,7 @@ LOCAL_C void TestSharedPara()
 	{
 	CParagraphStyle::TApplyParaStyleMode applyMode=CParagraphStyle::ERetainNoSpecificFormats;
 
-	INFO_PRINTF1(_L("Apply style to shared paragraph"));
+	test.Next(_L("Apply style to shared paragraph"));
 	ConstructEnvironment();
 	TheText->InsertL(0,_L("HEADINGBODYTEXT"));
 	//
@@ -322,7 +305,7 @@ LOCAL_C void TestNonSharedPara()
 	{
 	CParagraphStyle::TApplyParaStyleMode applyMode=CParagraphStyle::ERetainNoSpecificFormats;
 
-	INFO_PRINTF1(_L("Apply style to non-shared paragraph"));
+	test.Next(_L("Apply style to non-shared paragraph"));
 	ConstructEnvironment();
 	//
 	TheText->InsertL(0,_L("This is paragraph one.This is paragraph number two."));
@@ -388,7 +371,7 @@ LOCAL_C void TestStyleList()
 	__UHEAP_MARK;
 	// Test 1
 	// Construction under OOM
-	INFO_PRINTF1(_L("Construction under OOM"));
+	test.Start(_L("Construction under OOM"));
 	CStyleList* list=NULL;
 	TInt nn;
 	for (nn=0; ;nn++)
@@ -415,12 +398,12 @@ LOCAL_C void TestStyleList()
 	__UHEAP_RESET;
 	TBuf<36> answer;
 	answer.Format(_L("        #allocs for full c'tion: %d\n"),nn-1);
-	INFO_PRINTF1(answer);
+	test.Printf(answer);
 
 
 	// Test 2
 	// Populated style list, Append under OOM;
-	INFO_PRINTF1(_L("AppendL() under OOM"));
+	test.Next(_L("AppendL() under OOM"));
 	CParaFormatLayer* paraLayer=CParaFormatLayer::NewL();
 	CCharFormatLayer* charLayer=CCharFormatLayer::NewL();
 	__UHEAP_MARK;
@@ -466,7 +449,7 @@ LOCAL_C void TestStyleList()
 
 	// Test 3
 	// Inserting a duplicate
-	INFO_PRINTF1(_L("AppendL() a duplicate"));
+	test.Next(_L("AppendL() a duplicate"));
 	list=CStyleList::NewL();
 	style=NULL;
 	for (TInt pp=0;pp<KMaxStyleListGranularity;pp++)
@@ -486,7 +469,7 @@ LOCAL_C void TestStyleList()
 
 	// Test 4
 	// Looking for a style by name that does not exist.
-	INFO_PRINTF1(_L("IndexByName() where style not present"));
+	test.Next(_L("IndexByName() where style not present"));
 	list=CStyleList::NewL();
 	style=NULL;
 	TUint name='A';
@@ -508,7 +491,7 @@ LOCAL_C void TestStyleList()
 	delete charLayer;
 
 	__UHEAP_MARKEND;
-	
+	test.End();
 	}
 
 
@@ -516,12 +499,12 @@ LOCAL_C void TestHarness()
 // Test rich text style usage.
 //
     {
-	INFO_PRINTF1(_L(" @SYMTestCaseID:SYSLIB-TTEXT-LEGACY-T_STYLE-0001 RichText Styles "));
+	test.Start(_L(" @SYMTestCaseID:SYSLIB-TTEXT-LEGACY-T_STYLE-0001 RichText Styles "));
 	// Do the tests.
 	TestConstruction();
 	TestStyles();
 	TestStyleWithNullParaFormat();
-	INFO_PRINTF1(_L("CStyleList"));
+	test.Next(_L("CStyleList"));
 	TestStyleList();
 	//
     }
@@ -573,32 +556,26 @@ LOCAL_C void DeleteDataFile(const TDesC& aFullName)
 		}
 	}
 
-CT_STYLE::CT_STYLE()
+GLDEF_C TInt E32Main()
+//
+// Test the streaming framework.
+//
     {
-    SetTestStepName(KTestStep_T_STYLE);
-    pTestStep = this;
-    }
 
-TVerdict CT_STYLE::doTestStepL()
-    {
-    SetTestStepResult(EFail);
-
-    INFO_PRINTF1(_L("Testing Paragraph Styles"));
-    __UHEAP_MARK;
-    setupCleanup();
-    TRAPD(r,TestHarness());
+	test.Title();	
+	__UHEAP_MARK;
+	setupCleanup();
+	TRAPD(r,TestHarness());
     test(r == KErrNone);
 
-    delete TheTrapCleanup;
-    
-    __UHEAP_MARKEND;
-    
-    ::DeleteDataFile(KOutputFile);      //deletion of data files must be before call to End() - DEF047652
+	delete TheTrapCleanup;
+	
+	__UHEAP_MARKEND;
+	
+	::DeleteDataFile(KOutputFile);		//deletion of data files must be before call to End() - DEF047652
+	
+	test.End();
+	test.Close();
 
-    if (r == KErrNone)
-        {
-        SetTestStepResult(EPass);
-        }
-
-    return TestStepResult();
+	return 0;
     }

@@ -20,6 +20,8 @@ TARGETTYPE		exe
 SOURCEPATH	../coltab
 SOURCE			 coltab.cpp
 
+//SYSTEMINCLUDE /epoc32/include
+
 VENDORID 0x70000001
 
 SMPSAFE

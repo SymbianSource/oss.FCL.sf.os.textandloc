@@ -192,10 +192,10 @@ EXPORTS
 	?UpdateLinkedTypefaceL@CFontStore@@QAEXABVTLinkedTypefaceSpecificationArgs@@@Z @ 191 NONAME ; void CFontStore::UpdateLinkedTypefaceL(class TLinkedTypefaceSpecificationArgs const &)
 	?KLinkedFontDrive@@3CB @ 192 NONAME ; signed char const KLinkedFontDrive
 	?GetFontFilePath@CFontStore@@QBEHABVTDesC16@@AAV?$TBuf@$0BAA@@@@Z @ 193 NONAME ; int CFontStore::GetFontFilePath(class TDesC16 const &, class TBuf<256> &) const
-	?ReleaseGlyphOutlines@CBitmapFont@@QAEXHPBIHH@Z @ 194 NONAME ; void CBitmapFont::ReleaseGlyphOutlines(int, unsigned int const *, int, int)
-	?GetGlyphOutline@CBitmapFont@@QAEHIHAAPAXAAHH@Z @ 195 NONAME ; int CBitmapFont::GetGlyphOutline(unsigned int, int, void * &, int &, int)
-	?KFontTable_GlyphOutline_CacheMaxMem@@3KB @ 196 NONAME ; unsigned long const KFontTable_GlyphOutline_CacheMaxMem
-	?CleanupCacheOnFbsSessionTermination@CFontStore@@QAEXH@Z @ 197 NONAME ; void CFontStore::CleanupCacheOnFbsSessionTermination(int)
-	?GetFontTable@CBitmapFont@@QAEHKAAPAXAAHH@Z @ 198 NONAME ; int CBitmapFont::GetFontTable(unsigned long, void * &, int &, int)
-	?ReleaseFontTable@CBitmapFont@@QAEXKH@Z @ 199 NONAME ; void CBitmapFont::ReleaseFontTable(unsigned long, int)
+	?ReleaseGlyphOutlines@CBitmapFont@@QAEXHPBIHH@Z @ 194 NONAME ABSENT ; void CBitmapFont::ReleaseGlyphOutlines(int, unsigned int const *, int, int)
+	?GetGlyphOutline@CBitmapFont@@QAEHIHAAPAXAAHH@Z @ 195 NONAME ABSENT ; int CBitmapFont::GetGlyphOutline(unsigned int, int, void * &, int &, int)
+	?KFontTable_GlyphOutline_CacheMaxMem@@3KB @ 196 NONAME ABSENT ; unsigned long const KFontTable_GlyphOutline_CacheMaxMem
+	?CleanupCacheOnFbsSessionTermination@CFontStore@@QAEXH@Z @ 197 NONAME ABSENT ; void CFontStore::CleanupCacheOnFbsSessionTermination(int)
+	?GetFontTable@CBitmapFont@@QAEHKAAPAXAAHH@Z @ 198 NONAME ABSENT ; int CBitmapFont::GetFontTable(unsigned long, void * &, int &, int)
+	?ReleaseFontTable@CBitmapFont@@QAEXKH@Z @ 199 NONAME ABSENT ; void CBitmapFont::ReleaseFontTable(unsigned long, int)
 

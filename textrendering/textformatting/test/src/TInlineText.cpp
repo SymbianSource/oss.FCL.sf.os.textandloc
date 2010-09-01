@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2004-2010 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 2004-2009 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -25,9 +25,8 @@
 #include <fbs.h>
 #include <w32std.h>
 #include <inlinetext.h>
-#include "tinlinetext.h"
 
-namespace LocalToTInlineText
+namespace LocalToFile
 {
 
 _LIT(KTInlineText, "TInlineText");
@@ -35,11 +34,7 @@ const TInt KDisplayWidthWide = 202;
 const TInt KDisplayWidthThin = 102;
 const TInt KDisplayHeight = 100;
 const TInt KPictureCharacter = 0xFFFC;
-
-CTInLineTextStep* TestStep = NULL;
-#define TESTPOINT(p) TestStep->testpoint(p,(TText8*)__FILE__,__LINE__)
-#define TESTPRINT(p) TestStep->print(p,(TText8*)__FILE__,__LINE__)
-
+RTest test(KTInlineText);
 
 enum TInlineTextPanic { EAccessOutsideText = 1 };
 void Panic(TInlineTextPanic)
@@ -156,7 +151,7 @@ private:
 	CParaFormat* iParagraphFormat;
 	};
 }
-using namespace LocalToTInlineText;
+using namespace LocalToFile;
 
 class CTestTextView	// slightly naughty
 	{
@@ -174,7 +169,7 @@ _LIT(KSpace, " ");
 _LIT(KLength, ", Length of Data = %d 16-bit words\r\n");
 _LIT(KSpaces, "                                                                      ");
 _LIT(KPeriod, ".");
-_LIT(KSingleString, "%S\r\n");
+_LIT(KSingleString, "%s\r\n");
 //_LIT(KDoubleString, "%s <%s>\r\n");
 //_LIT(KLinefeed, "\r\n");
 
@@ -193,9 +188,7 @@ void PrintTestData (const TDesC& aTitle , const TDesC16& aData)
 	buffer.Append(aTitle);
 	buffer.Append(KLength);
 
-	TBuf<256> buf;
-	buf.AppendFormat(buffer, length);
-	TESTPRINT(buf);
+	test.Printf(buffer, length);
 
 	for (i = 0 ; i < length ; i += 8)
 		{
@@ -224,9 +217,7 @@ void PrintTestData (const TDesC& aTitle , const TDesC16& aData)
 				}
 			}
 		buffer.ZeroTerminate();
-		buf.Zero();
-		buf.AppendFormat(KSingleString,buffer.Ptr());
-		TESTPRINT(buf);		
+		test.Printf(KSingleString, buffer.Ptr());
 		}
 
 	}
@@ -1212,35 +1203,35 @@ void DoLineTestL(TDes& aText, CTextLayout* aLayout, CTestGraphicsDevice* aDevice
 	case 5:
 		line1 = &(aDevice->LineArray().Line(4));
 		line2 = aDevice->LineArray().Find(KTestStrings[aIndex][aNumChar][5]);
-		TESTPOINT(0 != line1);
-		TESTPOINT(0 != line2);
-		TESTPOINT(line1->iLineData.Compare(line2->iLineData) == 0);
+		test(0 != line1);
+		test(0 != line2);
+		test(line1->iLineData.Compare(line2->iLineData) == 0);
 	case 4:
 		line1 = &(aDevice->LineArray().Line(3));
 		line2 = aDevice->LineArray().Find(KTestStrings[aIndex][aNumChar][4]);
-		TESTPOINT(0 != line1);
-		TESTPOINT(0 != line2);
-		TESTPOINT(line1->iLineData.Compare(line2->iLineData) == 0);
+		test(0 != line1);
+		test(0 != line2);
+		test(line1->iLineData.Compare(line2->iLineData) == 0);
 	case 3:
 		line1 = &(aDevice->LineArray().Line(2));
 		line2 = aDevice->LineArray().Find(KTestStrings[aIndex][aNumChar][3]);
-		TESTPOINT(0 != line1);
-		TESTPOINT(0 != line2);
-		TESTPOINT(line1->iLineData.Compare(line2->iLineData) == 0);
+		test(0 != line1);
+		test(0 != line2);
+		test(line1->iLineData.Compare(line2->iLineData) == 0);
 	case 2:
 		line1 = &(aDevice->LineArray().Line(1));
 		line2 = aDevice->LineArray().Find(KTestStrings[aIndex][aNumChar][2]);
-		TESTPOINT(0 != line1);
-		TESTPOINT(0 != line2);
-		TESTPOINT(line1->iLineData.Compare(line2->iLineData) == 0);
+		test(0 != line1);
+		test(0 != line2);
+		test(line1->iLineData.Compare(line2->iLineData) == 0);
 	case 1:
 		line1 = &(aDevice->LineArray().Line(0));
 		line2 = aDevice->LineArray().Find(KTestStrings[aIndex][aNumChar][1]);
-		TESTPOINT(0 != line1);
-		TESTPOINT(0 != line2);
+		test(0 != line1);
+		test(0 != line2);
 		// Can't always do a direct comparison of lines because same string
 		// may appear in more than one line, so compare contents
-		TESTPOINT(line1->iLineData.Compare(line2->iLineData) == 0);
+		test(line1->iLineData.Compare(line2->iLineData) == 0);
 		}
 	aLayout->SetInterfaceProvider(NULL);
 	CleanupStack::PopAndDestroy(interfaceProvider);
@@ -1249,47 +1240,49 @@ void DoLineTestL(TDes& aText, CTextLayout* aLayout, CTestGraphicsDevice* aDevice
 void GeneralCombinationTestsTextViewL(TDes& aText, CTextLayout* aLayout, CTestGraphicsDevice* aDevice, CTextView* aView, TInt aNumChar)
 	{
 	// For all tests carried out from here up to 20 chars will fit on a line
-	TESTPRINT(_L("Test L-P"));
+	test.Start(_L("Test L-P"));
 	DoLineTestL(aText, aLayout, aDevice, aView, aNumChar, 0);
-	TESTPRINT(_L("Test X L-P"));
+	test.Next(_L("Test X L-P"));
 	DoLineTestL(aText, aLayout, aDevice, aView, aNumChar, 1);
-	TESTPRINT(_L("Test P-T"));
+	test.Next(_L("Test P-T"));
 	DoLineTestL(aText, aLayout, aDevice, aView, aNumChar, 2);
-	TESTPRINT(_L("Test P-T Y"));
+	test.Next(_L("Test P-T Y"));
 	DoLineTestL(aText, aLayout, aDevice, aView, aNumChar, 3);
-	TESTPRINT(_L("Test L-P-T"));
+	test.Next(_L("Test L-P-T"));
 	DoLineTestL(aText, aLayout, aDevice, aView, aNumChar, 4);
-	TESTPRINT(_L("Test L-C-T"));
+	test.Next(_L("Test L-C-T"));
 	DoLineTestL(aText, aLayout, aDevice, aView, aNumChar, 5);
-	TESTPRINT(_L("Test X L-P-T"));
+	test.Next(_L("Test X L-P-T"));
 	DoLineTestL(aText, aLayout, aDevice, aView, aNumChar, 6);
-	TESTPRINT(_L("Test X L-C-T"));
+	test.Next(_L("Test X L-C-T"));
 	DoLineTestL(aText, aLayout, aDevice, aView, aNumChar, 7);
-	TESTPRINT(_L("Test L-P-T Y"));
+	test.Next(_L("Test L-P-T Y"));
 	DoLineTestL(aText, aLayout, aDevice, aView, aNumChar, 8);
-	TESTPRINT(_L("Test L-C-T Y"));
+	test.Next(_L("Test L-C-T Y"));
 	DoLineTestL(aText, aLayout, aDevice, aView, aNumChar, 9);
-	TESTPRINT(_L("Test X L-P-T Y"));
+	test.Next(_L("Test X L-P-T Y"));
 	DoLineTestL(aText, aLayout, aDevice, aView, aNumChar, 10);
-	TESTPRINT(_L("Test X L-C-T Y"));
+	test.Next(_L("Test X L-C-T Y"));
 	DoLineTestL(aText, aLayout, aDevice, aView, aNumChar, 11);
+	test.End();
 	}
 
 void SpecificTestsTextViewL(TDes& aText, CTextLayout* aLayout, CTestGraphicsDevice* aDevice, CTextView* aView, TInt aNumChar)
 	{
 	// For all tests carried out from here up to 10 chars will fit on a line
-    TESTPRINT(_L("Test P-T B"));
+	test.Start(_L("Test P-T B"));
 	DoLineTestL(aText, aLayout, aDevice, aView, aNumChar, 12);
-	TESTPRINT(_L("Test X P-T one"));
+	test.Next(_L("Test X P-T one"));
 	DoLineTestL(aText, aLayout, aDevice, aView, aNumChar, 13);
-	TESTPRINT(_L("Test X P-T two"));
+	test.Next(_L("Test X P-T two"));
 	DoLineTestL(aText, aLayout, aDevice, aView, aNumChar, 14);
-	TESTPRINT(_L("Test X L-P-T one"));
+	test.Next(_L("Test X L-P-T one"));
 	DoLineTestL(aText, aLayout, aDevice, aView, aNumChar, 15);
-	TESTPRINT(_L("Test X L-P-T two"));
+	test.Next(_L("Test X L-P-T two"));
 	DoLineTestL(aText, aLayout, aDevice, aView, aNumChar, 16);
-	TESTPRINT(_L("Test X L-P-T three"));
+	test.Next(_L("Test X L-P-T three"));
 	DoLineTestL(aText, aLayout, aDevice, aView, aNumChar, 17);
+	test.End();
 	}
 
 void DoLineTestForINC141914L(TDes& aText, CTextLayout* aLayout, CTestGraphicsDevice* aDevice, CTextView* aView)
@@ -1452,45 +1445,46 @@ void RunTestsForINC141914L()
     __UHEAP_MARKEND;
     }
 
-TVerdict CTInLineTextStep::doTestStepL()
+TInt E32Main()
 	{
-    SetTestStepResult(EPass);
-    TestStep = this;
-    
 	__UHEAP_MARK;
-	TESTPRINT(KTInlineText);
-	TESTPRINT(_L(" @SYMTestCaseID:SYSLIB-FORM-LEGACY-INLINETEXT-0001 General combination tests - no inline text "));
+	test.Title();
+	static CTrapCleanup* TrapCleanup = CTrapCleanup::New();
+	test.Start(_L(" @SYMTestCaseID:SYSLIB-FORM-LEGACY-INLINETEXT-0001 General combination tests - no inline text "));
 	TInt error = RFbsSession::Connect();
 	if (error == KErrNotFound)
 		{
 		FbsStartup();
 		error = RFbsSession::Connect();
 		}
-	TEST(error == KErrNone);
+	test(error == KErrNone);
 	TRAP(error, RunGeneralCombinationTestsL(0));
-	TEST(error == KErrNone);
-	TESTPRINT(_L("General combination tests - single char inline text"));
+	test(error == KErrNone);
+	test.Next(_L("General combination tests - single char inline text"));
 	TRAP(error, RunGeneralCombinationTestsL(1));
-	TEST(error == KErrNone);
-	TESTPRINT(_L("General combination tests - multi char inline text"));
+	test(error == KErrNone);
+	test.Next(_L("General combination tests - multi char inline text"));
 	TRAP(error, RunGeneralCombinationTestsL(2));
-	TEST(error == KErrNone);
-	TESTPRINT(_L("Specific tests - no inline text"));
+	test(error == KErrNone);
+	test.Next(_L("Specific tests - no inline text"));
 	TRAP(error, RunSpecificTestsL(0));
-	TEST(error == KErrNone);
-	TESTPRINT(_L("Specific tests - single char inline text"));
+	test(error == KErrNone);
+	test.Next(_L("Specific tests - single char inline text"));
 	TRAP(error, RunSpecificTestsL(1));
-	TEST(error == KErrNone);
-	TESTPRINT(_L("Specific tests - multi char inline text"));
+	test(error == KErrNone);
+	test.Next(_L("Specific tests - multi char inline text"));
 	TRAP(error, RunSpecificTestsL(2));
-	TEST(error == KErrNone);
+	test(error == KErrNone);
 	
-    TESTPRINT(_L("Defect tests - for INC141914"));
+    test.Next(_L("Defect tests - for INC141914"));
     TRAP(error, RunTestsForINC141914L());
-    TEST(error == KErrNone);
+    test(error == KErrNone);
     
 	RFbsSession::Disconnect();
+	test.End();
+	delete TrapCleanup;
+	test.Close();
 	__UHEAP_MARKEND;
 	User::Heap().Check();
-	return TestStepResult();
+	return error;
 	}

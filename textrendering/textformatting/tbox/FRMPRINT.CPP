@@ -19,11 +19,6 @@
 #include "FRMPRINT.H"
 #include "FRMCONST.H"
 
-#include "OstTraceDefinitions.h"
-#ifdef OST_TRACE_COMPILER_IN_USE
-#include "FRMPRINTTraces.h"
-#endif
-
 #ifdef SYMBIAN_ENABLE_SPLIT_HEADERS
 #include "FRMCONST_INTERNAL.H"
 #include "FRMCONST_PARTNER.H"
@@ -157,19 +152,7 @@ EXPORT_C void CTextPageRegionPrinter::PrintBandL(CGraphicsDevice* aImageDevice,T
 // Traps leaves
 //
 	{
-	if (!iPageList)
-	    {
-	    OstTrace0( TRACE_FATAL, DUP1_CTEXTPAGEREGIONPRINTER_PRINTBANDL, "EFInvalidPageList" );
-	    }
 	__ASSERT_ALWAYS(iPageList!=NULL,FormPanic(EFInvalidPageList));
-	if (aPageNo-iFirstPage>=iPageList->Count())
-	    {
-	    OstTrace0( TRACE_DUMP, CTEXTPAGEREGIONPRINTER_PRINTBANDL, "EFInvalidPageNumber" );
-	    }
-	if (aPageNo<iFirstPage)
-	    {
-	    OstTrace0( TRACE_DUMP, DUP2_CTEXTPAGEREGIONPRINTER_PRINTBANDL, "EFInvalidPageNumber" );
-	    }
 	__ASSERT_DEBUG(aPageNo-iFirstPage<iPageList->Count(),FormPanic(EFInvalidPageNumber));
 	__ASSERT_DEBUG(aPageNo>=iFirstPage,FormPanic(EFInvalidPageNumber));
 
@@ -401,8 +384,7 @@ void CTextPageRegionPrinter::LeaveL(TInt aErr)
 
 	delete iPictureGc;
 	iPictureGc=NULL;
-	
-	OstTrace1( TRACE_FATAL, CTEXTPAGEREGIONPRINTER_LEAVEL, "CTextPageRegionPrinter::LeaveL;aErr=%d", aErr );
+
 	User::Leave(aErr);
 	}
 

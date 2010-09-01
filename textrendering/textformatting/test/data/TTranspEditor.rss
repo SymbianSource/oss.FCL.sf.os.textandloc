@@ -19,7 +19,7 @@
 NAME WRAP
 
 #include "TTranspEditor.hrh"
-#include <eikon.rh>
+#include <techview/eikon.rh>
 #include <uiklafgt/eikcore.rsg>
 
 RESOURCE RSS_SIGNATURE { }

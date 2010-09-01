@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2004-2010 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 2004-2009 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -20,17 +20,11 @@
 #include "TAGMA.H"
 #include <txtfrmat.h>
 #include <e32test.h>
-#include "tformat.h"
 
 #define UNUSED_VAR(a) a = a
 
-namespace LocalToTFormat
-{
-CTFormatStep* TestStep = NULL;
-#define TESTPOINT(p) TestStep->testpoint(p,(TText8*)__FILE__,__LINE__)
-#define TESTPRINT(p) TestStep->print(p,(TText8*)__FILE__,__LINE__)
-}
-using namespace LocalToTFormat;
+CTrapCleanup* TrapCleanup;
+RTest test(_L("TFormat - TTmCharFormat and CTmParFormat"));
 
 void INC041190()
 	{
@@ -40,26 +34,33 @@ void INC041190()
 		= TFontPresentation::EFontHighlightNoMatchesIndicator;
 	tmcf.iEffects = 0;
 	tmcf = cf;
-	TESTPOINT(tmcf.iEffects == TTmCharFormat::ENoMatchesIndicator);
+	test(tmcf.iEffects == TTmCharFormat::ENoMatchesIndicator);
 	cf.iFontPresentation.iHighlightStyle
 		= TFontPresentation::EFontHighlightNone;
 	tmcf.GetTCharFormat(cf);
-	TESTPOINT(cf.iFontPresentation.iHighlightStyle
+	test(cf.iFontPresentation.iHighlightStyle
 		== TFontPresentation::EFontHighlightNoMatchesIndicator);
 	}
 
-TVerdict CTFormatStep::doTestStepL()
+void RunTestsL()
 	{
-    SetTestStepResult(EPass);
-    TestStep = this;
-    TESTPRINT(_L("TFormat - TTmCharFormat and CTmParFormat"));
-    
 	__UHEAP_MARK;
 
-	TESTPRINT(_L(" @SYMTestCaseID:SYSLIB-FORM-LEGACY-TFORMAT-0001 INC041190 - EText's EFontHighlightNoMatchesIndicator isn't mappd to anythng in TTmCharFormat "));
+	test.Title();
+	test.Start(_L(" @SYMTestCaseID:SYSLIB-FORM-LEGACY-TFORMAT-0001 INC041190 - EText's EFontHighlightNoMatchesIndicator isn't mappd to anythng in TTmCharFormat "));
 	INC041190();
 
+	test.End();
+	test.Close();
+
 	__UHEAP_MARKENDC(0);
-	return TestStepResult();
 	}
 
+TInt E32Main()
+	{
+	TrapCleanup = CTrapCleanup::New();
+	TRAPD(err, RunTestsL());
+    test(err == KErrNone);
+	delete TrapCleanup;
+	return 0;
+	}

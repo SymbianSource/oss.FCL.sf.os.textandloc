@@ -17,19 +17,25 @@
 
 
 #include <e32std.h>
+#include <e32test.h>
 #include <utf.h>
 #include "utf8.h"
-#include "t_comp8.h"
+
 ///////////////////////////////////////////////////////////////////////////////////////
 
+RTest TheTest(_L("TComp8"));
 
-#define test(cond)                                  \
-    TEST((cond));                                   \
-    if (!(cond))                                    \
-        {                                           \
-        ERR_PRINTF1(_L("ERROR: Test Failed"));      \
-        User::Leave(1);                             \
-        }
+///////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////
+//Tests macroses and functions.
+static void Check(TInt aValue, TInt aLine)
+	{
+	if(!aValue)
+		{
+		TheTest(EFalse, aLine);
+		}
+	}
+#define TEST(arg) ::Check((arg), __LINE__)
 
 ///////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -52,9 +58,9 @@ LOCAL_C void Panic(TPanic aPanic)
 @SYMTestExpectedResults Test must not fail
 @SYMREQ                 REQ0000
 */
-void CT_COMP8::TestCOMP8()
+GLDEF_C TInt E32Main()
 	{
-    INFO_PRINTF1(_L(" @SYMTestCaseID:SYSLIB-CHARCONV-CT-0566 Comparing behaviour with the Unicode CD-ROM UTF-8 sample code "));
+	TheTest.Start(_L(" @SYMTestCaseID:SYSLIB-CHARCONV-CT-0566 Comparing behaviour with the Unicode CD-ROM UTF-8 sample code "));
 	TDes16* originalUnicode=new TBuf16<512>;
 	TDes8* generatedUtf8=new TBuf8<1024>;
 	TDes8* otherGeneratedUtf8=new TBuf8<1024>;
@@ -70,56 +76,34 @@ void CT_COMP8::TestCOMP8()
 	originalUnicode->AppendFormat(_L16("Here are some Han characters: %c%c%c%c%c%c%c%c%c%c. "),   0x7f0c, 0x7a92, 0x6d90, 0x6272, 0x5934, 0x5973, 0x55ce, 0x516c, 0x4ec0, 0x4e00);
 	originalUnicode->AppendFormat(_L16("Here are some surrogate pairs: %c%c%c%c%c%c%c%c%c%c. "),   0xd800, 0xdc00, 0xdbff, 0xdfff, 0xdb80, 0xdddd, 0xdbff, 0xdcba, 0xdbeb, 0xdeb0);
 	originalUnicode->AppendFormat(_L16("Here are some odd bits and pieces: =+-/*?#~'@!\"$%%^&\\|()[]{}<>_;:,. "));
-	INFO_PRINTF1(_L("Round-trips via UTF-8"));
-	test(CnvUtfConverter::ConvertFromUnicodeToUtf8(*generatedUtf8, *originalUnicode)==0);
+	TheTest.Next(_L("Round-trips via UTF-8"));
+	TEST(CnvUtfConverter::ConvertFromUnicodeToUtf8(*generatedUtf8, *originalUnicode)==0);
 	{__ASSERT_ALWAYS(originalUnicode->Length()<originalUnicode->MaxLength(), Panic(EPanicNoFreeSpaceAtEndOfBuffer1));
 	TUint16* sourceStart=CONST_CAST(TUint16*, originalUnicode->Ptr());
 	TUint16* sourceEnd=sourceStart+originalUnicode->Length();
 	TUint8* targetStart=CONST_CAST(TUint8*, otherGeneratedUtf8->Ptr());
 	TUint8* targetEnd=targetStart+(otherGeneratedUtf8->MaxLength()-1);
-	test(ConvertUTF16toUTF8(&sourceStart, sourceEnd, &targetStart, targetEnd)==ok);
+	TEST(ConvertUTF16toUTF8(&sourceStart, sourceEnd, &targetStart, targetEnd)==ok);
 	otherGeneratedUtf8->SetLength(targetStart-otherGeneratedUtf8->Ptr());}
-	test(*generatedUtf8==*otherGeneratedUtf8);
-	test(CnvUtfConverter::ConvertToUnicodeFromUtf8(*generatedUnicode, *generatedUtf8)==0);
+	TEST(*generatedUtf8==*otherGeneratedUtf8);
+	TEST(CnvUtfConverter::ConvertToUnicodeFromUtf8(*generatedUnicode, *generatedUtf8)==0);
 	{__ASSERT_ALWAYS(otherGeneratedUtf8->Length()<otherGeneratedUtf8->MaxLength(), Panic(EPanicNoFreeSpaceAtEndOfBuffer2));
 	TUint8* sourceStart=CONST_CAST(TUint8*, otherGeneratedUtf8->Ptr());
 	TUint8* sourceEnd=sourceStart+otherGeneratedUtf8->Length();
 	TUint16* targetStart=CONST_CAST(TUint16*, otherGeneratedUnicode->Ptr());
 	TUint16* targetEnd=targetStart+(otherGeneratedUnicode->MaxLength()-1);
-	test(ConvertUTF8toUTF16(&sourceStart, sourceEnd, &targetStart, targetEnd)==ok);
+	TEST(ConvertUTF8toUTF16(&sourceStart, sourceEnd, &targetStart, targetEnd)==ok);
 	otherGeneratedUnicode->SetLength(targetStart-otherGeneratedUnicode->Ptr());}
-	test(*generatedUnicode==*originalUnicode);
-	test(*generatedUnicode==*otherGeneratedUnicode);
+	TEST(*generatedUnicode==*originalUnicode);
+	TEST(*generatedUnicode==*otherGeneratedUnicode);
 	//
 	delete originalUnicode;
 	delete generatedUtf8;
 	delete otherGeneratedUtf8;
 	delete generatedUnicode;
 	delete otherGeneratedUnicode;
+	TheTest.End();
+	TheTest.Close();
+	return KErrNone;
 	}
-
-
-CT_COMP8::CT_COMP8()
-    {
-    SetTestStepName(KTestStep_T_COMP8);
-    }
-
-TVerdict CT_COMP8::doTestStepL()
-    {
-    SetTestStepResult(EFail);
-
-    __UHEAP_MARK;
-
-    TRAPD(error1, TestCOMP8());
-
-    __UHEAP_MARKEND;
-
-    if(error1 == KErrNone )
-        {
-        SetTestStepResult(EPass);
-        }
-
-    return TestStepResult();
-    }
-
 

@@ -17,22 +17,25 @@
 
 
 #include <e32std.h>
+#include <e32test.h>
 #include <utf.h>
 #include "utf7.h"
-#include "t_comp7.h"
 
 ///////////////////////////////////////////////////////////////////////////////////////
 
+RTest TheTest(_L("TComp7"));
 
-#define test(cond)                                  \
-    TEST((cond));                                   \
-    if (!(cond))                                    \
-        {                                           \
-        ERR_PRINTF1(_L("ERROR: Test Failed"));      \
-        User::Leave(1);                             \
-        }
-
-
+///////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////
+//Tests macroses and functions.
+static void Check(TInt aValue, TInt aLine)
+	{
+	if(!aValue)
+		{
+		TheTest(EFalse, aLine);
+		}
+	}
+#define TEST(arg) ::Check((arg), __LINE__)
 
 ///////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -55,9 +58,9 @@ LOCAL_C void Panic(TPanic aPanic)
 @SYMTestExpectedResults Test must not fail
 @SYMREQ                 REQ0000
 */
-void CT_COMP7::TestCOMP7()
+GLDEF_C TInt E32Main()
 	{
-    INFO_PRINTF1(_L(" @SYMTestCaseID:SYSLIB-CHARCONV-CT-0565 Comparing behaviour with the Unicode CD-ROM UTF-7 sample code "));
+	TheTest.Start(_L(" @SYMTestCaseID:SYSLIB-CHARCONV-CT-0565 Comparing behaviour with the Unicode CD-ROM UTF-7 sample code "));
 	TDes16* originalUnicode=new TBuf16<512>;
 	TDes8* generatedUtf7=new TBuf8<1024>;
 	TDes8* otherGeneratedUtf7=new TBuf8<1024>;
@@ -82,30 +85,30 @@ void CT_COMP7::TestCOMP7()
 		EUtf7FlagCrossOver		=0x00000008,
 		EUtf7FlagDone			=0x00000010
 		};
-	INFO_PRINTF1(_L("Round-trips via UTF-7"));
+	TheTest.Next(_L("Round-trips via UTF-7"));
 	for (TInt i=0; ~i&EUtf7FlagDone; ++i)
 		{
-        test(CnvUtfConverter::ConvertFromUnicodeToUtf7(*generatedUtf7, *originalUnicode, i&EUtf7FlagOptional)==0);
+		TEST(CnvUtfConverter::ConvertFromUnicodeToUtf7(*generatedUtf7, *originalUnicode, i&EUtf7FlagOptional)==0);
 		{__ASSERT_ALWAYS(originalUnicode->Length()<originalUnicode->MaxLength(), Panic(EPanicNoFreeSpaceAtEndOfBuffer1));
 		TUint16* sourceStart=CONST_CAST(TUint16*, originalUnicode->Ptr());
 		TUint16* sourceEnd=sourceStart+originalUnicode->Length();
 		char* targetStart=REINTERPRET_CAST(char*, CONST_CAST(TUint8*, otherGeneratedUtf7->Ptr()));
 		char* targetEnd=targetStart+(otherGeneratedUtf7->MaxLength()-1);
-		test(ConvertUCS2toUTF7(&sourceStart, sourceEnd, &targetStart, targetEnd, i&EUtf7FlagOtherOptional, i&EUtf7FlagOtherVerbose)==ok);
+		TEST(ConvertUCS2toUTF7(&sourceStart, sourceEnd, &targetStart, targetEnd, i&EUtf7FlagOtherOptional, i&EUtf7FlagOtherVerbose)==ok);
 		otherGeneratedUtf7->SetLength(targetStart-REINTERPRET_CAST(char*, CONST_CAST(TUint8*, otherGeneratedUtf7->Ptr())));}
 		TDes8& sourceForReturnTrip=(i&EUtf7FlagCrossOver)? *otherGeneratedUtf7: *generatedUtf7;
 		TDes8& otherSourceForReturnTrip=(i&EUtf7FlagCrossOver)? *generatedUtf7: *otherGeneratedUtf7;
-		test(CnvUtfConverter::ConvertToUnicodeFromUtf7(*generatedUnicode, sourceForReturnTrip, state)==0);
-		test(state==CnvUtfConverter::KStateDefault);
+		TEST(CnvUtfConverter::ConvertToUnicodeFromUtf7(*generatedUnicode, sourceForReturnTrip, state)==0);
+		TEST(state==CnvUtfConverter::KStateDefault);
 		{__ASSERT_ALWAYS(otherSourceForReturnTrip.Length()<otherSourceForReturnTrip.MaxLength(), Panic(EPanicNoFreeSpaceAtEndOfBuffer2));
 		char* sourceStart=REINTERPRET_CAST(char*, CONST_CAST(TUint8*, otherSourceForReturnTrip.Ptr()));
 		char* sourceEnd=sourceStart+otherSourceForReturnTrip.Length();
 		TUint16* targetStart=CONST_CAST(TUint16*, otherGeneratedUnicode->Ptr());
 		TUint16* targetEnd=targetStart+(otherGeneratedUnicode->MaxLength()-1);
-		test(ConvertUTF7toUCS2(&sourceStart, sourceEnd, &targetStart, targetEnd)==ok);
+		TEST(ConvertUTF7toUCS2(&sourceStart, sourceEnd, &targetStart, targetEnd)==ok);
 		otherGeneratedUnicode->SetLength(targetStart-otherGeneratedUnicode->Ptr());}
-		test(*generatedUnicode==*originalUnicode);
-		test(*generatedUnicode==*otherGeneratedUnicode);
+		TEST(*generatedUnicode==*originalUnicode);
+		TEST(*generatedUnicode==*otherGeneratedUnicode);
 		}
 	//
 	delete originalUnicode;
@@ -114,27 +117,9 @@ void CT_COMP7::TestCOMP7()
 	delete generatedUnicode;
 	delete otherGeneratedUnicode;
 
+	TheTest.End();
+	TheTest.Close();
+
+	return KErrNone;
 	}
 
-CT_COMP7::CT_COMP7()
-    {
-    SetTestStepName(KTestStep_T_COMP7);
-    }
-
-TVerdict CT_COMP7::doTestStepL()
-    {
-    SetTestStepResult(EFail);
-
-    __UHEAP_MARK;
-
-    TRAPD(error1, TestCOMP7());
-
-    __UHEAP_MARKEND;
-
-    if(error1 == KErrNone )
-        {
-        SetTestStepResult(EPass);
-        }
-
-    return TestStepResult();
-    }

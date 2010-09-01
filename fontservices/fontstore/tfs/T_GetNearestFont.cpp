@@ -313,20 +313,14 @@ void CTGetNearestFont::TestSystemDefaultFont()
 void CTGetNearestFont::AliasedFontCreationL()
 	{
 	TInt numTypefaces = iTfs->NumTypefaces();
-	if(numTypefaces <2)
-	    return;
-	
-	TTypefaceSupport tfSupport1;
-	
-    iTfs->TypefaceSupport(tfSupport1, 0);
-    INFO_PRINTF1(tfSupport1.iTypeface.iName);
+
+	TTypefaceSupport tfSupport;
+
 	// Get the first different typeface
-    TTypefaceSupport tfSupport2;
 	while (--numTypefaces)
 		{
-		iTfs->TypefaceSupport(tfSupport2, numTypefaces);
-		INFO_PRINTF1(tfSupport2.iTypeface.iName);
-		if (tfSupport2.iTypeface.iName != tfSupport1.iTypeface.iName)
+		iTfs->TypefaceSupport(tfSupport, numTypefaces);
+		if (tfSupport.iTypeface.iName != KTypefaceName)
 			{
 			break;
 			}
@@ -334,17 +328,19 @@ void CTGetNearestFont::AliasedFontCreationL()
 
 	// Make sure we aren't at the end of the list
 	TEST(numTypefaces);
+
+	TPtrC typeface = tfSupport.iTypeface.iName;
+
 	// Alias the other font with the same name as the original
-	iTfs->SetFontNameAliasL(tfSupport1.iTypeface.iName, tfSupport2.iTypeface.iName);
+	iTfs->SetFontNameAliasL(KTypefaceName, typeface);
 
 	// Request the original font (making sure we don't get the aliased font back)
 	CFont* font = NULL;
-	TFontSpec spec(tfSupport1.iTypeface.iName, 0);
+	TFontSpec spec(KTypefaceName, 0);
 	TInt ret = iTfs->GetNearestFontToDesignHeightInPixels(font, spec);
 	TEST(ret == KErrNone);
 	TFontSpec returnedSpecs = font->FontSpecInTwips();
-	INFO_PRINTF1(returnedSpecs.iTypeface.iName);
-	TEST(returnedSpecs.iTypeface.iName == tfSupport1.iTypeface.iName);
+	TEST(returnedSpecs.iTypeface.iName == KTypefaceName);
 	iTfs->ReleaseFont(font);
 	}
 

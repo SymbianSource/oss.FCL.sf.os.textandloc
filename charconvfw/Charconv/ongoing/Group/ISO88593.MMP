@@ -1,0 +1,70 @@
+/*
+* Copyright (c) 8859 Nokia Corporation and/or its subsidiary(-ies). 
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:    
+*       MakMake Project file.  
+*
+*/
+
+
+
+
+
+
+
+
+/**
+@file
+
+@SYMPurpose iso88593.cpl ISO-8859-3 converter
+*/
+
+#include <platform_paths.hrh>
+
+target			ISO88593.DLL
+targettype		PLUGIN
+
+CAPABILITY All -Tcb
+
+uid				0x10009D8D 0x102044F7
+VENDORID 0x70000001
+
+sourcepath		../Source/foreign/plugins
+source			ISO88593.CPP
+
+sourcepath		../Source/generatedcpp
+source			g_iso88593.cpp
+
+// This is a SYSTEMINCLUDE macro containing the middleware
+// layer specific include directories
+MW_LAYER_SYSTEMINCLUDE
+OS_LAYER_SYSTEMINCLUDE
+
+SYSTEMINCLUDE   ../../../../inc
+SYSTEMINCLUDE   ../../../inc
+systeminclude		../Include
+
+library			EUSER.LIB CHARCONV.LIB ECOM.LIB
+
+sourcepath		../Source/foreign/plugins
+start resource		ISO88593.RSS
+targetpath		/resource/charconv
+lang			sc
+end
+
+sourcepath		../Source/foreign/plugins
+start resource		102044F7.rss
+#ifdef SYMBIAN_SECURE_ECOM
+target			ISO88593.rsc
+#endif
+end

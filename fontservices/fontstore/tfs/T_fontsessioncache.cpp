@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2006-2010 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -22,17 +22,33 @@
 */
 
 #include "FNTSTORE.H"
+#include "OPENFONT.H"
+#include "FNTBODY.H"
+#include "FNTSTD.H"
 #include "t_fontsessioncache.h"
-#include "T_IsolatedFontStore.h"
+#include <hal.h>
+#include <s32file.h>
+#include <graphics/shapeimpl.h>
 
 _LIT(KWorkerProcess,"tfontsessioncacheproc");
-_LIT(KSharedChunk,"TestSharedChunk_T_FontSessionCache");
 
 const TInt KNumOfProc = 4;
 const TInt KRunningTime = 1000 * 1000 * 5;
 
-//Make sure font is large enough that font and session caches are used sufficiently. 
-const TInt KFontHeight = 250;   
+class CTFontSessionCache : public CTGraphicsBase
+    {
+public:
+    CTFontSessionCache(CTestStep* aStep);
+    ~CTFontSessionCache();
+    
+    static void TimerCleanup(TAny *);
+protected:
+// From CTGraphicsStep
+    virtual void RunTestCaseL(TInt aCurTestCase);
+private:
+    void TestOpenFontForQtL();
+    void RunMultiWorkerProcessL();
+    };
 
 // This class is a data mirror to CBitmapFont in order to check its private 
 // member iOpenFont. It is only used by TestOpenFontForQtL().
@@ -48,29 +64,15 @@ public:
     TUint32 iUniqueFontId;     
     };
 
-class CTFontSessionCache : public CTGraphicsBase
+class CFbsFontUtil:public CFbsFont
     {
 public:
-    CTFontSessionCache(CTestStep* aStep);
-    ~CTFontSessionCache();
-    TInt Base();
-
-protected:
-// From CTGraphicsStep
-    virtual void RunTestCaseL(TInt aCurTestCase);
-    virtual void ConstructL();
-private:
-    void TestOpenFontForQtL();
-    void RunMultiWorkerProcessL();
-    
-    void FlushCaches();
-    
-private:
-    CTIsolatedFontStore *iIFontStore;
-    RHeap   *iSharedHeap;
-    RChunk  iChunk;
-    CFont *iFont;
+    static CBitmapFontDummy *getBitmapFont(CFbsFont *aFbsfont)
+        {
+        return reinterpret_cast<CBitmapFontDummy*>(static_cast<CFbsFontUtil*>(aFbsfont)->Address());
+        }
     };
+
 
 CTFontSessionCache::CTFontSessionCache(CTestStep* aStep)
  :  CTGraphicsBase(aStep)
@@ -80,96 +82,46 @@ CTFontSessionCache::CTFontSessionCache(CTestStep* aStep)
 
 CTFontSessionCache::~CTFontSessionCache()
     {
-    iIFontStore->iFs->ReleaseFont(iFont);
-    delete iIFontStore;
-    iChunk.Close(); 
+    // no action needed
     }
 
-inline TInt CTFontSessionCache::Base() 
+void CTFontSessionCache::TimerCleanup(TAny *aTimer)
     {
-    return reinterpret_cast<TInt>(iChunk.Base());
-    }
-
-void CTFontSessionCache::ConstructL()
-    {
-    User::LeaveIfError(iChunk.CreateGlobal(KNullDesC,0x10000,0x10000));
-    iSharedHeap = UserHeap::ChunkHeap(iChunk,0x10000,0x1000,0x10000,0,EFalse,0);
-    if(iSharedHeap == NULL)
-        {
-        RDebug::Print(_L("iSharedHeap = NULL"));
-        User::Leave(KErrNoMemory);
-        }
-    iIFontStore = CTIsolatedFontStore::NewL(iSharedHeap);
-    iIFontStore->LoadRasterizersL();
-    iIFontStore->iFs->LoadFontsAtStartupL();
-    
-    _LIT(KTypefaceName, "DejaVu Sans Condensed");
-    TFontSpec spec(KTypefaceName, KFontHeight);   
-    
-    TInt ret = iIFontStore->iFs->GetNearestFontToDesignHeightInPixels(iFont,spec);
-    TEST(ret == KErrNone);
- 
-    }
-
-void CTFontSessionCache::FlushCaches()
-    {
-    TText ch;
-    TOpenFontGlyphData *glyphData = NULL;
-    for (TInt sHandle = 0; sHandle < KNumOfProc; sHandle++)
-        {
-        for (ch = 'A'; ch <= 'z'; ch++)
-            {
-            static_cast<CBitmapFont*> (iFont)->Rasterize(sHandle, ch, glyphData);
-            }
-        }
+    ((RTimer*)aTimer)->Cancel();
     }
 
 /**
-    @SYMTestCaseID
-    TI18N-FNTSTORE-UT--4003
-
-    @SYMTestCaseDesc
-    Qt needs the last bit of iOpenFont to be set 1 as a workaround to maintain
-    its compatibility across difference Symbian OS versions.
-
-    @SYMTestActions
-    1. Get a CBitmapFont in the constructor
-    2. Check the LSB of its iOpenFont by using CBitmapFontDummy
-        
-    @SYMTestExpectedResults
-    Test should pass
+Qt needs the last bit of iOpenFont to be set 1 as a workaround to maintain
+its compatibility across difference Symbian OS versions.
 */
-
 void CTFontSessionCache::TestOpenFontForQtL()
-    {    
-    TEST(reinterpret_cast<TInt>(reinterpret_cast<CBitmapFontDummy*>(iFont)->iOpenFont) & 1);
+    {
+    _LIT(KTypefaceName, "DejaVu Sans Condensed");
+    TFontSpec spec(KTypefaceName, 15);   
+    CFbsTypefaceStore *tfs = CFbsTypefaceStore::NewL(NULL);
+    
+    CFont* font = NULL;
+    TInt ret = tfs->GetNearestFontToDesignHeightInPixels(font,spec);
+    TEST(ret == KErrNone);
+    
+    CFbsFont *fbs_font = static_cast<CFbsFont*>(font);
+    TEST(reinterpret_cast<TInt>((CFbsFontUtil::getBitmapFont(fbs_font))->iOpenFont) & 1);
+    
+    tfs->ReleaseFont(font);
+    delete tfs;
     }
 
-/**
-    @SYMTestCaseID
-    TI18N-FNTSTORE-CIT-4002
-
-    @SYMTestCaseDesc
-    This case is to test the safty of actions over the shared heap.
-
-    @SYMTestActions
-    1. Shared heap is initialised in the constructor
-    2. Run rasterizing function to Flush the font caches(glyph tree and session cache).
-    3. Launch KNumOfProc worker processes running with random latency at beginning, which
-       is to seach the cache from different processes. The globle chunk and font handles are
-       passed via process environment variables.
-    4. Each one lasts about 1 sec. Within duration of 5 sec, if one terminates, re-launch it.   
-        
-    @SYMTestExpectedResults
-    Test should pass without any Panic.
-*/
+/*
+ * Launch 4 worker processes running with random latency at beginning. 
+ * Each one lasts about 1 sec. Within duration of 5 sec, if one terminates, 
+ * re-launch it.
+ * 
+ */
 void CTFontSessionCache::RunMultiWorkerProcessL()
     {
     RProcess ProcArray[KNumOfProc];
     TRequestStatus *completeStatus[KNumOfProc];
 
-    FlushCaches();
-    
     for (TInt i = 0; i < KNumOfProc; i++)
         {                    
         RDebug::Print(_L(">>> Launching %d..."),i);
@@ -177,11 +129,6 @@ void CTFontSessionCache::RunMultiWorkerProcessL()
         err = ProcArray[i].Create(KWorkerProcess, KNullDesC);
         User::LeaveIfError(err);
 
-        TInt FontOffset = reinterpret_cast<TInt>(iFont) - Base();
-        ProcArray[i].SetParameter(1,iChunk);        
-        ProcArray[i].SetParameter(2,FontOffset);
-        ProcArray[i].SetParameter(3,i);
-        
         completeStatus[i] = new(ELeave) TRequestStatus; 
         CleanupStack::PushL(completeStatus[i]);
         *completeStatus[i] = KRequestPending;
@@ -220,12 +167,7 @@ void CTFontSessionCache::RunMultiWorkerProcessL()
         TInt err;
         err = ProcArray[i].Create(KWorkerProcess, KNullDesC);
         User::LeaveIfError(err);
-        
-        TInt FontOffset = reinterpret_cast<TInt>(iFont) - Base();
-        ProcArray[i].SetParameter(1,iChunk);        
-        ProcArray[i].SetParameter(2,FontOffset);
-        ProcArray[i].SetParameter(3,i);
-        
+
         //run process 1
         *completeStatus[i] = KRequestPending;
         ProcArray[i].Logon(*completeStatus[i]);
@@ -242,11 +184,17 @@ void CTFontSessionCache::RunMultiWorkerProcessL()
         RDebug::Print(_L("<<< Tear down Close %d..."),i);
         ProcArray[i].Close(); //tear down
         }        
-    CleanupStack::PopAndDestroy(KNumOfProc);
+    CleanupStack::PopAndDestroy(4);
     }
 
+    
 void CTFontSessionCache::RunTestCaseL( TInt aCurTestCase )
     {
+#if defined __WINS__ || defined __WINSCW__
+    aCurTestCase = aCurTestCase;  //to avoid unused warning
+ //   TestComplete(); //only run test on hardware, always passes on winscw
+ //   return;
+#endif
     ((CTFontSessionCacheStep*) iStep)->SetTestStepID(KUnknownSYMTestCaseIDName);
 
     switch (aCurTestCase)

@@ -20,10 +20,24 @@
 #include "InlineText.h"
 #include "frmUtils.h"
 
-#include "OstTraceDefinitions.h"
-#ifdef OST_TRACE_COMPILER_IN_USE
-#include "TmChunkTraces.h"
-#endif
+inline TBool IsSurrogate(TText a) { return 0xD800 == (a & 0xF800); }
+inline TBool IsHighSurrogate(TText a) { return 0xD800 == (a & 0xFC00); }
+inline TBool IsLowSurrogate(TText a) { return 0xDC00 == (a & 0xFC00); }
+inline TChar JoinSurrogates(TText aHigh, TText aLow)
+	{
+	return ((aHigh - 0xd7f7) << 10) + aLow;
+	}
+
+
+inline TText16 GetHighSurrogate(TUint aChar)
+	{
+	return STATIC_CAST(TText16, 0xD7C0 + (aChar >> 10));
+	}
+
+inline TText16 GetLowSurrogate(TUint aChar)
+	{
+	return STATIC_CAST(TText16, 0xDC00 | (aChar & 0x3FF));
+	}
 
 
 TTmChunk::TTmChunk():
@@ -93,7 +107,7 @@ void TTmChunk::TruncateIfNeeded(CTmFormatContext& aContext, TPtrC& aText, TInfo&
 				}
 			}
 
-		if ( TChar::IsLowSurrogate( *current_character ) )
+		if ( IsLowSurrogate( *current_character ) )
 			{
 			// skip it
 			RDebug::Print(_L("Error: Should not be low surrogate. Skip corrupt low surrogate %X."), *current_character);
@@ -104,21 +118,21 @@ void TTmChunk::TruncateIfNeeded(CTmFormatContext& aContext, TPtrC& aText, TInfo&
 		const TText *previous_character = current_character;
 		TUint character_to_process = *current_character++;
 		// If it's surrogate, join the high and low together
-		if( TChar::IsHighSurrogate( character_to_process ) )
+		if( IsHighSurrogate( character_to_process ) )
 			{
 			TInt high = character_to_process;
 			if ( current_character < last_character )
 			    {
 	            TInt low = *current_character++;
-	            if ( !TChar::IsLowSurrogate( low ) )
+	            if ( !IsLowSurrogate( low ) )
 	                {
 	                // should be low surrogate
 	                // skip the high surrogate
-	                RDebug::Print(_L("Error: %X should be low surrogate. Skip corrupt high surrogate %X."), low, high);
+	                RDebug::Print(_L("Error: Should be low surrogate. Skip corrupt high surrogate %X."), high);
 	                current_character--;
 	                continue;
 	                }
-	            character_to_process = TChar::JoinSurrogate( high, low );			    
+	            character_to_process = JoinSurrogates( high, low );			    
 			    }
 			}
 
@@ -203,23 +217,23 @@ void TTmChunk::TruncateIfNeeded(CTmFormatContext& aContext, TPtrC& aText, TInfo&
 				{
 				TUint next_character_to_process = *current_character;
 				// If the next character is surrogate
-		        if( TChar::IsHighSurrogate( next_character_to_process ) )
+		        if( IsHighSurrogate( next_character_to_process ) )
 		            {
 		            TInt high = next_character_to_process;
 		            if ( current_character < last_character )
 		                {
 	                    TInt low = *(++current_character);
 	                    
-	                    if ( !TChar::IsLowSurrogate( low ) )
+	                    if ( !IsLowSurrogate( low ) )
 	                        {
 	                        // should be low surrogate
-	                        RDebug::Print(_L("Error: %X should be low surrogate. See TmChunk.cpp, TruncateIfNeeded()."), low);
+	                        RDebug::Print(_L("Error: Should be low surrogate. See TmChunk.cpp, TruncateIfNeeded()."));
                             // The category of the character is determined by what it's mapped
 	                        next_character_to_process = aContext.iSource.Map( high );
 	                        }
 	                    else
 	                        {
-	                        next_character_to_process = TChar::JoinSurrogate( high, low );
+	                        next_character_to_process = JoinSurrogates( high, low );
 	                        }
 	                    --current_character;		                
 		                }
@@ -501,10 +515,6 @@ void TTmChunk::SetL(CTmFormatContext& aContext, TInt aStartChar,
 			measure - (iInitialInlineWidth + iFinalInlineWidth), &text_metrics);
 		// Check WidthL (probably MeasureText inside it) doesn't come back
 		// with a value larger than the max we specified - shouldn't happen
-		if (text_metrics.iChars > iTextLength)
-		    {
-		    OstTrace0( TRACE_DUMP, TTMCHUNK_SETL, "EInvariant" );
-		    }
 		__ASSERT_DEBUG(text_metrics.iChars <= iTextLength, TmPanic(EInvariant));
 		if (text_metrics.iChars < iTextLength)
 			{

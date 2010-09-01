@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 1997-2010 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 1997-2009 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -18,6 +18,7 @@
 
 #include <e32std.h>
 #include <e32base.h>
+#include <e32test.h>
 
 #include <txtfrmat.h>
 #include <txtfmlyr.h>
@@ -25,29 +26,13 @@
 #include <gdi.h>
 
 #include "../incp/T_PMLPAR.H"
-#include "T_INDTER.h"
-
-LOCAL_D CTestStep *pTestStep = NULL;
-#define test(cond)											\
-	{														\
-	TBool __bb = (cond);									\
-	pTestStep->TEST(__bb);									\
-	if (!__bb)												\
-		{													\
-		pTestStep->ERR_PRINTF1(_L("ERROR: Test Failed"));	\
-		User::Leave(1);										\
-		}													\
-	}
-#undef INFO_PRINTF1
-#undef INFO_PRINTF2
-// copy from tefexportconst.h
-#define INFO_PRINTF1(p1)        pTestStep->Logger().LogExtra(((TText8*)__FILE__), __LINE__, ESevrInfo, (p1))
-#define INFO_PRINTF2(p1, p2)    pTestStep->Logger().LogExtra(((TText8*)__FILE__), __LINE__, ESevrInfo, (p1), (p2))
 
 #define UNUSED_VAR(a) a = a
 
 const TInt KTestCleanupStack=0x40;
 
+
+LOCAL_D RTest test(_L("Rich Text Format attribute Indeterminate State tests"));
 LOCAL_D CTrapCleanup* TheTrapCleanup=NULL;
 LOCAL_D CRichText* TheText=NULL;
 LOCAL_D CParaFormatLayer* TheGlobalParaLayer=NULL;
@@ -179,7 +164,7 @@ LOCAL_C void TestParaFormatL()
 // Test the indeterminate state of paragraph format attributes.
 //
 	{
-	INFO_PRINTF1(_L(" @SYMTestCaseID:SYSLIB-TTEXT-LEGACY-T_INDTER-0001 Paragraph format attributes "));
+	test.Start(_L(" @SYMTestCaseID:SYSLIB-TTEXT-LEGACY-T_INDTER-0001 Paragraph format attributes "));
 	TestParaBordersL();
 	}
 
@@ -188,7 +173,7 @@ LOCAL_C void TestCharFormatL()
 // Test the indeterminate state of character format attributes.
 //
 	{
-	INFO_PRINTF1(_L("Character format attributes"));
+	test.Next(_L("Character format attributes"));
 	//
 	ResetTextL();
 	TCharFormat applyFormat;
@@ -236,7 +221,7 @@ LOCAL_C void DoTestL()
 	CreateRichTextL();
 	TestParaFormatL();
 	TestCharFormatL();
-	
+	test.End();
 	DestroyRichText();
     }
 
@@ -256,30 +241,22 @@ LOCAL_C void setupCleanup()
 		});
 	}
 
-CT_INDTER::CT_INDTER()
-    {
-    SetTestStepName(KTestStep_T_INDTER);
-    pTestStep = this;
-    }
 
-TVerdict CT_INDTER::doTestStepL()
+GLDEF_C TInt E32Main()
+//
+// Test the streaming framework.
+//
     {
-    SetTestStepResult(EFail);
 
-    INFO_PRINTF1(_L("Rich Text Format attribute Indeterminate State tests"));
-    __UHEAP_MARK;
-    setupCleanup();
-    TRAPD(r, DoTestL());
+	test.Title();
+	__UHEAP_MARK;
+	setupCleanup();
+	TRAPD(r, DoTestL());
     test(r == KErrNone);
 
-    delete TheTrapCleanup;
-    
-    __UHEAP_MARKEND;
-    
-    if (r == KErrNone)
-        {
-        SetTestStepResult(EPass);
-        }
-
-    return TestStepResult();
+	delete TheTrapCleanup;
+	
+	__UHEAP_MARKEND;
+	test.Close();
+	return 0;
     }

@@ -284,7 +284,6 @@ TInt CISO2022JPConverterImpl::ConvertFromUnicode(
         const TDesC16& aUnicode, 
         CCnvCharacterSetConverter::TArrayOfAscendingIndices& aIndicesOfUnconvertibleCharacters)
     {
-    TInt ret = KErrNone;
     RArray<CnvUtilities::SCharacterSet> characterSets;
     if ( FeatureManager::FeatureSupported(KFeatureIdJapanesePicto) )
         {        
@@ -292,19 +291,19 @@ TInt CISO2022JPConverterImpl::ConvertFromUnicode(
         characterSet.iConversionData=&CnvJisRoman::ConversionData();
         characterSet.iConvertFromIntermediateBufferInPlace=ConvertFromJisRomanToJisInPlace;
         characterSet.iEscapeSequence=&KLit8EscapeSequenceForJisRoman;
-        ret |= characterSets.Append(characterSet);
+        characterSets.Append(characterSet);
         characterSet.iConversionData=&CCnvCharacterSetConverter::AsciiConversionData();
         characterSet.iConvertFromIntermediateBufferInPlace=ConvertFromAsciiToJisInPlace;
         characterSet.iEscapeSequence=&KLit8EscapeSequenceForAscii;
-        ret |= characterSets.Append(characterSet);
+        characterSets.Append(characterSet);
         characterSet.iConversionData=&CnvJisX0208::ConversionData();
         characterSet.iConvertFromIntermediateBufferInPlace=ConvertFromJisX0208ToJisInPlace;
         characterSet.iEscapeSequence=&KLit8EscapeSequenceForJisX0208_1983;
-        ret |= characterSets.Append(characterSet);
+        characterSets.Append(characterSet);
         characterSet.iEscapeSequence=&KLit8EscapeSequenceForJisX0208_1983;
         characterSet.iConversionData=&CnvJisBase::HalfWidthKatakana7ConversionData();
         characterSet.iConvertFromIntermediateBufferInPlace=ConvertFromHalfKatakanaToFullKatakana;
-        ret |= characterSets.Append(characterSet);
+        characterSets.Append(characterSet);
 
         SetCharacterSetsForPictograph(characterSets);
         }
@@ -314,21 +313,20 @@ TInt CISO2022JPConverterImpl::ConvertFromUnicode(
         characterSet.iConversionData=&CCnvCharacterSetConverter::AsciiConversionData();
         characterSet.iConvertFromIntermediateBufferInPlace=ConvertFromAsciiToJisInPlace;
         characterSet.iEscapeSequence=&KLit8EscapeSequenceForAscii;
-        ret |= characterSets.Append(characterSet);
+        characterSets.Append(characterSet);
         characterSet.iConversionData=&CnvJisRoman::ConversionData();
         characterSet.iConvertFromIntermediateBufferInPlace=ConvertFromJisRomanToJisInPlace;
         characterSet.iEscapeSequence=&KLit8EscapeSequenceForJisRoman;
-        ret |= characterSets.Append(characterSet);
+        characterSets.Append(characterSet);
         characterSet.iConversionData=&CnvJisX0208::ConversionData();
         characterSet.iConvertFromIntermediateBufferInPlace=ConvertFromJisX0208ToJisInPlace;
         characterSet.iEscapeSequence=&KLit8EscapeSequenceForJisX0208_1983;
-        ret |= characterSets.Append(characterSet);
+        characterSets.Append(characterSet);
         characterSet.iEscapeSequence=&KLit8EscapeSequenceForJisX0208_1983;
         characterSet.iConversionData=&CnvJisBase::HalfWidthKatakana7ConversionData();
         characterSet.iConvertFromIntermediateBufferInPlace=ConvertFromHalfKatakanaToFullKatakana;
-        ret |= characterSets.Append(characterSet);
+        characterSets.Append(characterSet);
         }
-    __ASSERT_DEBUG(!ret, User::Panic(_L("RArray append failure"), ret));
     TUint notUsed;
 //S60 30    TUint inputConversionFlags=CCnvCharacterSetConverter::EInputConversionFlagMustEndInDefaultCharacterSet;
     TUint inputConversionFlags=CCnvCharacterSetConverter::EInputConversionFlagMustEndInDefaultCharacterSet |
@@ -394,11 +392,7 @@ void CISO2022JPConverterImpl::ConstructL()
 
 const TImplementationProxy ImplementationTable[] = 
     {
-#ifdef S60_TEST
-    IMPLEMENTATION_PROXY_ENTRY(0x01000006,  CISO2022JPConverterImpl::NewL)
-#else
-    IMPLEMENTATION_PROXY_ENTRY(0x100066A0,  CISO2022JPConverterImpl::NewL)
-#endif        
+        IMPLEMENTATION_PROXY_ENTRY(0x100066A0,  CISO2022JPConverterImpl::NewL)
     };
 
 EXPORT_C const TImplementationProxy* ImplementationGroupProxy(TInt& aTableCount)

@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2008-2010 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -34,20 +34,8 @@
 #include "TAGMA_INTERNAL.H"
 #endif
 
-#include "tformbenchmark.h"
-
-namespace LocalToTFormBenchmark
-{
-CTFormBenchmarkStep* TestStep = NULL;
-#define TESTPOINT(p) TestStep->testpoint(p,(TText8*)__FILE__,__LINE__)
-#define TESTPRINT(p) TestStep->print(p,(TText8*)__FILE__,__LINE__)
-}
-using namespace LocalToTFormBenchmark;
-
 RFs fs;
 RFile fileTimeStamps;
-
-_LIT(KFormBenchmark, "TFormBenchmark");
 
 #if ((defined (__WINS__)) || (defined (__X86GCC__)))
 	_LIT(KLogTimeStampsName, "c:\\formtimestamps.csv");
@@ -78,6 +66,10 @@ _LIT(KJapanese, "\x4EBA\x985E\x793E\x4F1A\x306E\x3059\x3079\x3066\x306E\x69CB\
 const TInt KJapaneseRepeats = 357;
 const TInt KDisplayWidth = 100;
 const TInt KDisplayHeight = 120;
+
+
+_LIT(KFormBenchmark, "TFormBenchmark");
+RTest test(KFormBenchmark);
 
 const TInt KInsertDisplayWidth = 200;
 const TInt KChangedDisplayWidth = 150;
@@ -429,7 +421,7 @@ void RunScrollingTestL(TInt aRepeats, TInt aRepeatsPerParagraph,
 	RArray<TTFTimeStamp>& aTimeStampsDown, RArray<TTFTimeStamp>& aTimeStampsUp,
 	TDocInfo& aDocInfo)
 	{
-    TESTPRINT(_L(" @SYMTestCaseID:SYSLIB-FORMA-UT-1897 "));
+	test.Next(_L(" @SYMTestCaseID:SYSLIB-FORMA-UT-1897 "));
 	TInt docLength = KEnglish().Length() * aRepeats;
 	TInt paragraphs = aRepeats/aRepeatsPerParagraph;
 
@@ -444,10 +436,8 @@ void RunScrollingTestL(TInt aRepeats, TInt aRepeatsPerParagraph,
 	MeasureCursorL(aTimeStampsDown, TCursorPosition::EFLineDown, o, slowest);
 	MeasureCursorL(aTimeStampsUp, TCursorPosition::EFLineUp, o, slowest);
 
-	TBuf<256> buf;
-	buf.AppendFormat(_L("PERFORMANCE: Syslibs;Form_Scrolling_Slowest_Doc_with_%d_characters_%d_paragraphs;microseconds: %Ld"), docLength, paragraphs, slowest);
-	TESTPRINT(buf);
-	
+	RDebug::Printf("PERFORMANCE: Syslibs;Form_Scrolling_Slowest_Doc_with_%d_characters_%d_paragraphs;microseconds: %Ld", docLength, paragraphs, slowest);
+
 	aDocInfo = GetSampleDocInfoL(o);
 	DestroyFormattingObjects(o);
 	}
@@ -462,7 +452,7 @@ void RunScrollingTestL(TInt aRepeats, TInt aRepeatsPerParagraph,
 */
 void RunEnglishArabicJapaneseBenchmarksL(TFormattingObjects& aFormattingObjects)
 	{
-    TESTPRINT(_L(" @SYMTestCaseID:SYSLIB-FORMA-UT-1898 "));
+	test.Next(_L(" @SYMTestCaseID:SYSLIB-FORMA-UT-1898 "));
 	SetTextL(*aFormattingObjects.iRichText, KEnglish, KEnglishRepeats, KEnglishRepeats);
 	TTimeIntervalMicroSeconds opening = MeasureOpeningL(*aFormattingObjects.iView);
 	TTimeIntervalMicroSeconds rmsCursorDown = MeasureRmsCursorDownL(*aFormattingObjects.iView);
@@ -494,32 +484,18 @@ void RunEnglishArabicJapaneseBenchmarksL(TFormattingObjects& aFormattingObjects)
 		maxLines = japaneseLines;
 
 	//Tests that the number of lines in each test is more or less balanced
-	TESTPOINT(maxLines * 100 <= minLines * 105);
+	test(maxLines * 100 <= minLines * 105);
 
-	TBuf<256> buf;
-	buf.AppendFormat(_L("PERFORMANCE: Syslibs;Form_OpeningLargeParagraph;microseconds: %d"),
+	RDebug::Printf("PERFORMANCE: Syslibs;Form_OpeningLargeParagraph;microseconds: %d",
 		static_cast<TInt>(opening.Int64()));
-	TESTPRINT(buf);
-	buf.Zero();
-	
-	buf.AppendFormat(_L("PERFORMANCE: Syslibs;Form_RmsCursorDown;microseconds: %d"),
+	RDebug::Printf("PERFORMANCE: Syslibs;Form_RmsCursorDown;microseconds: %d",
 		static_cast<TInt>(rmsCursorDown.Int64()));
-	TESTPRINT(buf);
-	buf.Zero();
-	
-	buf.AppendFormat(_L("PERFORMANCE: Syslibs;Form_FormattingEnglish;microseconds: %d"),
+	RDebug::Printf("PERFORMANCE: Syslibs;Form_FormattingEnglish;microseconds: %d",
 		static_cast<TInt>(englishFormatting.Int64()));
-	TESTPRINT(buf);
-	buf.Zero();
-	
-	buf.AppendFormat(_L("PERFORMANCE: Syslibs;Form_FormattingArabic;microseconds: %d"),
+	RDebug::Printf("PERFORMANCE: Syslibs;Form_FormattingArabic;microseconds: %d",
 		static_cast<TInt>(arabicFormatting.Int64()));
-	TESTPRINT(buf);
-	buf.Zero();
-	
-	buf.AppendFormat(_L("PERFORMANCE: Syslibs;Form_FormattingJapanese;microseconds: %d"),
+	RDebug::Printf("PERFORMANCE: Syslibs;Form_FormattingJapanese;microseconds: %d",
 		static_cast<TInt>(japaneseFormatting.Int64()));
-	TESTPRINT(buf);	
 	}
 
 /**
@@ -534,7 +510,7 @@ the beginning
 void RunInsertTextTestsL(TInt aRepeats, TInt aRepeatsPerParagraph,
 	RArray<TTFTimeStamp>& aTimeStamps, TDocInfo& aDocInfo)
 	{
-    TESTPRINT(_L(" @SYMTestCaseID:SYSLIB-FORMA-UT-1896 "));
+	test.Next(_L(" @SYMTestCaseID:SYSLIB-FORMA-UT-1896 "));
 	TFormattingObjects o;
 	CreateFormattingObjectsLC(o);
 	TInt64 slowest = 0;
@@ -543,10 +519,8 @@ void RunInsertTextTestsL(TInt aRepeats, TInt aRepeatsPerParagraph,
 	MeasureInsertTextAtStartL(aRepeats, aRepeatsPerParagraph, aTimeStamps, o, slowest);
 	aDocInfo = GetSampleDocInfoL(o);
 
-	TBuf<256> buf;
-	buf.AppendFormat(_L("PERFORMANCE: Syslibs;Form_InsertText_Slowest;microseconds: %Ld"), slowest);
-	TESTPRINT(buf);
-	
+	RDebug::Printf("PERFORMANCE: Syslibs;Form_InsertText_Slowest;microseconds: %Ld", slowest);
+
 	DestroyFormattingObjects(o);
 	}
 
@@ -561,7 +535,7 @@ the beginning
 */
 void RunDeleteTextFromStartTest(RArray<TTFTimeStamp>& aTimeStamps, TDocInfo& aDocInfo)
 	{
-    TESTPRINT(_L(" @SYMTestCaseID:SYSLIB-FORMA-UT-1895 "));
+	test.Next(_L(" @SYMTestCaseID:SYSLIB-FORMA-UT-1895 "));
 	TFormattingObjects o;
 	CreateFormattingObjectsLC(o);
 	TInt64 slowest = 0;
@@ -575,9 +549,7 @@ void RunDeleteTextFromStartTest(RArray<TTFTimeStamp>& aTimeStamps, TDocInfo& aDo
 	MeasureDeleteTextFromStartL(aTimeStamps, o, slowest);
 	aDocInfo = GetSampleDocInfoL(o);
 
-	TBuf<256> buf;	
-	buf.AppendFormat(_L("PERFORMANCE: Syslibs;Form_DeleteText_Slowest;microseconds: %Ld"), slowest);
-	TESTPRINT(buf);	
+	RDebug::Printf("PERFORMANCE: Syslibs;Form_DeleteText_Slowest;microseconds: %Ld", slowest);
 
 	CleanupStack::PopAndDestroy();//bigbuf
 	DestroyFormattingObjects(o);
@@ -585,7 +557,7 @@ void RunDeleteTextFromStartTest(RArray<TTFTimeStamp>& aTimeStamps, TDocInfo& aDo
 
 void GetFormattingBenchmarkL(TInt aNumberOfIterations, TInt& aNumberOfCharacters, TInt64& aNormalisedBenchmark)
 	{
-    TESTPRINT(_L(" @SYMTestCaseID:SYSLIB-FORMA-UT-1895 "));
+	test.Next(_L(" @SYMTestCaseID:SYSLIB-FORMA-UT-1895 "));
 	TFormattingObjects o;
 	CreateFormattingObjectsLC(o);
 	o.iLayout->SetWrapWidth(KInsertDisplayWidth);
@@ -624,65 +596,46 @@ roughly linear with the document size.
 */
 void RunFormattingBenchmarksL()
 	{
-    TESTPRINT(_L(" @SYMTestCaseID:SYSLIB-FORMA-UT-1894 "));
+	test.Next(_L(" @SYMTestCaseID:SYSLIB-FORMA-UT-1894 "));
 	TInt numberOfCharacters = 0;
 	TInt numberOfIterations;
 	TInt64 normalisedBenchmark = 0;
 
-	TBuf<256> buf;
-	
 	numberOfIterations = 1;
 	GetFormattingBenchmarkL(numberOfIterations, numberOfCharacters, normalisedBenchmark);
-	buf.AppendFormat(_L("PERFORMANCE: Syslibs;Form_FormatText;document contains %d characters: %Ld microseconds per iteration"), numberOfCharacters, normalisedBenchmark);
-	TESTPRINT(buf);
-	
-	buf.Zero();
+	RDebug::Printf("PERFORMANCE: Syslibs;Form_FormatText;document contains %d characters: %Ld microseconds per iteration", numberOfCharacters, normalisedBenchmark);
+
 	numberOfIterations = 5;
 	GetFormattingBenchmarkL(numberOfIterations, numberOfCharacters, normalisedBenchmark);
-	buf.AppendFormat(_L("PERFORMANCE: Syslibs;Form_FormatText;document contains %d characters: %Ld microseconds per iteration"), numberOfCharacters, normalisedBenchmark);
-	TESTPRINT(buf);
-	
-	buf.Zero();
+	RDebug::Printf("PERFORMANCE: Syslibs;Form_FormatText;document contains %d characters: %Ld microseconds per iteration", numberOfCharacters, normalisedBenchmark);
+
 	numberOfIterations = 10;
 	GetFormattingBenchmarkL(numberOfIterations, numberOfCharacters, normalisedBenchmark);
-	buf.AppendFormat(_L("PERFORMANCE: Syslibs;Form_FormatText;document contains %d characters: %Ld microseconds per iteration"), numberOfCharacters, normalisedBenchmark);
-	TESTPRINT(buf);
+	RDebug::Printf("PERFORMANCE: Syslibs;Form_FormatText;document contains %d characters: %Ld microseconds per iteration", numberOfCharacters, normalisedBenchmark);
 
-	buf.Zero();
 	numberOfIterations = 50;
 	GetFormattingBenchmarkL(numberOfIterations, numberOfCharacters, normalisedBenchmark);
-	buf.AppendFormat(_L("PERFORMANCE: Syslibs;Form_FormatText;document contains %d characters: %Ld microseconds per iteration"), numberOfCharacters, normalisedBenchmark);
-	TESTPRINT(buf);
+	RDebug::Printf("PERFORMANCE: Syslibs;Form_FormatText;document contains %d characters: %Ld microseconds per iteration", numberOfCharacters, normalisedBenchmark);
 
-	buf.Zero();
 	numberOfIterations = 100;
 	GetFormattingBenchmarkL(numberOfIterations, numberOfCharacters, normalisedBenchmark);
-	buf.AppendFormat(_L("PERFORMANCE: Syslibs;Form_FormatText;document contains %d characters: %Ld microseconds per iteration"), numberOfCharacters, normalisedBenchmark);
-	TESTPRINT(buf);
+	RDebug::Printf("PERFORMANCE: Syslibs;Form_FormatText;document contains %d characters: %Ld microseconds per iteration", numberOfCharacters, normalisedBenchmark);
 
-	buf.Zero();
 	numberOfIterations = 250;
 	GetFormattingBenchmarkL(numberOfIterations, numberOfCharacters, normalisedBenchmark);
-	buf.AppendFormat(_L("PERFORMANCE: Syslibs;Form_FormatText;document contains %d characters: %Ld microseconds per iteration"), numberOfCharacters, normalisedBenchmark);
-	TESTPRINT(buf);
+	RDebug::Printf("PERFORMANCE: Syslibs;Form_FormatText;document contains %d characters: %Ld microseconds per iteration", numberOfCharacters, normalisedBenchmark);
 
-	buf.Zero();
 	numberOfIterations = 500;
 	GetFormattingBenchmarkL(numberOfIterations, numberOfCharacters, normalisedBenchmark);
-	buf.AppendFormat(_L("PERFORMANCE: Syslibs;Form_FormatText;document contains %d characters: %Ld microseconds per iteration"), numberOfCharacters, normalisedBenchmark);
-	TESTPRINT(buf);
-	
-	buf.Zero();
+	RDebug::Printf("PERFORMANCE: Syslibs;Form_FormatText;document contains %d characters: %Ld microseconds per iteration", numberOfCharacters, normalisedBenchmark);
+
 	numberOfIterations = 750;
 	GetFormattingBenchmarkL(numberOfIterations, numberOfCharacters, normalisedBenchmark);
-	buf.AppendFormat(_L("PERFORMANCE: Syslibs;Form_FormatText;document contains %d characters: %Ld microseconds per iteration"), numberOfCharacters, normalisedBenchmark);
-	TESTPRINT(buf);
-	
-	buf.Zero();
+	RDebug::Printf("PERFORMANCE: Syslibs;Form_FormatText;document contains %d characters: %Ld microseconds per iteration", numberOfCharacters, normalisedBenchmark);
+
 	numberOfIterations = 1000;
 	GetFormattingBenchmarkL(numberOfIterations, numberOfCharacters, normalisedBenchmark);
-	buf.AppendFormat(_L("PERFORMANCE: Syslibs;Form_FormatText;document contains %d characters: %Ld microseconds per iteration"), numberOfCharacters, normalisedBenchmark);
-	TESTPRINT(buf);
+	RDebug::Printf("PERFORMANCE: Syslibs;Form_FormatText;document contains %d characters: %Ld microseconds per iteration", numberOfCharacters, normalisedBenchmark);
 	}
 
 void RunBenchmarksL()
@@ -732,14 +685,11 @@ void RunBenchmarksL()
 
 	}
 
-TVerdict CTFormBenchmarkStep::doTestStepL()
+TInt E32Main()
 	{
-    SetTestStepResult(EPass);
-    TestStep = this;
-    
-    TESTPRINT(KFormBenchmark);
-    TESTPRINT(_L("Start Font/Bitmap Server"));
-
+	test.Title();
+	test.Start(_L("Start Font/Bitmap Server"));
+	static CTrapCleanup* TrapCleanup = CTrapCleanup::New();
 	TInt error = RFbsSession::Connect();
 	if (error == KErrNotFound)
 		{
@@ -747,28 +697,26 @@ TVerdict CTFormBenchmarkStep::doTestStepL()
 		error = RFbsSession::Connect();
 		}
 	// Tests that FBServ actually starts
-	TESTPOINT(error == KErrNone);
+	test(error == KErrNone);
 	error = fs.Connect();
-	TESTPOINT(error == KErrNone);
+	test(error == KErrNone);
 
 	error = fileTimeStamps.Replace(fs, KLogTimeStampsName, EFileWrite);
-	
-	TBuf<256> buf;
-	buf.AppendFormat(_L("> fileTimeStamps.Replace %d"), error);
-	TESTPRINT(buf);
-	
-	TESTPOINT(error == KErrNone);
+	RDebug::Printf("> fileTimeStamps.Replace %d", error);
+	test(error == KErrNone);
 
-	TESTPRINT(_L("Run Benchmarks"));
+	test.Next(_L("Run Benchmarks"));
 	TRAP(error, RunBenchmarksL());
 	// Tests that the Benchmarks did not run out of memory
 	// or otherwise leave
-	TESTPOINT(error == KErrNone);
+	test(error == KErrNone);
 
 	fileTimeStamps.Close();
 	fs.Close();
 	RFbsSession::Disconnect();
-
-	return TestStepResult();
+	delete TrapCleanup;
+	test.End();
+	test.Close();
+	return error;
 	}
 

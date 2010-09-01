@@ -17,18 +17,36 @@
 
 
 #include <e32std.h>
-
+#include <e32test.h>
 #include <utf.h>
-#include "t_simple8.h"
+
 ///////////////////////////////////////////////////////////////////////////////////////
 
-#define test(cond)                                  \
-    TEST((cond));                                   \
-    if (!(cond))                                    \
-        {                                           \
-        ERR_PRINTF1(_L("ERROR: Test Failed"));      \
-        User::Leave(1);                             \
-        }
+RTest TheTest(_L("TSimple8"));
+
+///////////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////
+//Tests macroses and functions.
+//If (!aValue) then the test will be panicked, the test data files will be deleted.
+static void Check(TInt aValue, TInt aLine)
+	{
+	if(!aValue)
+		{
+		TheTest(EFalse, aLine);
+		}
+	}
+//If (aValue != aExpected) then the test will be panicked, the test data files will be deleted.
+static void Check(TInt aValue, TInt aExpected, TInt aLine)
+	{
+	if(aValue != aExpected)
+		{
+		TheTest.Printf(_L("*** Expected error: %d, got: %d\r\n"), aExpected, aValue);
+		TheTest(EFalse, aLine);
+		}
+	}
+//Use these to test conditions.
+#define TEST(arg) ::Check((arg), __LINE__)
+#define TEST2(aValue, aExpected) ::Check(aValue, aExpected, __LINE__)
 
 ///////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -44,23 +62,24 @@
 @SYMREQ                 REQ0000
 */
 //INC118714L
-void CT_SIMPLE8::TestForUtf8BomL()
+LOCAL_C void TestForUtf8BomL()
 	{
-    INFO_PRINTF1(_L("@SYMTestCaseID:SYSLIB-CHARCONV-CT-4002 Testing converting to and from UTF-8 BOM.")); 	
+	TheTest.Start(_L("@SYMTestCaseID:SYSLIB-CHARCONV-CT-4002 Testing converting to and from UTF-8 BOM.")); 	
 
 	TBuf8<100> generatedUtf8NoGKBWithBom(_L8("\xef\xbb\xbf\x7F\x48\x65\x6c\x6c\x6f\x20\x57\x6f\x72\x6c\x64"));
 	
 	//convert to unicode and verify BOM converted properly.
-	INFO_PRINTF1(_L("BOM, valid UTF-8 to Unicode conversion test."));
+	TheTest.Next(_L("BOM, valid UTF-8 to Unicode conversion test."));
 	TBuf16<256> generatedUnicode;
-	test(CnvUtfConverter::ConvertToUnicodeFromUtf8(generatedUnicode, generatedUtf8NoGKBWithBom)==0);
-	test(generatedUnicode==_L16("\xFEFF\x007fHello World"));
+	TEST(CnvUtfConverter::ConvertToUnicodeFromUtf8(generatedUnicode, generatedUtf8NoGKBWithBom)==0);
+	TEST(generatedUnicode==_L16("\xFEFF\x007fHello World"));
    
-	INFO_PRINTF1(_L("BOM, valid Unicode to UTF-8 conversion test."));
+	TheTest.Next(_L("BOM, valid Unicode to UTF-8 conversion test."));
 	TBuf8<256> generatedUtf8;
-	test(CnvUtfConverter::ConvertFromUnicodeToUtf8(generatedUtf8, generatedUnicode)==0);
-	test(generatedUtf8==generatedUtf8NoGKBWithBom);
+	TEST(CnvUtfConverter::ConvertFromUnicodeToUtf8(generatedUtf8, generatedUnicode)==0);
+	TEST(generatedUtf8==generatedUtf8NoGKBWithBom);
 	
+	TheTest.End();
 	}
 
 
@@ -73,136 +92,134 @@ void CT_SIMPLE8::TestForUtf8BomL()
 @SYMTestExpectedResults Test must not fail
 @SYMREQ                 REQ0000
 */
-void CT_SIMPLE8::TestSimple8()
+LOCAL_C void DoE32MainL()
 	{
-    INFO_PRINTF1(_L(" @SYMTestCaseID:SYSLIB-CHARCONV-CT-0563 Testing simple UTF-8 round trips "));
+	TheTest.Start(_L(" @SYMTestCaseID:SYSLIB-CHARCONV-CT-0563 Testing simple UTF-8 round trips "));
 	TBuf16<256> originalUnicode;
 	TBuf8<256> generatedUtf8;
 	TBuf16<256> generatedUnicode;
 	//
-	INFO_PRINTF1(_L("Empty descriptor"));
+	TheTest.Next(_L("Empty descriptor"));
 	originalUnicode=_L16("");
-	test(CnvUtfConverter::ConvertFromUnicodeToUtf8(generatedUtf8, originalUnicode)==0);
-	test(generatedUtf8==_L8(""));
-	test(CnvUtfConverter::ConvertToUnicodeFromUtf8(generatedUnicode, generatedUtf8)==0);
-	test(generatedUnicode==originalUnicode);
+	TEST(CnvUtfConverter::ConvertFromUnicodeToUtf8(generatedUtf8, originalUnicode)==0);
+	TEST(generatedUtf8==_L8(""));
+	TEST(CnvUtfConverter::ConvertToUnicodeFromUtf8(generatedUnicode, generatedUtf8)==0);
+	TEST(generatedUnicode==originalUnicode);
 	// Testing the new API
 	HBufC8* testbuffer8;
 	HBufC* testbuffer;
 	testbuffer8= CnvUtfConverter::ConvertFromUnicodeToUtf8L(originalUnicode);
 	TPtr8 comparebuffer8 = testbuffer8->Des();
-	test(comparebuffer8==generatedUtf8);
+	TEST(comparebuffer8==generatedUtf8);
 	testbuffer = CnvUtfConverter::ConvertToUnicodeFromUtf8L(generatedUtf8);
 	TPtr compareBuffer = testbuffer->Des();
-	test(compareBuffer == originalUnicode);
+	TEST(compareBuffer == originalUnicode);
 	delete testbuffer8;
 	delete testbuffer;
 
-	INFO_PRINTF1(_L("English \"Hello!\""));
+	TheTest.Next(_L("English \"Hello!\""));
 	originalUnicode=_L16("Hello!");
-	test(CnvUtfConverter::ConvertFromUnicodeToUtf8(generatedUtf8, originalUnicode)==0);
-	test(generatedUtf8==_L8("Hello!"));
-	test(CnvUtfConverter::ConvertToUnicodeFromUtf8(generatedUnicode, generatedUtf8)==0);
-	test(generatedUnicode==originalUnicode);
+	TEST(CnvUtfConverter::ConvertFromUnicodeToUtf8(generatedUtf8, originalUnicode)==0);
+	TEST(generatedUtf8==_L8("Hello!"));
+	TEST(CnvUtfConverter::ConvertToUnicodeFromUtf8(generatedUnicode, generatedUtf8)==0);
+	TEST(generatedUnicode==originalUnicode);
 	// Testing the new API
 	testbuffer8= CnvUtfConverter::ConvertFromUnicodeToUtf8L(originalUnicode);
 	comparebuffer8.Set(testbuffer8->Des());
-	test(comparebuffer8==generatedUtf8);
+	TEST(comparebuffer8==generatedUtf8);
 	testbuffer = CnvUtfConverter::ConvertToUnicodeFromUtf8L(generatedUtf8);
 	compareBuffer.Set(testbuffer->Des());
-	test(compareBuffer == originalUnicode);
+	TEST(compareBuffer == originalUnicode);
 	delete testbuffer8;
 	delete testbuffer;
 
-	INFO_PRINTF1(_L("Russian \"Hello!\""));
+	TheTest.Next(_L("Russian \"Hello!\""));
 	originalUnicode.Format(_L16("%c%c%c%c%c%c%c%c%c%c%c%c%c"), 0x0417, 0x0434, 0x0440, 0x0430, 0x0432, 0x0441, 0x0442, 0x0432, 0x0443, 0x0439, 0x0442, 0x0435, 0x0021);
-	test(CnvUtfConverter::ConvertFromUnicodeToUtf8(generatedUtf8, originalUnicode)==0);
-	test(generatedUtf8==_L8("\xd0\x97\xd0\xb4\xd1\x80\xd0\xb0\xd0\xb2\xd1\x81\xd1\x82\xd0\xb2\xd1\x83\xd0\xb9\xd1\x82\xd0\xb5\x21"));
-	test(CnvUtfConverter::ConvertToUnicodeFromUtf8(generatedUnicode, generatedUtf8)==0);
-	test(generatedUnicode==originalUnicode);
+	TEST(CnvUtfConverter::ConvertFromUnicodeToUtf8(generatedUtf8, originalUnicode)==0);
+	TEST(generatedUtf8==_L8("\xd0\x97\xd0\xb4\xd1\x80\xd0\xb0\xd0\xb2\xd1\x81\xd1\x82\xd0\xb2\xd1\x83\xd0\xb9\xd1\x82\xd0\xb5\x21"));
+	TEST(CnvUtfConverter::ConvertToUnicodeFromUtf8(generatedUnicode, generatedUtf8)==0);
+	TEST(generatedUnicode==originalUnicode);
 	// Testing the new API
 	testbuffer8= CnvUtfConverter::ConvertFromUnicodeToUtf8L(originalUnicode);
 	comparebuffer8.Set(testbuffer8->Des());
-	test(comparebuffer8==generatedUtf8);
+	TEST(comparebuffer8==generatedUtf8);
 	testbuffer = CnvUtfConverter::ConvertToUnicodeFromUtf8L(generatedUtf8);
 	compareBuffer.Set(testbuffer->Des());
-	test(compareBuffer == originalUnicode);
+	TEST(compareBuffer == originalUnicode);
 	delete testbuffer8;
 	delete testbuffer;
 
-	INFO_PRINTF1(_L("Greek \"Hello!\""));
+	TheTest.Next(_L("Greek \"Hello!\""));
 	originalUnicode.Format(_L16("%c%c%c%c%c%c"), 0x0393, 0x03b1, 0x03c3, 0x03bf, 0x03c5, 0x0021);
-	test(CnvUtfConverter::ConvertFromUnicodeToUtf8(generatedUtf8, originalUnicode)==0);
-	test(generatedUtf8==_L8("\xce\x93\xce\xb1\xcf\x83\xce\xbf\xcf\x85\x21"));
-	test(CnvUtfConverter::ConvertToUnicodeFromUtf8(generatedUnicode, generatedUtf8)==0);
-	test(generatedUnicode==originalUnicode);
+	TEST(CnvUtfConverter::ConvertFromUnicodeToUtf8(generatedUtf8, originalUnicode)==0);
+	TEST(generatedUtf8==_L8("\xce\x93\xce\xb1\xcf\x83\xce\xbf\xcf\x85\x21"));
+	TEST(CnvUtfConverter::ConvertToUnicodeFromUtf8(generatedUnicode, generatedUtf8)==0);
+	TEST(generatedUnicode==originalUnicode);
 	// Testing the new API
 	testbuffer8= CnvUtfConverter::ConvertFromUnicodeToUtf8L(originalUnicode);
 	comparebuffer8.Set(testbuffer8->Des());
-	test(comparebuffer8==generatedUtf8);
+	TEST(comparebuffer8==generatedUtf8);
 	testbuffer = CnvUtfConverter::ConvertToUnicodeFromUtf8L(generatedUtf8);
 	compareBuffer.Set(testbuffer->Des());
-	test(compareBuffer == originalUnicode);
+	TEST(compareBuffer == originalUnicode);
 	delete testbuffer8;
 	delete testbuffer;
 
-	INFO_PRINTF1(_L("Chinese \"Hello!\""));
+	TheTest.Next(_L("Chinese \"Hello!\""));
 	originalUnicode.Format(_L16("%c%c%c"), 0x4f60, 0x597d, 0x0021);
-	test(CnvUtfConverter::ConvertFromUnicodeToUtf8(generatedUtf8, originalUnicode)==0);
-	test(generatedUtf8==_L8("\xe4\xbd\xa0\xe5\xa5\xbd\x21"));
-	test(CnvUtfConverter::ConvertToUnicodeFromUtf8(generatedUnicode, generatedUtf8)==0);
-	test(generatedUnicode==originalUnicode);
+	TEST(CnvUtfConverter::ConvertFromUnicodeToUtf8(generatedUtf8, originalUnicode)==0);
+	TEST(generatedUtf8==_L8("\xe4\xbd\xa0\xe5\xa5\xbd\x21"));
+	TEST(CnvUtfConverter::ConvertToUnicodeFromUtf8(generatedUnicode, generatedUtf8)==0);
+	TEST(generatedUnicode==originalUnicode);
 	// Testing the new API
 	testbuffer8= CnvUtfConverter::ConvertFromUnicodeToUtf8L(originalUnicode);
 	comparebuffer8.Set(testbuffer8->Des());
-	test(comparebuffer8==generatedUtf8);
+	TEST(comparebuffer8==generatedUtf8);
 	testbuffer = CnvUtfConverter::ConvertToUnicodeFromUtf8L(generatedUtf8);
 	compareBuffer.Set(testbuffer->Des());
-	test(compareBuffer == originalUnicode);
+	TEST(compareBuffer == originalUnicode);
 	delete testbuffer8;
 	delete testbuffer;
 
-	INFO_PRINTF1(_L("Japanese \"Hello!\""));
+	TheTest.Next(_L("Japanese \"Hello!\""));
 	originalUnicode.Format(_L16("%c%c%c%c"), 0x4eca, 0x65e5, 0x306f, 0x0021);
-	test(CnvUtfConverter::ConvertFromUnicodeToUtf8(generatedUtf8, originalUnicode)==0);
-	test(generatedUtf8==_L8("\xe4\xbb\x8a\xe6\x97\xa5\xe3\x81\xaf\x21"));
-	test(CnvUtfConverter::ConvertToUnicodeFromUtf8(generatedUnicode, generatedUtf8)==0);
-	test(generatedUnicode==originalUnicode);
+	TEST(CnvUtfConverter::ConvertFromUnicodeToUtf8(generatedUtf8, originalUnicode)==0);
+	TEST(generatedUtf8==_L8("\xe4\xbb\x8a\xe6\x97\xa5\xe3\x81\xaf\x21"));
+	TEST(CnvUtfConverter::ConvertToUnicodeFromUtf8(generatedUnicode, generatedUtf8)==0);
+	TEST(generatedUnicode==originalUnicode);
 	// Testing the new API
 	testbuffer8= CnvUtfConverter::ConvertFromUnicodeToUtf8L(originalUnicode);
 	comparebuffer8.Set(testbuffer8->Des());
-	test(comparebuffer8==generatedUtf8);
+	TEST(comparebuffer8==generatedUtf8);
 	testbuffer = CnvUtfConverter::ConvertToUnicodeFromUtf8L(generatedUtf8);
 	compareBuffer.Set(testbuffer->Des());
-	test(compareBuffer == originalUnicode);
+	TEST(compareBuffer == originalUnicode);
 	delete testbuffer8;
 	delete testbuffer;
 	
+	TestForUtf8BomL();
 	
 	}
 
-CT_SIMPLE8::CT_SIMPLE8()
-    {
-    SetTestStepName(KTestStep_T_SIMPLE8);
-    }
 
-TVerdict CT_SIMPLE8::doTestStepL()
-    {
-    SetTestStepResult(EFail);
+GLDEF_C TInt E32Main()
+	{
+	__UHEAP_MARK;
 
-    __UHEAP_MARK;
+	TheTest.Title();
 
-    TRAPD(error1, TestSimple8());
-    TRAPD(error2, TestForUtf8BomL());
+	CTrapCleanup* trapCleanup=CTrapCleanup::New();
+	TEST(trapCleanup != NULL);
 
+	TRAPD(error, DoE32MainL());
+	TEST2(error, KErrNone);
 
-    __UHEAP_MARKEND;
+	delete trapCleanup;
 
-    if(error1 == KErrNone && error2 == KErrNone)
-        {
-        SetTestStepResult(EPass);
-        }
+	TheTest.End();
+	TheTest.Close();
 
-    return TestStepResult();
-    }
+	__UHEAP_MARKEND;
+	return KErrNone;
+	}
 

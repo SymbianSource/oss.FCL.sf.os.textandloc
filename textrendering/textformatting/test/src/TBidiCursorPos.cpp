@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2002-2010 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 2002-2009 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -23,17 +23,9 @@
 #include "TAGMA.H"
 #include "TmLayoutImp.h"
 #include "TMINTERP.H"
-#include "tbidicursorpos.h"
 
-namespace LocalToTBidiCursorPos
-{
-CTBidiCursorPosStep* TestStep;
-#define TESTPOINT(p) TestStep->testpoint(p,(TText8*)__FILE__,__LINE__)
-#define TESTPRINT(p) TestStep->print(p,(TText8*)__FILE__,__LINE__)
-
-}
-
-using namespace LocalToTBidiCursorPos;
+CTrapCleanup* TrapCleanup;
+RTest test(_L("TBidiCursorPos - GetNextVisualCursorPos tests"));
 
 class CTestSource : public CBase, public MTmSource
 	{
@@ -197,7 +189,7 @@ void GetNextVisualCursorPosTestsL(CTmTextLayout* aLayout, CTestSource* aSource)
 	for (TInt ii = 0; ii < NO_OF_TEST_CASES; ii++)
 		{
 		msg.Format(_L("GetNextVisualCursorPos test case %d\n"), ii + 1);
-		TESTPRINT(msg);
+		test.Next(msg);
 		aSource->SetText(logicalText[ii]);
 		format.iEndChar = logicalText[ii]->Length();
 		if (rightToLeftPara[ii])
@@ -212,15 +204,15 @@ void GetNextVisualCursorPosTestsL(CTmTextLayout* aLayout, CTestSource* aSource)
 			while (info.iDocPos.iPos != expectedCursorPos[ii][charIndex].iPos
 				|| info.iDocPos.iLeadingEdge != expectedCursorPos[ii][charIndex].iLeading)
 				{
-                TESTPOINT(expectedCursorPos[ii][charIndex].iOptional);
+				test(expectedCursorPos[ii][charIndex].iOptional);
 				++charIndex;
-				TESTPOINT(charIndex != numberOfCursorPositionsToCheck[ii]);
+				test(charIndex != numberOfCursorPositionsToCheck[ii]);
 				}
 			pos = info.iDocPos;
 			++charIndex;
-			TESTPOINT(charIndex <= numberOfCursorPositionsToCheck[ii]);
+			test(charIndex <= numberOfCursorPositionsToCheck[ii]);
 			}
-		TESTPOINT(charIndex == numberOfCursorPositionsToCheck[ii]);
+		test(charIndex == numberOfCursorPositionsToCheck[ii]);
 		aSource->iParFormat.iFlags &= ~(RTmParFormat::ERightToLeft); // reset back to default of LeftToRight
 		}
 
@@ -265,10 +257,10 @@ void DEF109737(CTmTextLayout* aLayout, CTestSource* aSource)
 	TTmDocPosSpec posSpec(pos,static_cast<TTmDocPosSpec::TType>(type));
 	TBool result = aLayout->GetCursor(posSpec, ECursorVertical,
 									lineInfo, position, width, ascent, descent);
-	TESTPOINT(result);
+	test(result);
 	//Test that the LHS is non negative. Because we are allowing bidirectional text the
 	//text shouldnt wrap to next line but instead the cursor can scroll left or right to see the text.
-	TESTPOINT(lineInfo.iInnerRect.iTl.iX >= 0);
+	test(lineInfo.iInnerRect.iTl.iX >= 0);
 	CleanupStack::PopAndDestroy(buf);
 	}
 
@@ -305,30 +297,35 @@ void INC041367(CTmTextLayout* aLayout, CTestSource* aSource)
 				static_cast<TTmDocPosSpec::TType>(type));
 			TBool result = aLayout->GetCursor(posSpec, ECursorVertical,
 				lineInfo, position, width, ascent, descent);
-			TESTPOINT(result);
-			TESTPOINT(0 < width);
+			test(result);
+			test(0 < width);
 			}
 		}
 	CleanupStack::PopAndDestroy(buf);
 	}
 
-TVerdict CTBidiCursorPosStep::doTestStepL()
+void RunTestsL()
 	{
-    SetTestStepResult(EPass);
-    TestStep = this;
-    TESTPRINT(_L("TBidiCursorPos - GetNextVisualCursorPos tests"));
 	CTmTextLayout* layout = new(ELeave) CTmTextLayout;
 	CleanupStack::PushL(layout);
 	CTestSource* source = CTestSource::NewLC();
-	TESTPRINT(_L(" @SYMTestCaseID:SYSLIB-FORM-UT-3610 GetNextVisualCursorPos tests "));
+	test.Start(_L(" @SYMTestCaseID:SYSLIB-FORM-UT-3610 GetNextVisualCursorPos tests "));
 	GetNextVisualCursorPosTestsL(layout, source);
-	TESTPRINT(_L("INC041367"));
+	test.Next(_L("INC041367"));
 	INC041367(layout, source);
-	TESTPRINT(_L("DEF109737"));
+	test.Next(_L("DEF109737"));
 	DEF109737(layout, source);
-	
+	test.End();
 	CleanupStack::PopAndDestroy(source);
 	CleanupStack::PopAndDestroy(layout);
-	return TestStepResult();
 	}
 
+TInt E32Main()
+	{
+	TrapCleanup = CTrapCleanup::New();
+	TRAPD(err, RunTestsL());
+	test(err == KErrNone);
+	test.Close();
+	delete TrapCleanup;
+	return 0;
+	}

@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2005-2010 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -27,21 +27,17 @@
 #include <w32std.h>
 #include <bitdev.h>
 #include <txtrich.h>
-#include "tformhindi.h"
 
-namespace LocalToTFormHindi {
+namespace LocalToFile {
 
 _LIT(KTformhindi, "tformhindi");
 const TInt KDisplayWidth = 100;
 const TInt KDisplayHeight = 100;
+RTest test(KTformhindi);
 _LIT(KDevanagariFontName, "Devanagari OT Eval");
 
-CTFormHindiStep* TestStep = NULL;
-#define TESTPOINT(p) TestStep->testpoint(p,(TText8*)__FILE__,__LINE__)
-#define TESTPRINT(p) TestStep->print(p,(TText8*)__FILE__,__LINE__)
-
 }
-using namespace LocalToTFormHindi;
+using namespace LocalToFile;
 
 _LIT(KTestDeva, "|\x915\x94d\x92b|\x907|\x920\x94d\x920|");
 _LIT(KTestBidi, "|\x915|\x644|\x920|");
@@ -86,16 +82,16 @@ void TestDeletePosition(const TDesC& aTestText, CRichText* aRichText,
 		{
 		aTextView->SetDocPosL(positions[j], EFalse);
 		TInt pos = aTextView->GetForwardDeletePositionL().HigherPos();
-		TESTPOINT(pos == positions[j + 1]);
+		test(pos == positions[j + 1]);
 		aTextView->SetDocPosL(positions[j], ETrue);
 		pos = aTextView->GetForwardDeletePositionL().HigherPos();
-		TESTPOINT(pos == positions[j + 1]);
+		test(pos == positions[j + 1]);
 		aTextView->SetDocPosL(positions[j + 1], EFalse);
 		pos = aTextView->GetBackwardDeletePositionL().LowerPos();
-		TESTPOINT(pos == positions[j]);
+		test(pos == positions[j]);
 		aTextView->SetDocPosL(positions[j + 1], ETrue);
 		pos = aTextView->GetBackwardDeletePositionL().LowerPos();
-		TESTPOINT(pos == positions[j]);
+		test(pos == positions[j]);
 		}
 
 	aRichText->Reset();
@@ -155,13 +151,13 @@ public:
 			// the first chunk with a LZW should be equal to iLeftChunk
 			if (0 == iChunk)
 				{
-                TESTPOINT(text == iLeftChunk);
+				test(text == iLeftChunk);
 				iChunk++;
 				}
 			// the following chunk should be equal to iRightChunk, if it is not-null.
 			else if (1 == iChunk && iRightChunk.Size() > 0)
 				{
-                TESTPOINT(text == iRightChunk);
+				test(text == iRightChunk);
 				iChunk++;
 				}
 			// just ignore the following chunks
@@ -277,24 +273,25 @@ void TestTextViewL(CRichText* aRichText,
 	CTextView* aTextView)
 	{
 	// Test devanagari delete-by-syllable
-	TESTPRINT(_L(" @SYMTestCaseID:SYSLIB-FORM-UT-1532 Test some simple Hindi "));
+	test.Start(_L(" @SYMTestCaseID:SYSLIB-FORM-UT-1532 Test some simple Hindi "));
 	TestDeletePosition(KTestDeva, aRichText, aTextView);
 
 	// Test Bidi
 	// The Arabic character is not present in this font, not even
 	// as a fallback glyph. This allows us to exercise a fixes for
 	// a latent defect.
-	TESTPRINT(_L("Test with characters not in font"));
+	test.Next(_L("Test with characters not in font"));
 	TestDeletePosition(KTestBidi, aRichText, aTextView);
 
 	// Test sample suggested by customer
-	TESTPRINT(_L("Test Hindi #2"));
+	test.Next(_L("Test Hindi #2"));
 	TestDeletePosition(KTestDeva2, aRichText, aTextView);
 
 	// regression test for PDEF101617: FORM always splits chunks at ZWJ character
-	TESTPRINT(_L("Regression test: PDEF101617"));
+	test.Next(_L("Regression test: PDEF101617"));
 	PDEF_101617_DefectL(aRichText, aTextView);
 
+	test.End();
 	}
 
 void TestL(CFbsScreenDevice* aDevice)
@@ -319,12 +316,8 @@ void TestL(CFbsScreenDevice* aDevice)
 	CleanupStack::PopAndDestroy(paraFormat);
 	}
 
-TVerdict CTFormHindiStep::doTestStepL()
+void MainL()
 	{
-    SetTestStepResult(EPass);
-    TestStep = this;
-    TESTPRINT(KTformhindi);
-    
 	TInt error = RFbsSession::Connect();
 	if (error == KErrNotFound)
 		{
@@ -377,12 +370,24 @@ TVerdict CTFormHindiStep::doTestStepL()
 	// We know that we have everything we need now, so we'll start the test!
 	// A failure before this point would show up in the logs as "not run" rather
 	// than "failed".
-	TESTPRINT(_L("Test forward/backward delete for Hindi"));
+	test.Title();
+	test.Start(_L("Test forward/backward delete for Hindi"));
 	TRAP(error, TestL(screenDevice));
+	test.End();
+	test.Close();
 	CleanupStack::PopAndDestroy(scheduler);
 	CleanupStack::PopAndDestroy(gc);
 	CleanupStack::PopAndDestroy(screenDevice);
 	RFbsSession::Disconnect();
 	User::LeaveIfError(error);
-	return TestStepResult();
+	}
+
+TInt E32Main()
+	{
+	static CTrapCleanup* TrapCleanup = CTrapCleanup::New();
+	if (!TrapCleanup)
+		return KErrNoMemory;
+	TRAPD(error, MainL());
+	delete TrapCleanup;
+	return error;
 	}

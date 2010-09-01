@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 1997-2010 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 1997-2009 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -22,30 +22,31 @@
 #include <frmconst.h>
 #include <bautils.h>
 #include <e32test.h>
-#include "tlinepag.h"
 
-namespace LocalToTLinePag
-{
 _LIT(KTLinePag, "TLinePag");
-CTLinePagStep*  TestStep = NULL;
-#define TESTPOINT(p) TestStep->testpoint(p,(TText8*)__FILE__,__LINE__)
-#define TESTPRINT(p) TestStep->print(p,(TText8*)__FILE__,__LINE__)
-}
-using namespace LocalToTLinePag;
+RTest TheTest(KTLinePag);
+
 ///////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////
 //Test macroses and functions
 
+LOCAL_C void CheckL(TInt aValue, TInt aLine)
+	{
+	if(!aValue)
+		{
+		TheTest(EFalse, aLine);
+		}
+	}
 LOCAL_C void CheckL(TInt aValue, TInt aExpected, TInt aLine)
 	{
 	if(aValue != aExpected)
 		{
-        TBuf<256> buf;
-        buf.AppendFormat(_L("*** Expected error: %d, got: %d\r\n"), aExpected, aValue);
-        TestStep->print(buf,(TText8*)__FILE__,aLine);
-		TestStep->testpoint(EFalse,(TText8*)__FILE__,aLine);
+		RDebug::Print(_L("*** Expected error: %d, got: %d\r\n"), aExpected, aValue);
+		TheTest(EFalse, aLine);
 		}
 	}
+#define TEST(arg) ::CheckL((arg), __LINE__)
+#define TEST2(aValue, aExpected) ::CheckL(aValue, aExpected, __LINE__)
 
 class CLinePaginatorTest : public CBase
 	{
@@ -115,7 +116,7 @@ void CLinePaginatorTest::StartPaginateL(/*parameters*/)
 		{
 		}
 	TBool success=CompareArrays();
-	CheckL(success, ETrue,__LINE__);
+	TEST2(success, ETrue);
 	}
 
 
@@ -152,9 +153,7 @@ void CLinePaginatorTest::OpenTestFileL()
 	lex.Val(pageHeight);
 	iPaginator.SetPageHeight(pageHeight);
 
-	TBuf<254> buf;
-	buf.AppendFormat(_L("DocPos\tHeight\tKeep\tStart\tHeight of Pages = <%d>\n"), pageHeight);
-	TESTPRINT(buf);
+	TheTest.Printf(_L("DocPos\tHeight\tKeep\tStart\tHeight of Pages = <%d>\n"), pageHeight);
 	}
 
 TBool CLinePaginatorTest::ReadTestFile(TPageLine& aLine)
@@ -172,9 +171,7 @@ TBool CLinePaginatorTest::ReadTestFile(TPageLine& aLine)
 		iFilePos+=startNum;
 		lex=textBuffer;
 		lex.Val(aLine.iDocPos);
-		TBuf<254> buf;
-		buf.AppendFormat(_L("%d\tX\n"), aLine.iDocPos);
-		TESTPRINT(buf);
+		TheTest.Printf(_L("%d\tX\n"), aLine.iDocPos);
 		return EFalse;
 		}
 
@@ -215,17 +212,13 @@ TBool CLinePaginatorTest::ReadTestFile(TPageLine& aLine)
 
 void CLinePaginatorTest::WriteOutputFile(TPageLine aLine)
 	{
-    TBuf<256> buf;
 	if (iTestPageBreak)
 		{
-		buf.AppendFormat(_L("%d\t%d\t%d\t%d\tBREAK\n"), aLine.iDocPos, aLine.iLineHeight, aLine.iKeepWithNext, aLine.iStartNewPage);
-		TESTPRINT(buf);		
+		TheTest.Printf(_L("%d\t%d\t%d\t%d\tBREAK\n"), aLine.iDocPos, aLine.iLineHeight, aLine.iKeepWithNext, aLine.iStartNewPage);
 		}
 	else
 		{
-        buf.Zero();        
-		buf.AppendFormat(_L("%d\t%d\t%d\t%d\n"), aLine.iDocPos, aLine.iLineHeight, aLine.iKeepWithNext, aLine.iStartNewPage);
-		TESTPRINT(buf);
+		TheTest.Printf(_L("%d\t%d\t%d\t%d\n"), aLine.iDocPos, aLine.iLineHeight, aLine.iKeepWithNext, aLine.iStartNewPage);
 		}
 
 	}
@@ -248,11 +241,9 @@ TBool CLinePaginatorTest::CompareArrays()
 	TInt prevDocPos=0;
 	TInt docPosError=0;
 
-	TBuf<256> buf;
 	if (numPages==numTestPages)
 		{
- 		buf.AppendFormat(_L("Correct Number of Pages = %d\n"), numPages);
- 		TESTPRINT(buf);
+ 		TheTest.Printf(_L("Correct Number of Pages = %d\n"), numPages);
 		pagesSame=ETrue;
 		for (TInt i=0; i<numPages; i++)
 			{
@@ -267,24 +258,20 @@ TBool CLinePaginatorTest::CompareArrays()
 			prevDocPos=(*iTestChars)[i];
 			}
 		if (pagesSame)
-			{            
- 			TESTPRINT(_L("Correct Number of Characters on Pages -- PASSED\n"));
+			{
+ 			TheTest.Printf(_L("Correct Number of Characters on Pages -- PASSED\n"));
 			}
 		else
 			{
-            TESTPRINT(_L("Incorrect Number of Characters on Pages -- FAILED\n"));            
-            buf.Zero();
-			buf.AppendFormat(_L("First Error Occurs at Position = %d"), docPosError);
-			TESTPRINT(buf);
+			TheTest.Printf(_L("Incorrect Number of Characters on Pages -- FAILED\n"));
+			TheTest.Printf(_L("First Error Occurs at Position = %d"), docPosError);
 			}
 		}
 	else
 		{
-        TESTPRINT(_L("Incorrect Number of Pages  -- FAILED\n"));
-        buf.Zero();
-		buf.AppendFormat(_L("Number Calculated	by LinePaginator = %d\n"), numPages);		
-		buf.AppendFormat(_L("Number Contained in File = %d\n"), numTestPages);
-		TESTPRINT(buf);
+ 		TheTest.Printf(_L("Incorrect Number of Pages  -- FAILED\n"));
+		TheTest.Printf(_L("Number Calculated	by LinePaginator = %d\n"), numPages);
+		TheTest.Printf(_L("Number Contained in File = %d\n"), numTestPages);
 		}
 
 	iTestFile.Close();
@@ -300,15 +287,18 @@ void LinePaginateL()
 	delete linePaginate;
 	}
 
-TVerdict CTLinePagStep::doTestStepL()
+TInt E32Main()
 	{
-    SetTestStepResult(EPass);
-    TestStep = this;
-	TESTPRINT(KTLinePag);
-	TESTPRINT(_L(" @SYMTestCaseID:SYSLIB-FORM-LEGACY-LINEPAG-0001 CLinePaginatorTest tests "));
+	TheTest.Title();
+	static CTrapCleanup* TrapCleanup = CTrapCleanup::New();
+
+	TheTest.Start(_L(" @SYMTestCaseID:SYSLIB-FORM-LEGACY-LINEPAG-0001 CLinePaginatorTest tests "));
 	TRAPD(error, LinePaginateL());
-	TESTPOINT(error == KErrNone);
-	return TestStepResult();
+	TEST(error == KErrNone);
+	delete TrapCleanup;
+	TheTest.End();
+	TheTest.Close();
+	return error;
 	}
 
 void FormPanic(TFormPanic aPanic)
