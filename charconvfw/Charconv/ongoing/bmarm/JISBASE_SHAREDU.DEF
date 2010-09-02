@@ -1,5 +1,0 @@
-EXPORTS
-	ConvertToUnicode__10CnvJisBaseQ225CCnvCharacterSetConverter11TEndiannessR6TDes16RC6TDesC8RiN24 @ 1 NONAME ; CnvJisBase::ConvertToUnicode(CCnvCharacterSetConverter::TEndianness, TDes16 &, TDesC8 const &, int &, int &, int &)
-	HalfWidthKatakana7ConversionData__10CnvJisBase @ 2 NONAME R3UNUSED ; CnvJisBase::HalfWidthKatakana7ConversionData(void)
-	IsCharacterJISBased__10CnvJisBaseRiRC6TDesC8 @ 3 NONAME R3UNUSED ; CnvJisBase::IsCharacterJISBased(int &, TDesC8 const &)
-

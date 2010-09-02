@@ -1,3 +1,0 @@
-EXPORTS
-	?ConversionData@CnvJisX0208@@SAABUSCnvConversionData@@XZ @ 1 NONAME ; public: static struct SCnvConversionData const & __cdecl CnvJisX0208::ConversionData(void)
-
