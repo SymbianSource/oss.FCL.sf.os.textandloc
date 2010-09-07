@@ -26,13 +26,10 @@
         <unit bldFile="fontservices/textshaperplugin/group" mrp="fontservices/textshaperplugin/group/graphics_iculayoutengine.mrp"/>
       </component>
       <component id="fontstore" name="Font Store" purpose="mandatory" filter="api_test"> <!-- both production and api_test-->
-    	<meta rel="testbuild">
-          <group name="test.graphics_fntstore"/>
-        </meta>
-        <unit bldFile="fontservices/fontstore/group" mrp="fontservices/fontstore/group/graphics_fntstore.mrp"/>
+`        <unit bldFile="fontservices/fontstore/group" mrp="fontservices/fontstore/group/graphics_fntstore.mrp"/>
       </component>
      <component id="textbase" name="Text Base" purpose="mandatory">
-     	<!-- placeholder for text code from GDI -->
+	<unit bldFile="fontservices/textbase/group" mrp="fontservices/textbase/group/textbase.mrp" /> 
      </component>      
       <component id="freetypefontrasteriser" name="FreeType Font Rasteriser" purpose="optional" class="plugin">
         <unit bldFile="fontservices/freetypefontrasteriser/group" mrp="fontservices/freetypefontrasteriser/group/graphics_freetype.mrp"/>
@@ -67,6 +64,9 @@
      </component>
       <component id="numberformatting" name="Number Formatting" introduced="7.0s" purpose="optional">
         <unit bldFile="textrendering/numberformatting/group" mrp="textrendering/numberformatting/group/app-framework_numberconversion.mrp"/>
+      </component>
+      <component id="nearestlangutils" name="Nearest Language Utils">
+        <unit bldFile="textandlocutils/nearestlangutils/group" mrp="textandlocutils/nearestlangutils/group/langutils.mrp"/>
       </component>
     </collection>
     <collection id="localesupport" name="Locale Support" level="util">

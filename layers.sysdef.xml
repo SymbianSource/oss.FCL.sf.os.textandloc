@@ -140,6 +140,9 @@
       <module name="syslibs_fatcharsetconv">
         <unit name="fatcharsetconv" unitID="tls.fatcharsetconv"  bldFile="sf\os\textandloc\charconvfw\fatfilenameconversionplugins\group" mrp="sf\os\textandloc\charconvfw\fatfilenameconversionplugins\group\syslibs_fatcharsetconv.mrp"/>
       </module>
+      <module name="nearestlangutils">
+        <unit name="nearestlangutils" unitID="tls.nearestlangutils"  bldFile="sf\os\textandloc\textandlocutils\nearestlangutils\group" mrp="sf\os\textandloc\textandlocutils\nearestlangutils\group\langutils.mrp"/>
+      </module>
     </layer>
     <layer name="api_test_layer">
       <!--module name="test.app-framework_etext">
