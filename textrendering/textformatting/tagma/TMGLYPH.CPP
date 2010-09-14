@@ -170,7 +170,32 @@ TInt RTmTextCache::AdvanceWidthL(TInt aStart, TInt aEnd, TBool aRightToLeft,
 			 cat == TChar::ERightToLeftArabic))
 			{
 			iContextCharPerChunk = last;
-			break;	
+			// Begin defect fixing for case ou1cimx1#475636.
+			// The defect: Popup panic 12 (ECharPosBeyondDocument) when display special Arabic
+			//             text string.
+			// The direct reason: in function RTmGraphemeInTextChunkIterator::Next(),
+			//                    iFont->Font().GetCharacterPosition2() returns with
+			//                    iPosition.iPosInText equal to iPosition.iText.Length(),
+			//                    so that iPosition.iPosInText is an invalid document position.
+			// The root cause: When call GetCharacterPosition2(), FORM gives a text string,
+			//                 which contains characters to check, and the context characters.
+			//                 GetCharacterPosition2() handles the whole string from sub index
+			//                 1 (given by FORM). But actually, each text string has two context
+			//                 characters, one leading and one trailing. That is to say, the
+			//                 trailing context character is incorrectly taken as normal text in
+			//                 GetCharacterPosition2(). It's fine normally, since
+			//                 GetCharacterPosition2() handles ONE glyph. Unfortunately, if the
+			//                 trailing context character is special, such as 0x644,
+			//                 GetCharacterPosition2() will try to composite 0x644 with the text
+			//                 character before it. If the composition success (like this defect),
+			//                 FORM will receive invalid document position.
+			// Solution: Never take 0x644 as context character.
+			if (iContextCharPerChunk == 0x644)
+				{
+				iContextCharPerChunk = 0x643;
+				}
+			// End defect fixing for case ou1cimx1#475636.
+			break;
 			}
 		textLength -= charSize;
 		}

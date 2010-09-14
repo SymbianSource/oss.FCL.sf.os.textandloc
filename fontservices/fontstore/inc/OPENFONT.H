@@ -327,7 +327,7 @@ public:
 	TBool HasCharacterL(TInt aCode) const;
 	TBool GetCharacterData(TInt aSessionHandle,TInt aCode,const TOpenFontCharMetrics*& aMetrics,const TUint8*& aBitmap) const;
 	void OnFileDeleted();
-	COpenFontGlyphCache* GetGlyphCache();
+	COpenFontGlyphCache* GetGlyphCache() const;
 	inline TInt FontCapitalAscent() const;
 	inline TInt FontMaxAscent() const;
 	inline TInt FontStandardDescent() const;
@@ -368,7 +368,7 @@ protected:
 private:
 	const COpenFontGlyph* Glyph(TInt aSessionHandle,TInt aCode) const;
 
-	const COpenFontGlyph* FontCacheGlyph(TInt aCode);
+	const COpenFontGlyph* FontCacheGlyph(TInt aCode) const;
 	
 	void SetGlyphCache(COpenFontGlyphCache* aGlyphCache);
 	
