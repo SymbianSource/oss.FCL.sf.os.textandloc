@@ -1,3 +1,0 @@
-EXPORTS
-	?ConversionData@CnvShiftJisDirectmap@@SAABUSCnvConversionData@@XZ @ 1 NONAME ; struct SCnvConversionData const & CnvShiftJisDirectmap::ConversionData(void)
-

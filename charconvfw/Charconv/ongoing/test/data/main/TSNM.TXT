@@ -1,4 +1,0 @@
-CharacterSet 0x000eb205
-	StandardName	"Dummy character set"
-	MibEnum			9415824
-
