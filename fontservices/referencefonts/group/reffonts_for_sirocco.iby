@@ -18,7 +18,7 @@
 #ifndef __REF_FONTS_FOR_SIROCCO_IBY__
 #define __REF_FONTS_FOR_SIROCCO_IBY__
 
-
+data=ZRESOURCE\Fonts\DejaVuSans.ttf    Resource\Fonts\DejaVuSans.ttf
 data=ZRESOURCE\Fonts\DejaVuSansCondensed.ttf    Resource\Fonts\DejaVuSansCondensed.ttf
 data=ZRESOURCE\Fonts\DejaVuSansCondensed-Bold.ttf     Resource\Fonts\DejaVuSansCondensed-Bold.ttf
 data=ZRESOURCE\Fonts\DejaVuSansCondensed-Oblique.ttf    Resource\Fonts\DejaVuSansCondensed-Oblique.ttf

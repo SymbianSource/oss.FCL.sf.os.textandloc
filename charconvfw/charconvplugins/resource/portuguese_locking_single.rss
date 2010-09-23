@@ -25,3 +25,4 @@ NAME PLPS
 RESOURCE RSS_SIGNATURE {}
 
 RESOURCE TBUF {buf=STRING_portuguese_locking_single;}
+

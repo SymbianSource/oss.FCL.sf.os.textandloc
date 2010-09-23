@@ -18,11 +18,11 @@
 
 #pragma warning (disable: 4514) // unreferenced inline/local function has been removed
 
-#include <STDIO.H>
-#include <STDLIB.H>
-#include <STRING.H>
-#include <LOCALE.H>
-#include <WCHAR.H>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <locale.h>
+#include <wchar.h>
 #if defined(__VC32__)
 #include <FCNTL.H>
 #include <IO.H>
@@ -372,4 +372,5 @@ int main(int aArgc, char* aArgv[])
 	FlushAndCloseFiles(inputFile, outputFile);
 	return 0;
 	}
+
 

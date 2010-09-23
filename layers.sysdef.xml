@@ -155,9 +155,11 @@
         <unit name="test.graphicstestharness" unitID="test.tls.graphicstestharness"  bldFile="sf\os\graphics\graphicstest\graphicstestharness\group" mrp=""/>
       </module>
       <!-- seems font files can not be exported -->
+      <!--
       <module name="test.graphics_internaltestfonts">
         <unit name="test.graphicsinternaltestfonts" unitID="test.tls.graphicsinternaltestfonts"  bldFile="sf\os\textandloc\fontservices\graphicstestfonts\group" mrp=""/>
       </module>
+      -->
       <module name="test.graphics_fntstore">
         <unit name="test.fntstore" unitID="test.tls.fntstore"  bldFile="sf\os\textandloc\fontservices\fontstore\group" mrp=""/>
       </module>

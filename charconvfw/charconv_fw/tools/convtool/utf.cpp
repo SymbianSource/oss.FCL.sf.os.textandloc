@@ -16,7 +16,7 @@
 */
 
 
-#include <STDLIB.H>
+#include <stdlib.h>
 
 const int KErrorIllFormedInput=-1;
 
@@ -132,7 +132,7 @@ int Utf8ToUnicode(wchar_t* aUnicode, const char* aUtf8)
 		}
 	return aUnicode-startOfUnicode;
 	}
-#include <STDIO.H>
+#include <stdio.h>
 int UnicodeToUtf8(char* aUtf8, const wchar_t* aUnicode)
 // must '\0'-terminate the output
 	{
@@ -222,4 +222,5 @@ int UnicodeToUtf8(char* aUtf8, const wchar_t* aUnicode)
 		}
 	return aUtf8-startOfUtf8;
 	}
+
 

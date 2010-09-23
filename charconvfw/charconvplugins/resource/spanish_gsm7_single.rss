@@ -25,3 +25,4 @@ NAME GSMS
 RESOURCE RSS_SIGNATURE {}
 
 RESOURCE TBUF {buf=STRING_spanish_gsm7_single;}
+

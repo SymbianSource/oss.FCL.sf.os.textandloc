@@ -2167,6 +2167,445 @@ void CTGlyphSelection::TestContextInShapeInfo()
 	}
 
 /**
+@SYMTestCaseID GRAPHICS-SYSLIB-GDI-CT-0221
+@SYMTestCaseDesc Test support for Vietnamese characters.
+@SYMTestPriority High
+@SYMTestActions  Attempt to compose various valid and invalid Vietnamese glyph clusters.
+@SYMTestExpectedResults The test must not fail.
+@SYMPREQ 402: GDI for Bravo.
+*/
+void CTGlyphSelection::TestVietnameseChars()
+    {
+/**
+ This method is a test case to test GetCharacterPosition() correctly
+ processes Vietnamese characters.
+*/
+    TBool r;
+    TBuf<41> testText(0);
+    CFont::TPositionParam param;
+    param.iDirection = CFont::EHorizontal;
+    param.iFlags = CFont::TPositionParam::EFLogicalOrder;
+
+    testText.SetLength(41);
+    
+    testText[0] = 0x0055; // capital U
+    testText[1] = 0x031B; // combining horn - expect 0x01AF (succeed)
+
+    testText[2] = 0x0055; // capital U
+    testText[3] = 0x0027; // apostrophe - expect 0x0055 (fail)
+
+    testText[4] = 0x0055; // capital U
+    testText[5] = 0x02B9; // modifier prime - expect 0x0055 (fail)
+
+    testText[6] = 0x0055; // capital U
+    testText[7] = 0x02BC; // modifier apostrophe - expect 0x0055 (fail)
+
+    testText[8] = 0x0055; // capital U
+    testText[9] = 0x0315; // combining comma above right - expect 0x0055, 0x0315 (fail)
+
+    testText[10] = 0x0055; // capital U
+    testText[11] = 0x2019; // right single quote mark - expect 0x0055 (fail)
+
+    testText[12] = 0x01AF; // capital U with horn
+    testText[13] = 0x0020; // space - expect 0x01AF (succeed)
+
+    testText[14] = 0x0045; // capital E
+    testText[15] = 0x031B; // combining horn - expect 0x0045, 0x031B (fail)
+
+    testText[16] = 0x0041; // capital A
+    testText[17] = 0x0306; // combining breve
+    testText[18] = 0x0301; // combining acute - expect 0x1EAE (succeed)
+
+    testText[19] = 0x0102; // capital A with breve
+    testText[20] = 0x0301; // combining acute - expect 0x1EAE (succeed)
+
+    testText[21] = 0x0041; // capital A
+    testText[22] = 0x0301; // combining acute
+    testText[23] = 0x0306; // combining breve - expect 0x0041, 0x0301, 0x0306 (fail)
+
+    testText[24] = 0x0041; // capital A
+    testText[25] = 0x0323; // combining dot below
+    testText[26] = 0x0306; // combining breve - expect 0x1EB6 (succeed)
+
+    testText[27] = 0x1EA0; // capital A with dot below
+    testText[28] = 0x0306; // combining breve - expect 0x1EB6 (succeed)
+
+    testText[29] = 0x0102; // capital A with breve
+    testText[30] = 0x0323; // combining dot below - expect 0x0102, 0x0323 (fail)
+
+    testText[31] = 0x0045; // capital A
+    testText[32] = 0x0302; // combining circumflex
+    testText[33] = 0x0301; // combining acute - expect 0x1EBE (succeed)
+
+    testText[34] = 0x00CA; // capital A with circumflex
+    testText[35] = 0x0301; // combining acute - expect 0x1EBE (succeed)
+
+    testText[36] = 0x004F; // capital O
+    testText[37] = 0x031B; // combining horn
+    testText[38] = 0x0309; // combining hook above - expect 0x1EDE (succeed)
+
+    testText[39] = 0x01A0; // capital O with horn
+    testText[40] = 0x0309; // combining hook above - expect 0x1EDE (succeed)
+
+    param.iText.Set(testText);
+
+    // 1: Capital U with combining horn
+    param.iPosInText = 0;
+    param.iPen.iX = param.iPen.iY = 0;
+    r = iTestFont->GetCharacterPosition(param);
+    TEST(r && param.iPosInText == 2 
+           && param.iPen.iX == 10
+           && param.iOutputGlyphs == 1
+           && param.iOutput[0].iCode == 0x01AF);
+
+    // 2: Capital U with apostrophe
+    param.iPosInText = 2;
+    param.iPen.iX = param.iPen.iY = 0;
+    r = iTestFont->GetCharacterPosition(param);
+    TEST(r && param.iPosInText == 3 
+           && param.iPen.iX == 10
+           && param.iOutputGlyphs == 1
+           && param.iOutput[0].iCode == 0x0055);
+
+    // 3: Capital U with modifier prime
+    param.iPosInText = 4;
+    param.iPen.iX = param.iPen.iY = 0;
+    r = iTestFont->GetCharacterPosition(param);
+    TEST(r && param.iPosInText == 5 
+           && param.iPen.iX == 10
+           && param.iOutputGlyphs == 1
+           && param.iOutput[0].iCode == 0x0055);
+
+    // 4: Capital U with modifier apostrophe
+    param.iPosInText = 6;
+    param.iPen.iX = param.iPen.iY = 0;
+    r = iTestFont->GetCharacterPosition(param);
+    TEST(r && param.iPosInText == 7 
+           && param.iPen.iX == 10
+           && param.iOutputGlyphs == 1
+           && param.iOutput[0].iCode == 0x0055);
+
+    // 5: Capital U with combining comma above right
+    param.iPosInText = 8;
+    param.iPen.iX = param.iPen.iY = 0;
+    r = iTestFont->GetCharacterPosition(param);
+    TEST(r && param.iPosInText == 10 
+           && param.iPen.iX == 10
+           && param.iOutputGlyphs == 2
+           && param.iOutput[0].iCode == 0x0055
+           && param.iOutput[1].iCode == 0x0315);
+
+    // 6: Capital U with right single quote
+    param.iPosInText = 10;
+    param.iPen.iX = param.iPen.iY = 0;
+    r = iTestFont->GetCharacterPosition(param);
+    TEST(r && param.iPosInText == 11 
+           && param.iPen.iX == 10
+           && param.iOutputGlyphs == 1
+           && param.iOutput[0].iCode == 0x0055);
+
+    // 7: Capital U with horn plus space
+    param.iPosInText = 12;
+    param.iPen.iX = param.iPen.iY = 0;
+    r = iTestFont->GetCharacterPosition(param);
+    TEST(r && param.iPosInText == 13 
+           && param.iPen.iX == 10
+           && param.iOutputGlyphs == 1
+           && param.iOutput[0].iCode == 0x01AF);
+
+    // 8: Capital E with combining horn
+    param.iPosInText = 14;
+    param.iPen.iX = param.iPen.iY = 0;
+    r = iTestFont->GetCharacterPosition(param);
+    TEST(r && param.iPosInText == 16 
+           && param.iPen.iX == 10
+           && param.iOutputGlyphs == 2
+           && param.iOutput[0].iCode == 0x0045
+           && param.iOutput[1].iCode == 0x031B);
+
+    // 9: Capital A with combining breve with combining acute
+    param.iPosInText = 16;
+    param.iPen.iX = param.iPen.iY = 0;
+    r = iTestFont->GetCharacterPosition(param);
+    TEST(r && param.iPosInText == 19 
+           && param.iPen.iX == 10
+           && param.iOutputGlyphs == 1
+           && param.iOutput[0].iCode == 0x1EAE);
+
+    // 10: Capital A with breve with combining acute
+    param.iPosInText = 19;
+    param.iPen.iX = param.iPen.iY = 0;
+    r = iTestFont->GetCharacterPosition(param);
+    TEST(r && param.iPosInText == 21 
+           && param.iPen.iX == 10
+           && param.iOutputGlyphs == 1
+           && param.iOutput[0].iCode == 0x1EAE);
+
+    // 11: Capital A with combining acute with combining breve
+    param.iPosInText = 21;
+    param.iPen.iX = param.iPen.iY = 0;
+    r = iTestFont->GetCharacterPosition(param);
+    TEST(r && param.iPosInText == 24 
+           && param.iPen.iX == 10
+           && param.iOutputGlyphs == 3
+           && param.iOutput[0].iCode == 0x0041
+           && param.iOutput[1].iCode == 0x0301
+           && param.iOutput[2].iCode == 0x0306);
+
+    // 12: Capital A with combining dot below with combining breve
+    param.iPosInText = 24;
+    param.iPen.iX = param.iPen.iY = 0;
+    r = iTestFont->GetCharacterPosition(param);
+    TEST(r && param.iPosInText == 27 
+           && param.iPen.iX == 10
+           && param.iOutputGlyphs == 1
+           && param.iOutput[0].iCode == 0x1EB6);
+
+    // 13: Capital A with dot below with combining breve
+    param.iPosInText = 27;
+    param.iPen.iX = param.iPen.iY = 0;
+    r = iTestFont->GetCharacterPosition(param);
+    TEST(r && param.iPosInText == 29 
+           && param.iPen.iX == 10
+           && param.iOutputGlyphs == 1
+           && param.iOutput[0].iCode == 0x1EB6);
+
+    // 14: Capital A with breve with combining dot below
+    param.iPosInText = 29;
+    param.iPen.iX = param.iPen.iY = 0;
+    r = iTestFont->GetCharacterPosition(param);
+    TEST(r && param.iPosInText == 31 
+           && param.iPen.iX == 10
+           && param.iOutputGlyphs == 2
+           && param.iOutput[0].iCode == 0x0102
+           && param.iOutput[1].iCode == 0x0323);
+
+    // 15: Capital A with combining circumflex with combining acute
+    param.iPosInText = 31;
+    param.iPen.iX = param.iPen.iY = 0;
+    r = iTestFont->GetCharacterPosition(param);
+    TEST(r && param.iPosInText == 34 
+           && param.iPen.iX == 10
+           && param.iOutputGlyphs == 1
+           && param.iOutput[0].iCode == 0x1EBE);
+
+    // 16: Capital A with circumflex with combining acute
+    param.iPosInText = 34;
+    param.iPen.iX = param.iPen.iY = 0;
+    r = iTestFont->GetCharacterPosition(param);
+    TEST(r && param.iPosInText == 36 
+           && param.iPen.iX == 10
+           && param.iOutputGlyphs == 1
+           && param.iOutput[0].iCode == 0x1EBE);
+
+    // 17: Capital O with combining horn with combing hook above
+    param.iPosInText = 36;
+    param.iPen.iX = param.iPen.iY = 0;
+    r = iTestFont->GetCharacterPosition(param);
+    TEST(r && param.iPosInText == 39 
+           && param.iPen.iX == 10
+           && param.iOutputGlyphs == 1
+           && param.iOutput[0].iCode == 0x1EDE);
+
+    // 18: Capital O with horn with combing hook above
+    param.iPosInText = 39;
+    param.iPen.iX = param.iPen.iY = 0;
+    r = iTestFont->GetCharacterPosition(param);
+    TEST(r && param.iPosInText == 41 
+           && param.iPen.iX == 10
+           && param.iOutputGlyphs == 1
+           && param.iOutput[0].iCode == 0x1EDE);
+    }
+
+
+void CTGlyphSelection::TestNonBmpCharsL()
+    {
+    // create a font store for testing
+    CFontStore* fontStore = CFontStore::NewL(&User::Heap());
+    
+    //load all ecom implemented rasterizer dlls. installs the rasterizer.   
+    LoadOpenFontLibraries(fontStore);
+        // test font preparation
+    fontStore->iKPixelWidthInTwips = 11860; //This value is default
+
+    //add any required font files
+    TUid err = fontStore->AddFileL(KTestGB18030FontFile);
+
+    TFontSpec testGB18030FontSpec(KTestGB18030FontFaceName,200); 
+     
+    CFbsBitmap* bmp = new(ELeave) CFbsBitmap;
+    
+    TInt ret = bmp->Create(TSize(100,100),EGray2);
+    if (ret == KErrNotSupported)
+        return;
+    else
+        User::LeaveIfError(ret);
+
+    CFbsBitmapDevice* device = NULL;
+    TRAPD(err2,device = CFbsBitmapDevice::NewL(bmp));
+    TEST(err2 == KErrNone);
+
+    CFbsBitGc* gc = NULL;
+    User::LeaveIfError(device->CreateContext(gc));
+    // Font file Creation
+    CFbsFont* gb18030Font = NULL;
+    User::LeaveIfError(device->GetNearestFontToDesignHeightInTwips(gb18030Font,testGB18030FontSpec));
+    gc->UseFont(gb18030Font);
+    CleanupStack::PushL(gb18030Font);
+    
+    //Testcode for GB18030
+    ((CTGlyphSelectionStep*)iStep)->RecordTestResultL();
+    ((CTGlyphSelectionStep*)iStep)->SetTestStepID(_L("TI18N-GDI-CIT-4077"));
+    TestNonBmpCharsInGB18030(gb18030Font);
+    ((CTGlyphSelectionStep*)iStep)->RecordTestResultL();
+    
+    CleanupStack::Pop(gb18030Font);
+    
+    //Cleaning the memory
+    delete bmp;
+    delete device;
+    delete gc;
+    fontStore->RemoveFile(err);
+    delete fontStore;
+    REComSession::FinalClose();
+    }
+
+
+void CTGlyphSelection::TestTextDirection()
+/**
+ This method is a test case to test GetCharacterPosition() correctly
+ produces glyph bounding boxes and utilizes various pen offsets in
+ a horizontal and vertical context.
+*/
+    {
+    TBool r;
+    TBuf<20> testText(0);
+    CFont::TPositionParam param;
+    param.iFlags = CFont::TPositionParam::EFLogicalOrder;
+
+    testText.SetLength(5);
+    testText[0] = 'a';
+    testText[1] = 'B';
+    testText[2] = 'c';
+    testText[3] = ' ';
+    testText[4] = '1';
+    param.iText.Set(testText);
+
+    // 1: Test horizontal text pen advancement & bounds
+    param.iDirection = CFont::EHorizontal;
+    param.iPosInText = 0;
+    param.iPen.iX = param.iPen.iY = 0;
+    r = iTestFont->GetCharacterPosition(param);
+    TEST(r && param.iPosInText == 1 
+           && param.iPen == TPoint(10,0)
+           && param.iOutputGlyphs == 1 
+           && param.iOutput[0].iCode == 'a'
+           && param.iOutput[0].iBounds.iTl == TPoint(0,-10)
+           && param.iOutput[0].iBounds.iBr == TPoint(10,2));
+           // add check for bounds
+
+    // 2: Test horizontal text pen advancement with +ve pen offset
+    param.iPosInText = 4;
+    param.iPen.iX = 20;
+    param.iPen.iY = 12;
+    r = iTestFont->GetCharacterPosition(param);
+    TEST(r && param.iPosInText == 5 
+           && param.iPen == TPoint(30,12)
+           && param.iOutputGlyphs == 1 
+           && param.iOutput[0].iCode == '1'
+           && param.iOutput[0].iBounds.iTl == TPoint(20,2)
+           && param.iOutput[0].iBounds.iBr == TPoint(30,14));
+
+    // 3: Test horizontal text pen advancement with -ve pen offset
+    param.iPosInText = 4;
+    param.iPen.iX = -10;
+    param.iPen.iY = -24;
+    r = iTestFont->GetCharacterPosition(param);
+    TEST(r && param.iPosInText == 5 
+           && param.iPen == TPoint(0,-24)
+           && param.iOutputGlyphs == 1 
+           && param.iOutput[0].iCode == '1'
+           && param.iOutput[0].iBounds.iTl == TPoint(-10,-34)
+           && param.iOutput[0].iBounds.iBr == TPoint(0,-22));
+
+    // 4: Test vertical text pen advancement & bounds
+    param.iDirection = CFont::EVertical;
+    param.iPosInText = 1;
+    param.iPen.iX = param.iPen.iY = 0;
+    r = iTestFont->GetCharacterPosition(param);
+    TEST(r && param.iPosInText == 2 
+           && param.iPen == TPoint(0,12)
+           && param.iOutputGlyphs == 1 
+           && param.iOutput[0].iCode == 'B'
+           && param.iOutput[0].iBounds.iTl == TPoint(0,0)
+           && param.iOutput[0].iBounds.iBr == TPoint(10,12));
+
+    // 5: Test vertical text pen advancement with +ve pen offset
+    param.iPosInText = 4;
+    param.iPen.iX = 20;
+    param.iPen.iY = 12;
+    r = iTestFont->GetCharacterPosition(param);
+    TEST(r && param.iPosInText == 5 
+           && param.iPen == TPoint(20,24)
+           && param.iOutputGlyphs == 1 
+           && param.iOutput[0].iCode == '1'
+           && param.iOutput[0].iBounds.iTl == TPoint(20,12)
+           && param.iOutput[0].iBounds.iBr == TPoint(30,24));
+
+    // 6: Test vertical text pen advancement with -ve pen offset
+    param.iPosInText = 4;
+    param.iPen.iX = -10;
+    param.iPen.iY = -24;
+    r = iTestFont->GetCharacterPosition(param);
+    TEST(r && param.iPosInText == 5 
+           && param.iPen == TPoint(-10,-12)
+           && param.iOutputGlyphs == 1 
+           && param.iOutput[0].iCode == '1'
+           && param.iOutput[0].iBounds.iTl == TPoint(-10,-24)
+           && param.iOutput[0].iBounds.iBr == TPoint(0,-12));
+    }
+
+void CTGlyphSelection::TestAllUnicodeChars()
+/**
+ This method is a test case to test GetCharacterPosition() correctly
+ processes all the characters in the Unicode code space 0x0000 to 
+ 0xffff.
+*/
+    {
+    TBool r;
+    TBuf<8> testText(0);
+    CFont::TPositionParam param;
+    param.iFlags = CFont::TPositionParam::EFLogicalOrder;
+
+    TInt errors = 0;
+    testText.SetLength(1);
+    for (TUint i = 0xd802; i <= 0xffff; i++)
+        {
+        testText[0] = (TText16) i;
+        if (i==0x1b) continue; // Skip as CTestFont designed to fail here r==0.
+        param.iText.Set(testText);
+        param.iDirection = CFont::EHorizontal;
+        param.iPosInText = 0;
+        param.iPen.iX = param.iPen.iY = 0;
+        r = iTestFont->GetCharacterPosition(param);
+        if (!r || param.iPosInText != 1)
+            {
+            errors++;
+            //RDebug::Print(_L("%04x(%d,%d,%d), "), i, r, param.iPosInText, param.iOutputGlyphs );
+            //if (errors%8 == 0)
+            //  RDebug::Print(_L("\n"));
+            }
+        }
+
+    TEST (errors == 0);
+    }
+
+#ifdef TEST
+#undef TEST
+#define TEST(a) (void)(a)
+#endif
+
+/**
 @SYMTestCaseID GRAPHICS-SYSLIB-GDI-CIT-1580
 @SYMTestCaseDesc Automated GDI testing for Hindi
 @SYMTestPriority High
@@ -7072,439 +7511,6 @@ void CTGlyphSelection::TestIndicCharsL()
 	}
 
 	
-/**
-@SYMTestCaseID GRAPHICS-SYSLIB-GDI-CT-0221
-@SYMTestCaseDesc Test support for Vietnamese characters.
-@SYMTestPriority High
-@SYMTestActions  Attempt to compose various valid and invalid Vietnamese glyph clusters.
-@SYMTestExpectedResults The test must not fail.
-@SYMPREQ 402: GDI for Bravo.
-*/
-void CTGlyphSelection::TestVietnameseChars()
-	{
-/**
- This method is a test case to test GetCharacterPosition() correctly
- processes Vietnamese characters.
-*/
-	TBool r;
-	TBuf<41> testText(0);
-	CFont::TPositionParam param;
-	param.iDirection = CFont::EHorizontal;
-	param.iFlags = CFont::TPositionParam::EFLogicalOrder;
-
-	testText.SetLength(41);
-	
-	testText[0] = 0x0055; // capital U
-	testText[1] = 0x031B; // combining horn - expect 0x01AF (succeed)
-
-	testText[2] = 0x0055; // capital U
-	testText[3] = 0x0027; // apostrophe - expect 0x0055 (fail)
-
-	testText[4] = 0x0055; // capital U
-	testText[5] = 0x02B9; // modifier prime - expect 0x0055 (fail)
-
-	testText[6] = 0x0055; // capital U
-	testText[7] = 0x02BC; // modifier apostrophe - expect 0x0055 (fail)
-
-	testText[8] = 0x0055; // capital U
-	testText[9] = 0x0315; // combining comma above right - expect 0x0055, 0x0315 (fail)
-
-	testText[10] = 0x0055; // capital U
-	testText[11] = 0x2019; // right single quote mark - expect 0x0055 (fail)
-
-	testText[12] = 0x01AF; // capital U with horn
-	testText[13] = 0x0020; // space - expect 0x01AF (succeed)
-
-	testText[14] = 0x0045; // capital E
-	testText[15] = 0x031B; // combining horn - expect 0x0045, 0x031B (fail)
-
-	testText[16] = 0x0041; // capital A
-	testText[17] = 0x0306; // combining breve
-	testText[18] = 0x0301; // combining acute - expect 0x1EAE (succeed)
-
-	testText[19] = 0x0102; // capital A with breve
-	testText[20] = 0x0301; // combining acute - expect 0x1EAE (succeed)
-
-	testText[21] = 0x0041; // capital A
-	testText[22] = 0x0301; // combining acute
-	testText[23] = 0x0306; // combining breve - expect 0x0041, 0x0301, 0x0306 (fail)
-
-	testText[24] = 0x0041; // capital A
-	testText[25] = 0x0323; // combining dot below
-	testText[26] = 0x0306; // combining breve - expect 0x1EB6 (succeed)
-
-	testText[27] = 0x1EA0; // capital A with dot below
-	testText[28] = 0x0306; // combining breve - expect 0x1EB6 (succeed)
-
-	testText[29] = 0x0102; // capital A with breve
-	testText[30] = 0x0323; // combining dot below - expect 0x0102, 0x0323 (fail)
-
-	testText[31] = 0x0045; // capital A
-	testText[32] = 0x0302; // combining circumflex
-	testText[33] = 0x0301; // combining acute - expect 0x1EBE (succeed)
-
-	testText[34] = 0x00CA; // capital A with circumflex
-	testText[35] = 0x0301; // combining acute - expect 0x1EBE (succeed)
-
-	testText[36] = 0x004F; // capital O
-	testText[37] = 0x031B; // combining horn
-	testText[38] = 0x0309; // combining hook above - expect 0x1EDE (succeed)
-
-	testText[39] = 0x01A0; // capital O with horn
-	testText[40] = 0x0309; // combining hook above - expect 0x1EDE (succeed)
-
-	param.iText.Set(testText);
-
-	// 1: Capital U with combining horn
-	param.iPosInText = 0;
-	param.iPen.iX = param.iPen.iY = 0;
-	r = iTestFont->GetCharacterPosition(param);
-	TEST(r && param.iPosInText == 2 
-		   && param.iPen.iX == 10
-		   && param.iOutputGlyphs == 1
-		   && param.iOutput[0].iCode == 0x01AF);
-
-	// 2: Capital U with apostrophe
-	param.iPosInText = 2;
-	param.iPen.iX = param.iPen.iY = 0;
-	r = iTestFont->GetCharacterPosition(param);
-	TEST(r && param.iPosInText == 3 
-		   && param.iPen.iX == 10
-		   && param.iOutputGlyphs == 1
-		   && param.iOutput[0].iCode == 0x0055);
-
-	// 3: Capital U with modifier prime
-	param.iPosInText = 4;
-	param.iPen.iX = param.iPen.iY = 0;
-	r = iTestFont->GetCharacterPosition(param);
-	TEST(r && param.iPosInText == 5 
-		   && param.iPen.iX == 10
-		   && param.iOutputGlyphs == 1
-		   && param.iOutput[0].iCode == 0x0055);
-
-	// 4: Capital U with modifier apostrophe
-	param.iPosInText = 6;
-	param.iPen.iX = param.iPen.iY = 0;
-	r = iTestFont->GetCharacterPosition(param);
-	TEST(r && param.iPosInText == 7 
-		   && param.iPen.iX == 10
-		   && param.iOutputGlyphs == 1
-		   && param.iOutput[0].iCode == 0x0055);
-
-	// 5: Capital U with combining comma above right
-	param.iPosInText = 8;
-	param.iPen.iX = param.iPen.iY = 0;
-	r = iTestFont->GetCharacterPosition(param);
-	TEST(r && param.iPosInText == 10 
-		   && param.iPen.iX == 10
-		   && param.iOutputGlyphs == 2
-		   && param.iOutput[0].iCode == 0x0055
-		   && param.iOutput[1].iCode == 0x0315);
-
-	// 6: Capital U with right single quote
-	param.iPosInText = 10;
-	param.iPen.iX = param.iPen.iY = 0;
-	r = iTestFont->GetCharacterPosition(param);
-	TEST(r && param.iPosInText == 11 
-		   && param.iPen.iX == 10
-		   && param.iOutputGlyphs == 1
-		   && param.iOutput[0].iCode == 0x0055);
-
-	// 7: Capital U with horn plus space
-	param.iPosInText = 12;
-	param.iPen.iX = param.iPen.iY = 0;
-	r = iTestFont->GetCharacterPosition(param);
-	TEST(r && param.iPosInText == 13 
-		   && param.iPen.iX == 10
-		   && param.iOutputGlyphs == 1
-		   && param.iOutput[0].iCode == 0x01AF);
-
-	// 8: Capital E with combining horn
-	param.iPosInText = 14;
-	param.iPen.iX = param.iPen.iY = 0;
-	r = iTestFont->GetCharacterPosition(param);
-	TEST(r && param.iPosInText == 16 
-		   && param.iPen.iX == 10
-		   && param.iOutputGlyphs == 2
-		   && param.iOutput[0].iCode == 0x0045
-		   && param.iOutput[1].iCode == 0x031B);
-
-	// 9: Capital A with combining breve with combining acute
-	param.iPosInText = 16;
-	param.iPen.iX = param.iPen.iY = 0;
-	r = iTestFont->GetCharacterPosition(param);
-	TEST(r && param.iPosInText == 19 
-		   && param.iPen.iX == 10
-		   && param.iOutputGlyphs == 1
-		   && param.iOutput[0].iCode == 0x1EAE);
-
-	// 10: Capital A with breve with combining acute
-	param.iPosInText = 19;
-	param.iPen.iX = param.iPen.iY = 0;
-	r = iTestFont->GetCharacterPosition(param);
-	TEST(r && param.iPosInText == 21 
-		   && param.iPen.iX == 10
-		   && param.iOutputGlyphs == 1
-		   && param.iOutput[0].iCode == 0x1EAE);
-
-	// 11: Capital A with combining acute with combining breve
-	param.iPosInText = 21;
-	param.iPen.iX = param.iPen.iY = 0;
-	r = iTestFont->GetCharacterPosition(param);
-	TEST(r && param.iPosInText == 24 
-		   && param.iPen.iX == 10
-		   && param.iOutputGlyphs == 3
-		   && param.iOutput[0].iCode == 0x0041
-		   && param.iOutput[1].iCode == 0x0301
-		   && param.iOutput[2].iCode == 0x0306);
-
-	// 12: Capital A with combining dot below with combining breve
-	param.iPosInText = 24;
-	param.iPen.iX = param.iPen.iY = 0;
-	r = iTestFont->GetCharacterPosition(param);
-	TEST(r && param.iPosInText == 27 
-		   && param.iPen.iX == 10
-		   && param.iOutputGlyphs == 1
-		   && param.iOutput[0].iCode == 0x1EB6);
-
-	// 13: Capital A with dot below with combining breve
-	param.iPosInText = 27;
-	param.iPen.iX = param.iPen.iY = 0;
-	r = iTestFont->GetCharacterPosition(param);
-	TEST(r && param.iPosInText == 29 
-		   && param.iPen.iX == 10
-		   && param.iOutputGlyphs == 1
-		   && param.iOutput[0].iCode == 0x1EB6);
-
-	// 14: Capital A with breve with combining dot below
-	param.iPosInText = 29;
-	param.iPen.iX = param.iPen.iY = 0;
-	r = iTestFont->GetCharacterPosition(param);
-	TEST(r && param.iPosInText == 31 
-		   && param.iPen.iX == 10
-		   && param.iOutputGlyphs == 2
-		   && param.iOutput[0].iCode == 0x0102
-		   && param.iOutput[1].iCode == 0x0323);
-
-	// 15: Capital A with combining circumflex with combining acute
-	param.iPosInText = 31;
-	param.iPen.iX = param.iPen.iY = 0;
-	r = iTestFont->GetCharacterPosition(param);
-	TEST(r && param.iPosInText == 34 
-		   && param.iPen.iX == 10
-		   && param.iOutputGlyphs == 1
-		   && param.iOutput[0].iCode == 0x1EBE);
-
-	// 16: Capital A with circumflex with combining acute
-	param.iPosInText = 34;
-	param.iPen.iX = param.iPen.iY = 0;
-	r = iTestFont->GetCharacterPosition(param);
-	TEST(r && param.iPosInText == 36 
-		   && param.iPen.iX == 10
-		   && param.iOutputGlyphs == 1
-		   && param.iOutput[0].iCode == 0x1EBE);
-
-	// 17: Capital O with combining horn with combing hook above
-	param.iPosInText = 36;
-	param.iPen.iX = param.iPen.iY = 0;
-	r = iTestFont->GetCharacterPosition(param);
-	TEST(r && param.iPosInText == 39 
-		   && param.iPen.iX == 10
-		   && param.iOutputGlyphs == 1
-		   && param.iOutput[0].iCode == 0x1EDE);
-
-	// 18: Capital O with horn with combing hook above
-	param.iPosInText = 39;
-	param.iPen.iX = param.iPen.iY = 0;
-	r = iTestFont->GetCharacterPosition(param);
-	TEST(r && param.iPosInText == 41 
-		   && param.iPen.iX == 10
-		   && param.iOutputGlyphs == 1
-		   && param.iOutput[0].iCode == 0x1EDE);
-	}
-
-
-void CTGlyphSelection::TestNonBmpCharsL()
-	{
-	// create a font store for testing
-	CFontStore* fontStore = CFontStore::NewL(&User::Heap());
-	
-	//load all ecom implemented rasterizer dlls. installs the rasterizer.	
-	LoadOpenFontLibraries(fontStore);
-		// test font preparation
-	fontStore->iKPixelWidthInTwips = 11860; //This value is default
-
-	//add any required font files
-	TUid err = fontStore->AddFileL(KTestGB18030FontFile);
-
-	TFontSpec testGB18030FontSpec(KTestGB18030FontFaceName,200); 
-	 
-	CFbsBitmap* bmp = new(ELeave) CFbsBitmap;
-	
-	TInt ret = bmp->Create(TSize(100,100),EGray2);
-	if (ret == KErrNotSupported)
-		return;
-	else
-		User::LeaveIfError(ret);
-
-	CFbsBitmapDevice* device = NULL;
-	TRAPD(err2,device = CFbsBitmapDevice::NewL(bmp));
-	TEST(err2 == KErrNone);
-
-	CFbsBitGc* gc = NULL;
-	User::LeaveIfError(device->CreateContext(gc));
-	// Font file Creation
-	CFbsFont* gb18030Font = NULL;
-	User::LeaveIfError(device->GetNearestFontToDesignHeightInTwips(gb18030Font,testGB18030FontSpec));
-	gc->UseFont(gb18030Font);
-	CleanupStack::PushL(gb18030Font);
-	
-	//Testcode for GB18030
-	((CTGlyphSelectionStep*)iStep)->RecordTestResultL();
-	((CTGlyphSelectionStep*)iStep)->SetTestStepID(_L("TI18N-GDI-CIT-4077"));
-	TestNonBmpCharsInGB18030(gb18030Font);
-	((CTGlyphSelectionStep*)iStep)->RecordTestResultL();
-	
-	CleanupStack::Pop(gb18030Font);
-	
-	//Cleaning the memory
-	delete bmp;
-	delete device;
-	delete gc;
-	fontStore->RemoveFile(err);
-	delete fontStore;
-	REComSession::FinalClose();
-	}
-
-
-void CTGlyphSelection::TestTextDirection()
-/**
- This method is a test case to test GetCharacterPosition() correctly
- produces glyph bounding boxes and utilizes various pen offsets in
- a horizontal and vertical context.
-*/
-	{
-	TBool r;
-	TBuf<20> testText(0);
-	CFont::TPositionParam param;
-	param.iFlags = CFont::TPositionParam::EFLogicalOrder;
-
-	testText.SetLength(5);
-	testText[0] = 'a';
-	testText[1] = 'B';
-	testText[2] = 'c';
-	testText[3] = ' ';
-	testText[4] = '1';
-	param.iText.Set(testText);
-
-	// 1: Test horizontal text pen advancement & bounds
-	param.iDirection = CFont::EHorizontal;
-	param.iPosInText = 0;
-	param.iPen.iX = param.iPen.iY = 0;
-	r = iTestFont->GetCharacterPosition(param);
-	TEST(r && param.iPosInText == 1 
-		   && param.iPen == TPoint(10,0)
-		   && param.iOutputGlyphs == 1 
-		   && param.iOutput[0].iCode == 'a'
-		   && param.iOutput[0].iBounds.iTl == TPoint(0,-10)
-		   && param.iOutput[0].iBounds.iBr == TPoint(10,2));
-		   // add check for bounds
-
-	// 2: Test horizontal text pen advancement with +ve pen offset
-	param.iPosInText = 4;
-	param.iPen.iX = 20;
-	param.iPen.iY = 12;
-	r = iTestFont->GetCharacterPosition(param);
-	TEST(r && param.iPosInText == 5 
-		   && param.iPen == TPoint(30,12)
-		   && param.iOutputGlyphs == 1 
-		   && param.iOutput[0].iCode == '1'
-		   && param.iOutput[0].iBounds.iTl == TPoint(20,2)
-		   && param.iOutput[0].iBounds.iBr == TPoint(30,14));
-
-	// 3: Test horizontal text pen advancement with -ve pen offset
-	param.iPosInText = 4;
-	param.iPen.iX = -10;
-	param.iPen.iY = -24;
-	r = iTestFont->GetCharacterPosition(param);
-	TEST(r && param.iPosInText == 5 
-		   && param.iPen == TPoint(0,-24)
-		   && param.iOutputGlyphs == 1 
-		   && param.iOutput[0].iCode == '1'
-		   && param.iOutput[0].iBounds.iTl == TPoint(-10,-34)
-		   && param.iOutput[0].iBounds.iBr == TPoint(0,-22));
-
-	// 4: Test vertical text pen advancement & bounds
-	param.iDirection = CFont::EVertical;
-	param.iPosInText = 1;
-	param.iPen.iX = param.iPen.iY = 0;
-	r = iTestFont->GetCharacterPosition(param);
-	TEST(r && param.iPosInText == 2 
-		   && param.iPen == TPoint(0,12)
-		   && param.iOutputGlyphs == 1 
-		   && param.iOutput[0].iCode == 'B'
-		   && param.iOutput[0].iBounds.iTl == TPoint(0,0)
-		   && param.iOutput[0].iBounds.iBr == TPoint(10,12));
-
-	// 5: Test vertical text pen advancement with +ve pen offset
-	param.iPosInText = 4;
-	param.iPen.iX = 20;
-	param.iPen.iY = 12;
-	r = iTestFont->GetCharacterPosition(param);
-	TEST(r && param.iPosInText == 5 
-		   && param.iPen == TPoint(20,24)
-		   && param.iOutputGlyphs == 1 
-		   && param.iOutput[0].iCode == '1'
-		   && param.iOutput[0].iBounds.iTl == TPoint(20,12)
-		   && param.iOutput[0].iBounds.iBr == TPoint(30,24));
-
-	// 6: Test vertical text pen advancement with -ve pen offset
-	param.iPosInText = 4;
-	param.iPen.iX = -10;
-	param.iPen.iY = -24;
-	r = iTestFont->GetCharacterPosition(param);
-	TEST(r && param.iPosInText == 5 
-		   && param.iPen == TPoint(-10,-12)
-		   && param.iOutputGlyphs == 1 
-		   && param.iOutput[0].iCode == '1'
-		   && param.iOutput[0].iBounds.iTl == TPoint(-10,-24)
-		   && param.iOutput[0].iBounds.iBr == TPoint(0,-12));
-	}
-
-void CTGlyphSelection::TestAllUnicodeChars()
-/**
- This method is a test case to test GetCharacterPosition() correctly
- processes all the characters in the Unicode code space 0x0000 to 
- 0xffff.
-*/
-	{
-	TBool r;
-	TBuf<8> testText(0);
-	CFont::TPositionParam param;
-	param.iFlags = CFont::TPositionParam::EFLogicalOrder;
-
-	TInt errors = 0;
-	testText.SetLength(1);
-	for (TUint i = 0xd802; i <= 0xffff; i++)
-		{
-		testText[0] = (TText16) i;
-		if (i==0x1b) continue; // Skip as CTestFont designed to fail here r==0.
-		param.iText.Set(testText);
-		param.iDirection = CFont::EHorizontal;
-		param.iPosInText = 0;
-		param.iPen.iX = param.iPen.iY = 0;
-		r = iTestFont->GetCharacterPosition(param);
-		if (!r || param.iPosInText != 1)
-			{
-			errors++;
-			//RDebug::Print(_L("%04x(%d,%d,%d), "), i, r, param.iPosInText, param.iOutputGlyphs );
-			//if (errors%8 == 0)
-			//	RDebug::Print(_L("\n"));
-			}
-		}
-
-	TEST (errors == 0);
-	}
 
 /** Tests that ligatures (presently just Lam-Alef in Arabic) work correctly
 when diacritics are required on one, both or neither character comprising the
@@ -8615,6 +8621,10 @@ void CTGlyphSelection::TestMalayalamWithVowelInitial( const CFbsFont& aFont )
 #endif 
 	}
 
+#ifdef TEST
+#undef TEST
+#define TEST(a)  testBooleanTrue((a), (TText8*)__FILE__, __LINE__)
+#endif
 
 //--------------
 

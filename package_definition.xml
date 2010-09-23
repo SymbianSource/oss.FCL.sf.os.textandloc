@@ -73,7 +73,7 @@
       <component id="reflocales" name="Reference Locales"  purpose="optional" class="plugin">
         <unit bldFile="localisation/localesupport" mrp="localisation/localesupport/mmpfiles/base_loce32.mrp"/>
       </component>
-     <component id="initlocale" name="Initialise Locale" introduced="^2" purpose="mandatory" deprecated="^4">
+     <component id="initlocale" name="Initialise Locale" introduced="^2" purpose="mandatory">
      	<!-- placeholder for split from bafl -->
      </component>
     </collection>

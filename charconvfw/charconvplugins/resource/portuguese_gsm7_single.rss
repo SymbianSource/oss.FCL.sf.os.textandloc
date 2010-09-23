@@ -25,3 +25,4 @@ NAME GSMP
 RESOURCE RSS_SIGNATURE {}
 
 RESOURCE TBUF {buf=STRING_portuguese_gsm7_single;}
+
