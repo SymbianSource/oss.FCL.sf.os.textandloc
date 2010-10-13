@@ -133,6 +133,8 @@ public:
 private:
 	inline COpenFontSessionCacheEntry(const COpenFont* aFont, TInt aCode, TInt aGlyphIndex, const TOpenFontCharMetrics& aMetrics);
 	~COpenFontSessionCacheEntry();
+public:
+    TInt iLastAccess;               // serial number of the last access to the glyph
 
 private: 
     TInt iFontOffset;          // offset of the font that contains this glyph, (not owned by this class!)    
@@ -146,21 +148,20 @@ private:
  */
 class COpenFontSessionCache
     {
-	friend class COpenFontSessionCacheList;
 public:
     static COpenFontSessionCache* NewL(RHeap* aHeap, TInt aSessionHandle, TInt aEntries);
     void Delete(RHeap* aHeap);
     
     TInt SessionHandle() { return iSessionHandle; }
-    const COpenFontGlyph* Glyph(const COpenFont* aFont, TInt aCode, TInt& aIndex) const;
+    const COpenFontGlyph* Glyph(const COpenFont* aFont, TInt aCode, TInt& aIndex);
     void Insert(RHeap* aHeap, COpenFontSessionCacheEntry* aEntry, TInt aIndex);
     
 private:
     COpenFontSessionCache(TInt aSessionHandle);
     ~COpenFontSessionCache();
-private:
-    TInt iSessionHandle;
-    TInt64 iRandomSeed;
+public:
+    TInt iSessionHandle;    
+    TInt iLastAccess;
     ROffsetArray<COpenFontSessionCacheEntry> iEntryArray;
     };
 

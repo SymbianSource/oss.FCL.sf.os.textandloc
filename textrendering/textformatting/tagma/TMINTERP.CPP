@@ -2745,7 +2745,6 @@ void RTmDrawingInterpreter::DrawText(const TDesC& aText,const TInt aStart, const
 		CFont::TMeasureTextInput input;
 		input.iFlags = CFont::TMeasureTextInput::EFVisualOrder;
 		input.iStartInputChar = 1;
-		input.iEndInputChar = aEnd;
 		extra_pixels = text_bounds.Width() - aFont->MeasureText(aText, &input);
 		}
 
