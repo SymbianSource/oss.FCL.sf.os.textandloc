@@ -1,5 +1,0 @@
-EXPORTS
-	ConversionData__9CnvGb2312 @ 1 NONAME R3UNUSED ; CnvGb2312::ConversionData(void)
-	ReplacementForUnconvertibleUnicodeCharacters__9CnvGb2312 @ 2 NONAME R3UNUSED ; CnvGb2312::ReplacementForUnconvertibleUnicodeCharacters(void)
-	IsCharGBBased__9CnvGb2312RiRC6TDesC8 @ 3 NONAME R3UNUSED ; CnvGb2312::IsCharGBBased(int &, TDesC8 const &)
-
