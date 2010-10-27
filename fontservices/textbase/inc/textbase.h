@@ -235,6 +235,11 @@ enum TGlyphBitmapType
 	For Internal Use Only.
 	*/
 	EAntiAliasedOrMonochromeGlyphBitmap,
+	/** The format used when outline and shadow font rendering is used. 
+	If the raterizer supports the outline and shadow fonts and EFourColourBlendGlyphBitmapMono is set, it will get regular monochrome
+    bitmap.
+	*/
+	EFourColourBlendGlyphBitmapMono,
 	};
 
 /**

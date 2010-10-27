@@ -26,7 +26,7 @@
         <unit bldFile="fontservices/textshaperplugin/group" mrp="fontservices/textshaperplugin/group/graphics_iculayoutengine.mrp"/>
       </component>
       <component id="fontstore" name="Font Store" purpose="mandatory" filter="api_test"> <!-- both production and api_test-->
-`        <unit bldFile="fontservices/fontstore/group" mrp="fontservices/fontstore/group/graphics_fntstore.mrp"/>
+        <unit bldFile="fontservices/fontstore/group" mrp="fontservices/fontstore/group/graphics_fntstore.mrp"/>
       </component>
      <component id="textbase" name="Text Base" purpose="mandatory">
 	<unit bldFile="fontservices/textbase/group" mrp="fontservices/textbase/group/textbase.mrp" /> 
