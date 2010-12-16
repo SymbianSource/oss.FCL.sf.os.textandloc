@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SystemDefinition xmlns:sf="http://www.symbian.org/system-definition" schema="3.0.0" id-namespace="http://www.nokia.com/schema/drd/system-definition">
+ <package id="sf:textandloc" name="Text and Localisation Services" levels="encoding util fonts tools text">
+    <collection id="sf:fontandtxtsrv" name="Font and Text Services" level="fonts">
+     <component id="itypefontrasteriser" name="iType Font Rasteriser" filter="gt" introduced="^2" purpose="development" class="plugin" before="sf:referencefonts">
+      <unit bldFile="../../../graphics/fbs/itypefontrasteriser/group" mrp="../../../graphics/fbs/itypefontrasteriser/group/graphics_itype.mrp"/>
+     </component>
+     <component id="testfonts" name="Test Fonts" filter="gt" introduced="^2" purpose="development">
+      <!-- placeholder 
+        <unit bldFile="../../fontservices/graphicstestfonts/group" mrp="../../fontservices/graphicstestfonts/group/graphics_testfonts.mrp"/>
+        -->
+     </component>
+    </collection>
+   <collection id="sf:textandloc_info" name="Text and Localisation Services Info" level="text">
+   <component id="nokia_textandloc_metadata" name="Nokia Text and Localisation Services Metadata" class="config" introduced="^2" purpose="development" target="desktop">
+    <unit mrp="nokia_textandloc_metadata.mrp"/>
+   </component>
+  </collection>
+ </package>
+</SystemDefinition>
